@@ -1,0 +1,36 @@
+package com.tracker.di
+
+import com.tracker.ActivityContextProvider
+import com.tracker.AndroidPermissionRequesterImpl
+import com.tracker.AndroidTrackingRequesterImpl
+import com.tracker.PermissionChecker
+import com.tracker.domain.datasource.PermissionRequester
+import com.tracker.domain.datasource.TrackingRequester
+import org.koin.android.ext.koin.androidContext
+import org.koin.dsl.module
+
+/**
+ * Koin модуль для Activity Context
+ * Живет только в жизненном цикле Activity
+ */
+val activityModule = module {
+    // ActivityContextProvider как singleton в scope Activity
+    single<ActivityContextProvider> {
+        ActivityContextProvider()
+    }
+    
+    // PermissionChecker как singleton в scope Activity
+    single<PermissionChecker> {
+        PermissionChecker()
+    }
+    
+    // PermissionRequester для domain слоя
+    single<PermissionRequester> {
+        AndroidPermissionRequesterImpl()
+    }
+    
+    // TrackingRequester для domain слоя
+    single<TrackingRequester> {
+        AndroidTrackingRequesterImpl()
+    }
+}

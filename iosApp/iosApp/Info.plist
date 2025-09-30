@@ -4,5 +4,38 @@
 <dict>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
+	
+	<!-- Разрешения для GPS и местоположения -->
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Это приложение использует GPS для отслеживания вашего местоположения во время использования приложения.</string>
+	
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Это приложение использует GPS для постоянного отслеживания вашего местоположения, даже когда приложение находится в фоне.</string>
+	
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>Это приложение использует GPS для постоянного отслеживания вашего местоположения, даже когда приложение находится в фоне.</string>
+	
+	<!-- Background Modes для фонового трекинга -->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>location</string>
+		<string>background-processing</string>
+		<string>background-fetch</string>
+	</array>
+	
+	<!-- Дополнительные настройки для фонового режима -->
+	<key>BGTaskSchedulerPermittedIdentifiers</key>
+	<array>
+		<string>com.tracker.location-tracking</string>
+		<string>com.tracker.background-refresh</string>
+	</array>
+	
+	<!-- Настройки для точности GPS -->
+	<key>NSLocationUsageDescription</key>
+	<string>Это приложение использует GPS для точного отслеживания местоположения.</string>
+	
+	<!-- Разрешения для уведомлений (если понадобятся) -->
+	<key>NSUserNotificationsUsageDescription</key>
+	<string>Это приложение отправляет уведомления о статусе GPS трекинга.</string>
 </dict>
 </plist>

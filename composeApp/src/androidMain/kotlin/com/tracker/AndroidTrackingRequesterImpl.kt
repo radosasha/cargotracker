@@ -1,0 +1,59 @@
+package com.tracker
+
+import android.content.Intent
+import com.tracker.domain.datasource.TrackingRequester
+import com.tracker.domain.model.Location
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.datetime.Clock
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
+
+/**
+ * Android реализация TrackingRequester
+ */
+class AndroidTrackingRequesterImpl : TrackingRequester, KoinComponent {
+    
+    private val activityContextProvider: ActivityContextProvider by inject()
+    
+    private val _locationFlow = MutableSharedFlow<Location>()
+    private var isTracking = false
+    
+    override suspend fun startTracking(): Result<Unit> {
+        return try {
+            val context = activityContextProvider.getContext()
+            val intent = Intent(context, LocationTrackingService::class.java)
+            context.startForegroundService(intent)
+            isTracking = true
+            println("AndroidTrackingRequesterImpl: Tracking started, isTracking = $isTracking")
+            Result.success(Unit)
+        } catch (e: Exception) {
+            println("AndroidTrackingRequesterImpl: Error starting tracking: ${e.message}")
+            Result.failure(e)
+        }
+    }
+    
+    override suspend fun stopTracking(): Result<Unit> {
+        return try {
+            val context = activityContextProvider.getContext()
+            val intent = Intent(context, LocationTrackingService::class.java)
+            context.stopService(intent)
+            isTracking = false
+            println("AndroidTrackingRequesterImpl: Tracking stopped, isTracking = $isTracking")
+            Result.success(Unit)
+        } catch (e: Exception) {
+            println("AndroidTrackingRequesterImpl: Error stopping tracking: ${e.message}")
+            Result.failure(e)
+        }
+    }
+    
+    override suspend fun isTrackingActive(): Boolean {
+        println("AndroidTrackingRequesterImpl: isTrackingActive() = $isTracking")
+        return isTracking
+    }
+    
+    override fun observeLocationUpdates(): Flow<Location> {
+        return _locationFlow.asSharedFlow()
+    }
+}
