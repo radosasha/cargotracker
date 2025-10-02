@@ -6,36 +6,31 @@ import org.koin.core.context.stopKoin
 
 /**
  * iOS инициализация Koin DI контейнера
+ * 
+ * Использует флаги состояния для отслеживания инициализации,
+ * вместо try-catch блоков (как в серьезных компаниях)
  */
 object IOSKoinApp {
     
-    private var isInitialized = false
+    // Флаги состояния
+    private var hasViewControllerScope = false
     
     /**
      * Инициализация Application-scoped зависимостей
      * Вызывается при запуске приложения
      */
     fun initApplicationScope() {
-        if (!isInitialized) {
-            try {
-                println("IOSKoinApp: Starting Koin initialization...")
-                println("IOSKoinApp: Loading modules: appModule + iosDataModule + iosModule")
-                
-                startKoin {
-                    modules(
-                        appModule + iosDataModule + iosModule
-                    )
-                }
-                isInitialized = true
-                println("IOSKoinApp: Application scope initialized successfully")
-            } catch (e: Exception) {
-                println("IOSKoinApp: Error during initialization: ${e.message}")
-                e.printStackTrace()
-                throw e
-            }
-        } else {
-            println("IOSKoinApp: Application scope already initialized")
+        
+        println("IOSKoinApp: Starting Koin initialization...")
+        println("IOSKoinApp: Loading modules: appModule + iosDataModule + iosModule")
+        
+        startKoin {
+            modules(
+                appModule + iosDataModule + iosModule
+            )
         }
+
+        println("IOSKoinApp: Application scope initialized successfully")
     }
     
     /**
@@ -43,17 +38,29 @@ object IOSKoinApp {
      * Вызывается при создании ViewController
      */
     fun initViewControllerScope() {
-        if (isInitialized) {
-            // Koin уже инициализирован, добавляем ViewController модуль
-            // Note: В реальном приложении здесь можно создать ViewController scope
-            println("IOSKoinApp: ViewController scope initialized")
-        } else {
-            println("IOSKoinApp: Koin not initialized, cannot init view controller scope")
+        
+        if (hasViewControllerScope) {
+            println("IOSKoinApp: ViewController scope already initialized, skipping")
+            return
         }
+        
+        hasViewControllerScope = true
+        println("IOSKoinApp: ViewController scope initialized successfully")
     }
     
+    /**
+     * Остановка Koin
+     * Вызывается при завершении приложения
+     */
     fun stop() {
+        
         stopKoin()
-        isInitialized = false
+        hasViewControllerScope = false
+        println("IOSKoinApp: Stopped successfully")
     }
+    
+    /**
+     * Проверка, инициализирован ли ViewController scope
+     */
+    fun hasViewControllerScopeInitialized(): Boolean = hasViewControllerScope
 }

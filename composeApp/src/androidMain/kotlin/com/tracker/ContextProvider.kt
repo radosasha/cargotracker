@@ -52,7 +52,3 @@ class ActivityContextProvider {
         activityContext = null
     }
 }
-
-// Функции для обратной совместимости
-fun getAndroidContext(): Context = ApplicationContextProvider.getContext()
-fun getActivityContext(): Context = ActivityContextProvider().getContext() // Временно, будет заменено на Koin
