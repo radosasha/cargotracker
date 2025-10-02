@@ -2,13 +2,15 @@ package com.tracker.domain.usecase
 
 import com.tracker.domain.repository.PermissionRepository
 import com.tracker.domain.repository.TrackingRepository
+import com.tracker.domain.service.LocationSyncService
 
 /**
  * Use Case для запуска GPS трекинга
  */
 class StartTrackingUseCase(
     private val permissionRepository: PermissionRepository,
-    private val trackingRepository: TrackingRepository
+    private val trackingRepository: TrackingRepository,
+    private val locationSyncService: LocationSyncService
 ) {
     
     suspend operator fun invoke(): Result<Unit> {
@@ -16,7 +18,15 @@ class StartTrackingUseCase(
         val permissionStatus = permissionRepository.getPermissionStatus()
         
         return if (permissionStatus.hasAllPermissions) {
-            trackingRepository.startTracking()
+            val result = trackingRepository.startTracking()
+            
+            // Запускаем синхронизацию неотправленных координат
+            if (result.isSuccess) {
+                locationSyncService.startSync()
+                println("StartTrackingUseCase: Location sync service started")
+            }
+            
+            result
         } else {
             Result.failure(
                 IllegalStateException("Не все необходимые разрешения получены")

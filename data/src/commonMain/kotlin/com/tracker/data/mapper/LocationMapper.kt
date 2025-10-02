@@ -15,10 +15,10 @@ object LocationMapper {
         return Location(
             latitude = dataModel.latitude,
             longitude = dataModel.longitude,
-            accuracy = dataModel.accuracy,
+            accuracy = dataModel.accuracy ?: 0f,
             altitude = dataModel.altitude,
             speed = dataModel.speed,
-            bearing = dataModel.bearing,
+            bearing = dataModel.course, // course -> bearing
             timestamp = dataModel.timestamp,
             deviceId = dataModel.deviceId
         )
@@ -31,11 +31,13 @@ object LocationMapper {
         return LocationDataModel(
             latitude = domainModel.latitude,
             longitude = domainModel.longitude,
+            timestamp = domainModel.timestamp,
+            isValid = true,
             accuracy = domainModel.accuracy,
             altitude = domainModel.altitude,
             speed = domainModel.speed,
-            bearing = domainModel.bearing,
-            timestamp = domainModel.timestamp,
+            course = domainModel.bearing, // bearing -> course
+            batteryLevel = null,
             deviceId = domainModel.deviceId
         )
     }

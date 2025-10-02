@@ -1,22 +1,23 @@
 package com.tracker.data.datasource.impl
 
-// import com.tracker.IOSLocationManager - заглушка
 import com.tracker.data.datasource.TrackingDataSource
+import com.tracker.data.mapper.LocationMapper
 import com.tracker.data.model.LocationDataModel
 import com.tracker.data.model.TrackingDataStatus
+import com.tracker.domain.datasource.LocationManager
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.map
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 
 /**
  * iOS реализация TrackingDataSource
  */
-class IOSTrackingDataSource : TrackingDataSource {
+class IOSTrackingDataSource : TrackingDataSource, KoinComponent {
 
-    // Заглушка для IOSLocationManager
-    private fun startLocationTracking() {}
-    private fun stopLocationTracking() {}
-    private fun isLocationTrackingActive(): Boolean = false
+    private val locationManager: LocationManager by inject()
     
     private val _trackingStatusFlow = MutableSharedFlow<TrackingDataStatus>()
     private val _locationFlow = MutableSharedFlow<LocationDataModel>()
@@ -25,32 +26,49 @@ class IOSTrackingDataSource : TrackingDataSource {
     
     override suspend fun startTracking(): Result<Unit> {
         return try {
-            startLocationTracking()
-            currentStatus = TrackingDataStatus.ACTIVE
-            _trackingStatusFlow.emit(currentStatus)
-            Result.success(Unit)
+            val result = locationManager.startLocationTracking()
+            if (result.isSuccess) {
+                currentStatus = TrackingDataStatus.ACTIVE
+                _trackingStatusFlow.emit(currentStatus)
+                println("IOSTrackingDataSource: Tracking started successfully")
+            } else {
+                currentStatus = TrackingDataStatus.ERROR
+                _trackingStatusFlow.emit(currentStatus)
+                println("IOSTrackingDataSource: Failed to start tracking: ${result.exceptionOrNull()?.message}")
+            }
+            result
         } catch (e: Exception) {
             currentStatus = TrackingDataStatus.ERROR
             _trackingStatusFlow.emit(currentStatus)
+            println("IOSTrackingDataSource: Exception starting tracking: ${e.message}")
             Result.failure(e)
         }
     }
     
     override suspend fun stopTracking(): Result<Unit> {
         return try {
-            stopLocationTracking()
-            currentStatus = TrackingDataStatus.STOPPED
-            _trackingStatusFlow.emit(currentStatus)
-            Result.success(Unit)
+            val result = locationManager.stopLocationTracking()
+            if (result.isSuccess) {
+                currentStatus = TrackingDataStatus.STOPPED
+                _trackingStatusFlow.emit(currentStatus)
+                println("IOSTrackingDataSource: Tracking stopped successfully")
+            } else {
+                currentStatus = TrackingDataStatus.ERROR
+                _trackingStatusFlow.emit(currentStatus)
+                println("IOSTrackingDataSource: Failed to stop tracking: ${result.exceptionOrNull()?.message}")
+            }
+            result
         } catch (e: Exception) {
             currentStatus = TrackingDataStatus.ERROR
             _trackingStatusFlow.emit(currentStatus)
+            println("IOSTrackingDataSource: Exception stopping tracking: ${e.message}")
             Result.failure(e)
         }
     }
     
     override suspend fun getTrackingStatus(): TrackingDataStatus {
-        return if (isLocationTrackingActive()) {
+        val isActive = locationManager.isLocationTrackingActive()
+        return if (isActive) {
             TrackingDataStatus.ACTIVE
         } else {
             TrackingDataStatus.STOPPED
@@ -62,6 +80,8 @@ class IOSTrackingDataSource : TrackingDataSource {
     }
     
     override fun observeLocationUpdates(): Flow<LocationDataModel> {
-        return _locationFlow.asSharedFlow()
+        return locationManager.observeLocationUpdates().map { domainLocation ->
+            LocationMapper.toData(domainLocation)
+        }
     }
 }

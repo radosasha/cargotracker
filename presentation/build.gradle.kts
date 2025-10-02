@@ -43,6 +43,7 @@ kotlin {
             // Domain module
             implementation(project(":domain"))
             
+            
             // Compose
             implementation(compose.runtime)
             implementation(compose.foundation)
@@ -55,11 +56,17 @@ kotlin {
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
             
+            // Official JetBrains Navigation
+            implementation(libs.androidx.navigation.compose)
+            
             // Koin
             implementation(libs.koin.core)
             
             // Coroutines
             implementation(libs.kotlinx.coroutines.core)
+            
+            // DateTime
+            implementation(libs.kotlinx.datetime)
         }
         
         androidMain.dependencies {

@@ -56,14 +56,11 @@ class MainActivity : ComponentActivity() {
         
         println("MainActivity.onCreate() called")
         
-        // Инициализируем ApplicationContextProvider
-        ApplicationContextProvider.init(this)
-        
-        // Инициализируем Koin DI
-        AndroidKoinApp.init()
-        
         // Инициализируем Activity scope
-        AndroidKoinApp.initActivityScope(this)
+        AndroidKoinApp.initActivityScope()
+        
+        // Инициализируем Activity context
+        AndroidKoinApp.initActivityContext(this)
         
         println("MainActivity initialization completed")
 
@@ -103,8 +100,8 @@ class MainActivity : ComponentActivity() {
     
     override fun onDestroy() {
         super.onDestroy()
-        // Очищаем Activity scope при уничтожении Activity
-        AndroidKoinApp.clearActivityScope()
+        // Очищаем Activity context при уничтожении Activity
+        AndroidKoinApp.clearActivityContext()
     }
 }
 

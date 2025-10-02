@@ -55,6 +55,9 @@ kotlin {
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
             
+            // Official JetBrains Navigation
+            implementation(libs.androidx.navigation.compose)
+            
             // Koin Core
             implementation(libs.koin.core)
             

@@ -11,11 +11,13 @@ import kotlinx.datetime.Instant
 data class LocationDataModel(
     val latitude: Double,
     val longitude: Double,
-    val accuracy: Float,
+    val timestamp: Instant,
+    val isValid: Boolean = true,
+    val accuracy: Float? = null,
     val altitude: Double? = null,
     val speed: Float? = null,
-    val bearing: Float? = null,
-    val timestamp: Instant,
+    val course: Float? = null, // bearing переименован в course для совместимости
+    val batteryLevel: Int? = null,
     val deviceId: String? = null
 )
 

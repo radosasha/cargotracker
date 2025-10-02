@@ -16,6 +16,9 @@ import platform.UserNotifications.UNAuthorizationStatusAuthorized
 import platform.UserNotifications.UNAuthorizationStatusDenied
 import platform.UserNotifications.UNAuthorizationStatusNotDetermined
 import platform.UserNotifications.UNAuthorizationStatusProvisional
+import platform.UserNotifications.UNAuthorizationOptionAlert
+import platform.UserNotifications.UNAuthorizationOptionBadge
+import platform.UserNotifications.UNAuthorizationOptionSound
 import platform.darwin.dispatch_async
 import platform.darwin.dispatch_get_main_queue
 import kotlin.coroutines.suspendCoroutine
@@ -57,9 +60,11 @@ actual class PermissionChecker {
     actual suspend fun hasNotificationPermission(): Boolean {
         return suspendCoroutine { continuation ->
             dispatch_async(dispatch_get_main_queue()) {
-                // Простая заглушка для iOS - в реальном приложении нужно использовать правильный API
-                // Пока что возвращаем true, так как iOS уведомления работают по-другому
-                continuation.resumeWith(Result.success(true))
+                val center = UNUserNotificationCenter.currentNotificationCenter()
+                center.getNotificationSettingsWithCompletionHandler { settings ->
+                    val hasPermission = settings?.authorizationStatus == UNAuthorizationStatusAuthorized
+                    continuation.resumeWith(Result.success(hasPermission))
+                }
             }
         }
     }
@@ -105,7 +110,44 @@ actual class PermissionChecker {
     }
     
     actual fun requestAllPermissions() {
-        // В iOS разрешения запрашиваются автоматически при первом обращении к CLLocationManager
-        // Здесь можно добавить дополнительную логику если нужно
+        // Запрашиваем разрешения на местоположение
+        requestLocationPermissions()
+        
+        // Запрашиваем разрешения на уведомления
+        requestNotificationPermissions()
+    }
+    
+    private fun requestLocationPermissions() {
+        dispatch_async(dispatch_get_main_queue()) {
+            when (locationManager.authorizationStatus) {
+                kCLAuthorizationStatusNotDetermined -> {
+                    // Запрашиваем разрешение на использование местоположения
+                    locationManager.requestWhenInUseAuthorization()
+                }
+                kCLAuthorizationStatusAuthorizedWhenInUse -> {
+                    // Запрашиваем разрешение на использование в фоне
+                    locationManager.requestAlwaysAuthorization()
+                }
+                else -> {
+                    // Разрешение уже получено или отклонено
+                }
+            }
+        }
+    }
+    
+    private fun requestNotificationPermissions() {
+        dispatch_async(dispatch_get_main_queue()) {
+            val center = UNUserNotificationCenter.currentNotificationCenter()
+            center.requestAuthorizationWithOptions(
+                options = UNAuthorizationOptionAlert or UNAuthorizationOptionBadge or UNAuthorizationOptionSound,
+                completionHandler = { granted, error ->
+                    if (granted) {
+                        println("iOS: Notification permission granted")
+                    } else {
+                        println("iOS: Notification permission denied: ${error?.localizedDescription}")
+                    }
+                }
+            )
+        }
     }
 }

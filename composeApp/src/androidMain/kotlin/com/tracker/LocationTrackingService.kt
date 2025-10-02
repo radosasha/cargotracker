@@ -4,9 +4,10 @@ import android.app.*
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.location.Location
+import android.location.Location as AndroidLocation
 import android.location.LocationListener
 import android.location.LocationManager
+import android.os.BatteryManager
 import android.os.Binder
 import android.os.Build
 import android.os.IBinder
@@ -14,12 +15,27 @@ import android.os.Looper
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import com.tracker.domain.model.Location
+import com.tracker.domain.usecase.ProcessLocationUseCase
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 
-class LocationTrackingService : Service(), LocationListener {
+
+class LocationTrackingService : Service(), LocationListener, KoinComponent {
     
     private val binder = LocationBinder()
     private lateinit var locationManager: LocationManager
     private var isTracking = false
+    
+    // Koin DI
+    private val processLocationUseCase: ProcessLocationUseCase by inject()
+    
+    // Coroutine scope for network operations
+    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     
     companion object {
         private const val NOTIFICATION_ID = 1
@@ -27,8 +43,8 @@ class LocationTrackingService : Service(), LocationListener {
         private const val CHANNEL_NAME = "Location Tracking"
         
         // Интервалы обновления GPS (в миллисекундах)
-        private const val MIN_TIME_MS = 1000L // 1 секунда
-        private const val MIN_DISTANCE_M = 1f // 1 метр
+        private const val MIN_TIME_MS = 60 * 1000L // 1 минута
+        private const val MIN_DISTANCE_M = 500f // 500 метров
     }
     
     inner class LocationBinder : Binder() {
@@ -132,20 +148,73 @@ class LocationTrackingService : Service(), LocationListener {
         isTracking = false
     }
     
-    override fun onLocationChanged(location: Location) {
-        // Здесь вы можете обработать полученные GPS координаты
-        // Например, отправить на сервер или сохранить локально
-        println("GPS Location: ${location.latitude}, ${location.longitude}")
-        println("Accuracy: ${location.accuracy}m, Time: ${location.time}")
+    override fun onLocationChanged(androidLocation: AndroidLocation) {
+        println("LocationTrackingService: GPS Location received")
+        println("LocationTrackingService: Lat: ${androidLocation.latitude}, Lon: ${androidLocation.longitude}")
+        println("LocationTrackingService: Accuracy: ${androidLocation.accuracy}m, Time: ${androidLocation.time}")
+        println("LocationTrackingService: Speed: ${if (androidLocation.hasSpeed()) androidLocation.speed else "N/A"} m/s")
+        println("LocationTrackingService: Bearing: ${if (androidLocation.hasBearing()) androidLocation.bearing else "N/A"}°")
         
-        // Обновляем уведомление с последними координатами
-        updateNotification(location)
+        // Конвертируем Android Location в Domain Location
+        val domainLocation = Location(
+            latitude = androidLocation.latitude,
+            longitude = androidLocation.longitude,
+            accuracy = androidLocation.accuracy,
+            altitude = if (androidLocation.hasAltitude()) androidLocation.altitude else null,
+            speed = if (androidLocation.hasSpeed()) androidLocation.speed else null,
+            bearing = if (androidLocation.hasBearing()) androidLocation.bearing else null,
+            timestamp = kotlinx.datetime.Instant.fromEpochMilliseconds(androidLocation.time),
+            deviceId = "40329715"
+        )
+        
+        // Получаем уровень батареи
+        val batteryLevel = getBatteryLevel()
+        
+        // Обрабатываем координату через Use Case
+        serviceScope.launch {
+            try {
+                val result = processLocationUseCase(domainLocation, batteryLevel)
+                
+                if (result.shouldSend) {
+                    println("LocationTrackingService: ✅ Successfully processed location")
+                    println("LocationTrackingService: Reason: ${result.reason}")
+                    println("LocationTrackingService: Battery: ${batteryLevel?.let { "${it}%" } ?: "N/A"}")
+                    updateNotification(androidLocation, "Location saved to DB")
+                } else {
+                    println("LocationTrackingService: ⏭️ Location filtered out")
+                    println("LocationTrackingService: Reason: ${result.reason}")
+                    updateNotification(androidLocation, "Location filtered")
+                }
+                
+                println("LocationTrackingService: Total sent: ${result.totalSent}, Total received: ${result.totalReceived}")
+                
+            } catch (e: Exception) {
+                println("LocationTrackingService: ❌ Error processing location: ${e.message}")
+                e.printStackTrace()
+                updateNotification(androidLocation, "Error processing location")
+            }
+        }
     }
     
-    private fun updateNotification(location: Location) {
+    private fun getBatteryLevel(): Float? {
+        return try {
+            val batteryManager = getSystemService(Context.BATTERY_SERVICE) as? android.os.BatteryManager
+            batteryManager?.getIntProperty(android.os.BatteryManager.BATTERY_PROPERTY_CAPACITY)?.toFloat()
+        } catch (e: Exception) {
+            println("LocationTrackingService: Error getting battery level: ${e.message}")
+            null
+        }
+    }
+    
+    private fun updateNotification(androidLocation: AndroidLocation, status: String = "Location received") {
         val notification = NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("GPS Трекинг активен")
-            .setContentText("Последнее обновление: ${location.latitude}, ${location.longitude}")
+            .setContentText("$status: ${androidLocation.latitude}, ${androidLocation.longitude}")
+            .setStyle(NotificationCompat.BigTextStyle()
+                .bigText("$status\n" +
+                        "Координаты: ${androidLocation.latitude}, ${androidLocation.longitude}\n" +
+                        "Точность: ${androidLocation.accuracy}m\n" +
+                        "Время: ${androidLocation.time}"))
             .setSmallIcon(android.R.drawable.ic_menu_mylocation)
             .setOngoing(true)
             .setPriority(NotificationCompat.PRIORITY_LOW)

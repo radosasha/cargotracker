@@ -1,40 +1,66 @@
 package com.tracker.domain.repository
 
 import com.tracker.domain.model.Location
-import kotlinx.coroutines.flow.Flow
 
 /**
- * Интерфейс репозитория для работы с GPS данными
+ * Repository для работы с GPS координатами
  */
 interface LocationRepository {
     
     /**
-     * Сохраняет GPS координаты локально
+     * Сохраняет GPS координату (отправляет на сервер)
      */
-    suspend fun saveLocation(location: Location)
+    suspend fun saveLocation(location: Location): Result<Unit>
     
     /**
-     * Получает все сохраненные GPS координаты
+     * Сохраняет координату в локальную БД
+     * @return ID сохраненной записи
+     */
+    suspend fun saveLocationToDb(location: Location, batteryLevel: Float? = null): Long
+    
+    /**
+     * Получает все неотправленные координаты из БД
+     * @return Список пар (ID в БД, Location)
+     */
+    suspend fun getUnsentLocations(): List<Pair<Long, Location>>
+    
+    /**
+     * Удаляет координату из БД по ID
+     */
+    suspend fun deleteLocationFromDb(id: Long)
+    
+    /**
+     * Удаляет координаты из БД по списку ID
+     */
+    suspend fun deleteLocationsFromDb(ids: List<Long>)
+    
+    /**
+     * Получает последнюю сохраненную координату из БД
+     */
+    suspend fun getLastSavedLocation(): Location?
+    
+    /**
+     * Получает количество неотправленных координат
+     */
+    suspend fun getUnsentCount(): Int
+    
+    /**
+     * Получает все сохраненные координаты
      */
     suspend fun getAllLocations(): List<Location>
     
     /**
-     * Получает последние N GPS координат
+     * Получает последние N координат
      */
-    suspend fun getRecentLocations(limit: Int = 100): List<Location>
+    suspend fun getRecentLocations(limit: Int): List<Location>
     
     /**
-     * Отправляет накопленные GPS данные на сервер
+     * Очищает старые координаты
      */
-    suspend fun syncLocationsToServer(): Result<Unit>
+    suspend fun clearOldLocations(olderThanDays: Int)
     
     /**
-     * Очищает старые GPS данные
+     * Наблюдает за новыми координатами
      */
-    suspend fun clearOldLocations(olderThanDays: Int = 7)
-    
-    /**
-     * Поток для отслеживания новых GPS координат
-     */
-    fun observeLocations(): Flow<Location>
+    fun observeLocations(): kotlinx.coroutines.flow.Flow<Location>
 }

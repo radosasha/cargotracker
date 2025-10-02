@@ -1,7 +1,7 @@
 package com.tracker.data.datasource.impl
 
-// import com.tracker.IOSLocationManager - заглушка
 import com.tracker.data.datasource.PermissionDataSource
+import com.tracker.data.datasource.PermissionChecker
 import com.tracker.data.model.PermissionDataModel
 import platform.UIKit.UIApplication
 import platform.UIKit.UIApplicationOpenSettingsURLString
@@ -10,28 +10,31 @@ import platform.Foundation.NSURL
 /**
  * iOS реализация PermissionDataSource
  */
-class IOSPermissionDataSource : PermissionDataSource {
-
-    // Заглушка для IOSLocationManager
-    private fun hasLocationPermission(): Boolean = false
-    private fun hasAlwaysLocationPermission(): Boolean = false
-    private fun doRequestLocationPermissions() {}
+class IOSPermissionDataSource(
+    private val permissionChecker: PermissionChecker
+) : PermissionDataSource {
     
     override suspend fun getPermissionStatus(): PermissionDataModel {
         return PermissionDataModel(
-            hasLocationPermission = hasLocationPermission(),
-            hasBackgroundLocationPermission = hasAlwaysLocationPermission(),
-            hasNotificationPermission = true, // В iOS уведомления запрашиваются отдельно
+            hasLocationPermission = permissionChecker.hasLocationPermissions(),
+            hasBackgroundLocationPermission = permissionChecker.hasBackgroundLocationPermission(),
+            hasNotificationPermission = permissionChecker.hasNotificationPermission(),
             isBatteryOptimizationDisabled = true // В iOS нет понятия оптимизации батареи
         )
     }
     
     override suspend fun requestAllPermissions(): Result<PermissionDataModel> {
         return try {
-            doRequestLocationPermissions()
+            // Запрашиваем все разрешения
+            permissionChecker.requestAllPermissions()
+            
+            // Ждем немного, чтобы разрешения успели обновиться
+            kotlinx.coroutines.delay(1000)
+            
             val status = getPermissionStatus()
+            println("IOSPermissionDataSource: Permission status after request: $status")
 
-            if (status.hasLocationPermission && status.hasBackgroundLocationPermission) {
+            if (status.hasLocationPermission && status.hasBackgroundLocationPermission && status.hasNotificationPermission) {
                 Result.success(status)
             } else {
                 Result.failure(Exception("Не все разрешения получены"))
@@ -43,8 +46,9 @@ class IOSPermissionDataSource : PermissionDataSource {
     
     override suspend fun requestLocationPermissions(): Result<Boolean> {
         return try {
-            doRequestLocationPermissions()
-            Result.success(hasLocationPermission())
+            permissionChecker.requestAllPermissions()
+            kotlinx.coroutines.delay(1000)
+            Result.success(permissionChecker.hasLocationPermissions())
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -52,17 +56,22 @@ class IOSPermissionDataSource : PermissionDataSource {
     
     override suspend fun requestBackgroundLocationPermission(): Result<Boolean> {
         return try {
-            doRequestLocationPermissions()
-            Result.success(hasAlwaysLocationPermission())
+            permissionChecker.requestAllPermissions()
+            kotlinx.coroutines.delay(1000)
+            Result.success(permissionChecker.hasBackgroundLocationPermission())
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
     
     override suspend fun requestNotificationPermission(): Result<Boolean> {
-        // В iOS уведомления запрашиваются через UNUserNotificationCenter
-        // Здесь заглушка
-        return Result.success(true)
+        return try {
+            permissionChecker.requestAllPermissions()
+            kotlinx.coroutines.delay(1000)
+            Result.success(permissionChecker.hasNotificationPermission())
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
     }
     
     override suspend fun openAppSettings() {

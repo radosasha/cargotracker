@@ -75,11 +75,11 @@ fun HomeScreen(
             onClick = {
                 val hasPermissions = uiState.permissionStatus?.hasAllPermissions ?: false
                 if (!hasPermissions) {
-                    viewModel.onRequestPermissions()
+                    viewModel.requestPermissions()
                 } else if (uiState.trackingStatus != com.tracker.domain.model.TrackingStatus.ACTIVE) {
-                    viewModel.onStartTracking()
+                    viewModel.startTracking()
                 } else {
-                    viewModel.onStopTracking()
+                    viewModel.stopTracking()
                 }
             },
             enabled = !uiState.isLoading,
@@ -92,6 +92,17 @@ fun HomeScreen(
                     else -> "Stop"
                 }
             )
+        }
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        // Кнопка тестирования сервера
+        OutlinedButton(
+            onClick = { viewModel.onTestServer() },
+            enabled = !uiState.isLoading,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Test Server Connection")
         }
         
         Spacer(modifier = Modifier.height(16.dp))
