@@ -22,11 +22,12 @@ object IOSKoinApp {
     fun initApplicationScope() {
         
         println("IOSKoinApp: Starting Koin initialization...")
-        println("IOSKoinApp: Loading modules: appModule + iosDataModule + iosModule")
+        println("IOSKoinApp: Loading modules: appModule + iosModule + iosDataModule")
         
         startKoin {
+            printLogger() // Включаем логирование Koin
             modules(
-                appModule + iosDataModule + iosModule
+                appModule + iosModule + iosDataModule
             )
         }
 
