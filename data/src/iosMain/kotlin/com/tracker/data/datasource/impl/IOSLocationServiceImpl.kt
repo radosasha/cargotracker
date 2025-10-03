@@ -47,7 +47,7 @@ class IOSLocationServiceImpl : IOSLocationService {
 
         // Настраиваем параметры согласно документации Apple
         locationManager.desiredAccuracy = platform.CoreLocation.kCLLocationAccuracyBest
-        locationManager.distanceFilter = 10.0 // 10 метров
+        locationManager.distanceFilter = 200.0 // 10 метров
 
         // Включаем фоновые обновления (требует Always разрешение)
         locationManager.allowsBackgroundLocationUpdates = true

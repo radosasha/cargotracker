@@ -7,6 +7,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tracker.presentation.component.MessageCard
 
 /**
@@ -16,7 +17,7 @@ import com.tracker.presentation.component.MessageCard
 fun HomeScreen(
     viewModel: HomeViewModel
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     
     Column(
         modifier = Modifier

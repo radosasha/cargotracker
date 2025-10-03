@@ -76,6 +76,8 @@ class LocationSyncService(
     
     /**
      * Отправляет все неотправленные координаты на сервер
+     * Использует пакетную отправку для эффективности
+     * Обрабатывает большие списки пакетами для избежания проблем с памятью и сетью
      */
     private suspend fun uploadPendingLocations(): Result<Int> {
         return try {
@@ -88,28 +90,56 @@ class LocationSyncService(
             
             println("LocationSyncManager: Found ${unsentLocations.size} pending locations")
             
-            var successCount = 0
-            val successfulIds = mutableListOf<Long>()
+            // Максимальный размер пакета для отправки (1000 координат)
+            val maxBatchSize = 100
+            var totalUploaded = 0
             
-            // Отправляем каждую координату
-            unsentLocations.forEach { (id, location) ->
-                val result = locationRepository.sendLocation(location)
+            if (unsentLocations.size <= maxBatchSize) {
+                // Небольшой список - отправляем целиком
+                val locations = unsentLocations.map { it.second }
+                val result = locationRepository.sendLocations(locations)
+                
                 if (result.isSuccess) {
-                    successCount++
-                    successfulIds.add(id)
-                    println("LocationSyncManager: Location $id uploaded successfully")
+                    val allIds = unsentLocations.map { it.first }
+                    locationRepository.deleteLocationsFromDb(allIds)
+                    println("LocationSyncManager: Successfully uploaded ${unsentLocations.size} locations and deleted from DB")
+                    totalUploaded = unsentLocations.size
                 } else {
-                    println("LocationSyncManager: Failed to upload location $id: ${result.exceptionOrNull()?.message}")
+                    println("LocationSyncManager: Failed to upload locations: ${result.exceptionOrNull()?.message}")
+                    return Result.failure(result.exceptionOrNull() ?: Exception("Unknown error"))
+                }
+            } else {
+                // Большой список - обрабатываем пакетами
+                println("LocationSyncManager: Large dataset detected (${unsentLocations.size} locations), processing in batches of $maxBatchSize")
+                
+                val batches = unsentLocations.chunked(maxBatchSize)
+                val allSuccessfulIds = mutableListOf<Long>()
+                
+                batches.forEachIndexed { index, batch ->
+                    println("LocationSyncManager: Processing batch ${index + 1}/${batches.size} (${batch.size} locations)")
+                    
+                    val locations = batch.map { it.second }
+                    val result = locationRepository.sendLocations(locations)
+                    
+                    if (result.isSuccess) {
+                        val batchIds = batch.map { it.first }
+                        allSuccessfulIds.addAll(batchIds)
+                        totalUploaded += batch.size
+                        println("LocationSyncManager: Batch ${index + 1} uploaded successfully (${batch.size} locations)")
+                    } else {
+                        println("LocationSyncManager: Batch ${index + 1} failed: ${result.exceptionOrNull()?.message}")
+                        // Продолжаем с остальными пакетами даже если один не удался
+                    }
+                }
+                
+                // Удаляем все успешно отправленные координаты
+                if (allSuccessfulIds.isNotEmpty()) {
+                    locationRepository.deleteLocationsFromDb(allSuccessfulIds)
+                    println("LocationSyncManager: Deleted $totalUploaded locations from DB")
                 }
             }
             
-            // Удаляем успешно отправленные
-            if (successfulIds.isNotEmpty()) {
-                locationRepository.deleteLocationsFromDb(successfulIds)
-                println("LocationSyncManager: Deleted $successCount locations from DB")
-            }
-            
-            Result.success(successCount)
+            Result.success(totalUploaded)
         } catch (e: Exception) {
             println("LocationSyncManager: Error uploading pending locations: ${e.message}")
             Result.failure(e)

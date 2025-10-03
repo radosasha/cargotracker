@@ -19,7 +19,16 @@ class LocationRepositoryImpl(
     override suspend fun sendLocation(location: Location): Result<Unit> {
         return try {
             val locationDataModel = LocationMapper.toData(location)
-            remoteLocationDataSource.sendLocations(listOf(locationDataModel))
+            remoteLocationDataSource.sendLocation(locationDataModel)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+    
+    override suspend fun sendLocations(locations: List<Location>): Result<Unit> {
+        return try {
+            val locationDataModels = locations.map { LocationMapper.toData(it) }
+            remoteLocationDataSource.sendLocations(locationDataModels)
         } catch (e: Exception) {
             Result.failure(e)
         }

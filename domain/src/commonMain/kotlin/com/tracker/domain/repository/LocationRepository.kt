@@ -13,6 +13,11 @@ interface LocationRepository {
     suspend fun sendLocation(location: Location): Result<Unit>
     
     /**
+     * Отправляет несколько GPS координат на сервер
+     */
+    suspend fun sendLocations(locations: List<Location>): Result<Unit>
+    
+    /**
      * Сохраняет координату в локальную БД
      * @return ID сохраненной записи
      */

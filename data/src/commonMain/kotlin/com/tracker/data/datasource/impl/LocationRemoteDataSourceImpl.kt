@@ -36,17 +36,7 @@ class LocationRemoteDataSourceImpl(
                 println("RemoteLocationDataSource: ✅ Successfully sent ${locations.size} locations via Flespi protocol")
             } else {
                 println("RemoteLocationDataSource: ❌ Failed to send locations via Flespi protocol: ${result.exceptionOrNull()?.message}")
-                // Fallback: отправляем по одной через OsmAnd протокол
-                println("RemoteLocationDataSource: Falling back to OsmAnd protocol (single location sending)")
-                for (location in locations) {
-                    val singleResult = osmAndLocationApi.sendLocation(location)
-                    if (singleResult.isFailure) {
-                        return singleResult
-                    }
-                }
-                println("RemoteLocationDataSource: ✅ Successfully sent ${locations.size} locations via OsmAnd protocol (fallback)")
             }
-            
             result
         } catch (e: Exception) {
             println("RemoteLocationDataSource: ❌ Network error: ${e.message}")
