@@ -28,16 +28,4 @@ class TrackingRepositoryImpl(
         val dataStatus = trackingDataSource.getTrackingStatus()
         return TrackingMapper.toDomain(dataStatus)
     }
-    
-    override fun observeTrackingStatus(): Flow<TrackingStatus> {
-        return trackingDataSource.observeTrackingStatus().map { dataStatus ->
-            TrackingMapper.toDomain(dataStatus)
-        }
-    }
-    
-    override fun observeLocationUpdates(): Flow<Location> {
-        return trackingDataSource.observeLocationUpdates().map { dataModel ->
-            LocationMapper.toDomain(dataModel)
-        }
-    }
 }

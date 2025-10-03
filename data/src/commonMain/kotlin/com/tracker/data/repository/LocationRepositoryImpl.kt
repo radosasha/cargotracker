@@ -1,50 +1,27 @@
 package com.tracker.data.repository
 
-import com.tracker.data.datasource.LocalLocationDataSource
-import com.tracker.data.datasource.LocationDataSource
+import com.tracker.data.datasource.LocationLocalDataSource
+import com.tracker.data.datasource.LocationRemoteDataSource
 import com.tracker.data.mapper.LocationEntityMapper
 import com.tracker.data.mapper.LocationMapper
 import com.tracker.domain.model.Location
 import com.tracker.domain.repository.LocationRepository
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
 
 /**
  * Реализация LocationRepository в data слое
  */
 class LocationRepositoryImpl(
-    private val locationDataSource: LocationDataSource,
-    private val localLocationDataSource: LocalLocationDataSource,
+    private val remoteLocationDataSource: LocationRemoteDataSource,
+    private val localLocationDataSource: LocationLocalDataSource,
     private val deviceId: String
 ) : LocationRepository {
     
-    override suspend fun saveLocation(location: Location): Result<Unit> {
+    override suspend fun sendLocation(location: Location): Result<Unit> {
         return try {
             val locationDataModel = LocationMapper.toData(location)
-            locationDataSource.saveLocation(locationDataModel)
-            Result.success(Unit)
+            remoteLocationDataSource.sendLocations(listOf(locationDataModel))
         } catch (e: Exception) {
             Result.failure(e)
-        }
-    }
-    
-    override suspend fun getAllLocations(): List<Location> {
-        val dataModels = locationDataSource.getAllLocations()
-        return LocationMapper.toDomainList(dataModels)
-    }
-    
-    override suspend fun getRecentLocations(limit: Int): List<Location> {
-        val dataModels = locationDataSource.getRecentLocations(limit)
-        return LocationMapper.toDomainList(dataModels)
-    }
-    
-    override suspend fun clearOldLocations(olderThanDays: Int) {
-        locationDataSource.clearOldLocations(olderThanDays)
-    }
-    
-    override fun observeLocations(): Flow<Location> {
-        return locationDataSource.observeLocations().map { dataModel ->
-            LocationMapper.toDomain(dataModel)
         }
     }
     

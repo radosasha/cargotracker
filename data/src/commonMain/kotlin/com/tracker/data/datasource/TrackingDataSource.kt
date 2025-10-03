@@ -23,14 +23,4 @@ interface TrackingDataSource {
      * Получает текущий статус трекинга
      */
     suspend fun getTrackingStatus(): TrackingDataStatus
-    
-    /**
-     * Поток статуса трекинга
-     */
-    fun observeTrackingStatus(): Flow<TrackingDataStatus>
-    
-    /**
-     * Поток GPS координат
-     */
-    fun observeLocationUpdates(): Flow<LocationDataModel>
 }

@@ -77,33 +77,36 @@ class LocationProcessor {
     
     /**
      * Проверяет, нужно ли отправлять координаты на сервер
+     * Координата отправляется если хотя бы одно из условий выполнилось:
+     * - Прошло MIN_SEND_INTERVAL_MS ИЛИ
+     * - Проехали MIN_DISTANCE_FOR_SEND_M
      */
     private fun shouldSendLocation(newLocation: Location): Boolean {
         val currentTime = Clock.System.now().toEpochMilliseconds()
         val lastSent = lastLocationSent
         
-        // Проверяем интервал времени
-        if (currentTime - lastLocationSentTime < MIN_SEND_INTERVAL_MS) {
-            return false
-        }
-        
-        // Проверяем точность
+        // Проверяем точность (это обязательное условие)
         if (newLocation.accuracy > MAX_ACCURACY_M) {
             return false
         }
         
+        // Проверяем интервал времени
+        val timeIntervalPassed = (currentTime - lastLocationSentTime) >= MIN_SEND_INTERVAL_MS
+        
         // Проверяем расстояние от последней отправленной координаты
-        if (lastSent != null) {
+        val distancePassed = if (lastSent != null) {
             val distance = calculateDistance(
                 lastSent.latitude, lastSent.longitude,
                 newLocation.latitude, newLocation.longitude
             )
-            if (distance < MIN_DISTANCE_FOR_SEND_M) {
-                return false
-            }
+            distance >= MIN_DISTANCE_FOR_SEND_M
+        } else {
+            // Если это первая координата, считаем что расстояние прошли
+            true
         }
         
-        return true
+        // Отправляем если прошло время ИЛИ проехали расстояние
+        return timeIntervalPassed || distancePassed
     }
     
     /**
@@ -113,28 +116,40 @@ class LocationProcessor {
         val currentTime = Clock.System.now().toEpochMilliseconds()
         val lastSent = lastLocationSent
         
-        // Проверяем интервал времени
-        if (currentTime - lastLocationSentTime < MIN_SEND_INTERVAL_MS) {
-            return "Too soon to send (${currentTime - lastLocationSentTime}ms < ${MIN_SEND_INTERVAL_MS}ms)"
-        }
-        
-        // Проверяем точность
+        // Проверяем точность (обязательное условие)
         if (location.accuracy > MAX_ACCURACY_M) {
             return "Accuracy too low (${location.accuracy}m > ${MAX_ACCURACY_M}m)"
         }
         
+        // Проверяем интервал времени
+        val timeIntervalPassed = (currentTime - lastLocationSentTime) >= MIN_SEND_INTERVAL_MS
+        
         // Проверяем расстояние
-        if (lastSent != null) {
+        val distancePassed = if (lastSent != null) {
             val distance = calculateDistance(
                 lastSent.latitude, lastSent.longitude,
                 location.latitude, location.longitude
             )
-            if (distance < MIN_DISTANCE_FOR_SEND_M) {
-                return "Too close to last sent (${distance}m < ${MIN_DISTANCE_FOR_SEND_M}m)"
-            }
+            distance >= MIN_DISTANCE_FOR_SEND_M
+        } else {
+            true
         }
         
-        return "Unknown reason"
+        // Если ни одно условие не выполнено, объясняем почему
+        return when {
+            !timeIntervalPassed && !distancePassed -> {
+                val timeLeft = MIN_SEND_INTERVAL_MS - (currentTime - lastLocationSentTime)
+                val distance = if (lastSent != null) {
+                    calculateDistance(
+                        lastSent.latitude, lastSent.longitude,
+                        location.latitude, location.longitude
+                    )
+                } else 0f
+                val distanceLeft = MIN_DISTANCE_FOR_SEND_M - distance
+                "Too soon (${timeLeft}ms left) AND too close (${distanceLeft}m left)"
+            }
+            else -> "Unknown reason"
+        }
     }
     
     /**

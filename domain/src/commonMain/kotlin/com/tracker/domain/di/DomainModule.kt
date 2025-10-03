@@ -9,11 +9,9 @@ import com.tracker.domain.usecase.GetPermissionStatusUseCase
 import com.tracker.domain.usecase.GetTrackingStatusUseCase
 import com.tracker.domain.usecase.ProcessLocationUseCase
 import com.tracker.domain.usecase.RequestAllPermissionsUseCase
-import com.tracker.domain.usecase.SaveAndUploadLocationUseCase
 import com.tracker.domain.usecase.StartTrackingUseCase
 import com.tracker.domain.usecase.StopTrackingUseCase
 import com.tracker.domain.usecase.TestServerUseCase
-import com.tracker.domain.usecase.UploadPendingLocationsUseCase
 import org.koin.core.module.dsl.factoryOf
 import org.koin.dsl.module
 
@@ -24,12 +22,10 @@ val domainModule = module {
     
     // Services (Singleton - живут весь жизненный цикл приложения)
     single { LocationProcessor() }
-    single { 
-        LocationSyncService(
-            uploadPendingLocationsUseCase = get(),
-            coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-        )
-    }
+    single { LocationSyncService(get(), get()) }
+    
+    // CoroutineScope для LocationSyncManager
+    single<CoroutineScope> { CoroutineScope(SupervisorJob() + Dispatchers.Default) }
     
     // Use Cases (Factory - создаются для каждого ViewModel)
     factoryOf(::GetPermissionStatusUseCase)
@@ -39,6 +35,4 @@ val domainModule = module {
     factoryOf(::StopTrackingUseCase)
     factoryOf(::ProcessLocationUseCase)
     factoryOf(::TestServerUseCase)
-    factoryOf(::SaveAndUploadLocationUseCase)
-    factoryOf(::UploadPendingLocationsUseCase)
 }

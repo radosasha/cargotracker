@@ -4,11 +4,15 @@ import com.tracker.data.datasource.TrackingDataSource
 import com.tracker.data.mapper.LocationMapper
 import com.tracker.data.model.LocationDataModel
 import com.tracker.data.model.TrackingDataStatus
-import com.tracker.domain.datasource.LocationManager
+import com.tracker.domain.datasource.IOSLocationService
+import com.tracker.domain.usecase.ProcessLocationUseCase
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
@@ -17,20 +21,33 @@ import org.koin.core.component.inject
  */
 class IOSTrackingDataSource : TrackingDataSource, KoinComponent {
 
-    private val locationManager: LocationManager by inject()
+    private val locationService: IOSLocationService by inject()
+    private val processLocationUseCase: ProcessLocationUseCase by inject()
     
     private val _trackingStatusFlow = MutableSharedFlow<TrackingDataStatus>()
-    private val _locationFlow = MutableSharedFlow<LocationDataModel>()
 
     private var currentStatus = TrackingDataStatus.STOPPED
     
+    // Coroutine scope for processing locations
+    private val scope = CoroutineScope(SupervisorJob())
+    
+    init {
+        println("IOSTrackingDataSource: Created with LocationManager instance: ${locationService.hashCode()}")
+        println("IOSTrackingDataSource: LocationManager type: ${locationService::class.simpleName}")
+    }
+    
     override suspend fun startTracking(): Result<Unit> {
+        println("IOSTrackingDataSource: startTracking() called")
         return try {
-            val result = locationManager.startLocationTracking()
+            val result = locationService.startLocationTracking()
             if (result.isSuccess) {
                 currentStatus = TrackingDataStatus.ACTIVE
                 _trackingStatusFlow.emit(currentStatus)
                 println("IOSTrackingDataSource: Tracking started successfully")
+                
+                // Запускаем обработку координат
+                println("IOSTrackingDataSource: Calling startLocationProcessing()...")
+                startLocationProcessing()
             } else {
                 currentStatus = TrackingDataStatus.ERROR
                 _trackingStatusFlow.emit(currentStatus)
@@ -47,7 +64,7 @@ class IOSTrackingDataSource : TrackingDataSource, KoinComponent {
     
     override suspend fun stopTracking(): Result<Unit> {
         return try {
-            val result = locationManager.stopLocationTracking()
+            val result = locationService.stopLocationTracking()
             if (result.isSuccess) {
                 currentStatus = TrackingDataStatus.STOPPED
                 _trackingStatusFlow.emit(currentStatus)
@@ -67,7 +84,7 @@ class IOSTrackingDataSource : TrackingDataSource, KoinComponent {
     }
     
     override suspend fun getTrackingStatus(): TrackingDataStatus {
-        val isActive = locationManager.isLocationTrackingActive()
+        val isActive = locationService.isLocationTrackingActive()
         return if (isActive) {
             TrackingDataStatus.ACTIVE
         } else {
@@ -75,13 +92,41 @@ class IOSTrackingDataSource : TrackingDataSource, KoinComponent {
         }
     }
     
-    override fun observeTrackingStatus(): Flow<TrackingDataStatus> {
-        return _trackingStatusFlow.asSharedFlow()
-    }
-    
-    override fun observeLocationUpdates(): Flow<LocationDataModel> {
-        return locationManager.observeLocationUpdates().map { domainLocation ->
-            LocationMapper.toData(domainLocation)
+    /**
+     * Запускает обработку координат через ProcessLocationUseCase
+     */
+    private fun startLocationProcessing() {
+        println("IOSTrackingDataSource: Starting location processing...")
+        println("IOSTrackingDataSource: LocationManager instance: ${locationService.hashCode()}")
+        scope.launch {
+            println("IOSTrackingDataSource: Collecting location updates...")
+            try {
+                locationService.observeLocationUpdates().collect { domainLocation ->
+                    try {
+                        println("IOSTrackingDataSource: 🔥 RECEIVED location in collect: Lat: ${domainLocation.latitude}, Lon: ${domainLocation.longitude}")
+                        
+                        // Обрабатываем координату через Use Case (без batteryLevel для iOS)
+                        val result = processLocationUseCase(domainLocation, null)
+                        
+                        if (result.shouldSend) {
+                            println("IOSTrackingDataSource: ✅ Successfully processed location")
+                            println("IOSTrackingDataSource: Reason: ${result.reason}")
+                        } else {
+                            println("IOSTrackingDataSource: ⏭️ Location filtered out")
+                            println("IOSTrackingDataSource: Reason: ${result.reason}")
+                        }
+                        
+                        println("IOSTrackingDataSource: Total sent: ${result.totalSent}, Total received: ${result.totalReceived}")
+                        
+                    } catch (e: Exception) {
+                        println("IOSTrackingDataSource: Error processing location: ${e.message}")
+                        e.printStackTrace()
+                    }
+                }
+            } catch (e: Exception) {
+                println("IOSTrackingDataSource: Error in collect: ${e.message}")
+                e.printStackTrace()
+            }
         }
     }
 }

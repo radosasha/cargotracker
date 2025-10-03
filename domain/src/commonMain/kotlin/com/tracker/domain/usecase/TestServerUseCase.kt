@@ -28,7 +28,7 @@ class TestServerUseCase(
             println("TestServerUseCase: Sending test location: ${testLocation.latitude}, ${testLocation.longitude}")
             
             // Отправляем тестовые координаты на сервер
-            locationRepository.saveLocation(testLocation)
+            locationRepository.sendLocation(testLocation)
             
             Result.success(Unit)
         } catch (e: Exception) {

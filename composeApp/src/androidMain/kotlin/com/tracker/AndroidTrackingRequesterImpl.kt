@@ -16,8 +16,7 @@ import org.koin.core.component.inject
 class AndroidTrackingRequesterImpl : TrackingRequester, KoinComponent {
     
     private val activityContextProvider: ActivityContextProvider by inject()
-    
-    private val _locationFlow = MutableSharedFlow<Location>()
+
     private var isTracking = false
     
     override suspend fun startTracking(): Result<Unit> {
@@ -51,9 +50,5 @@ class AndroidTrackingRequesterImpl : TrackingRequester, KoinComponent {
     override suspend fun isTrackingActive(): Boolean {
         println("AndroidTrackingRequesterImpl: isTrackingActive() = $isTracking")
         return isTracking
-    }
-    
-    override fun observeLocationUpdates(): Flow<Location> {
-        return _locationFlow.asSharedFlow()
     }
 }

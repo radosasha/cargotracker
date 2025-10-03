@@ -60,14 +60,4 @@ class AndroidTrackingDataSource : TrackingDataSource, KoinComponent {
             TrackingDataStatus.STOPPED
         }
     }
-    
-    override fun observeTrackingStatus(): Flow<TrackingDataStatus> {
-        return _trackingStatusFlow.asSharedFlow()
-    }
-    
-    override fun observeLocationUpdates(): Flow<LocationDataModel> {
-        return trackingRequester.observeLocationUpdates().map { location ->
-            locationMapper.toData(location)
-        }
-    }
 }

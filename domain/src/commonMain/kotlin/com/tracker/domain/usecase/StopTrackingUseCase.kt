@@ -8,13 +8,13 @@ import com.tracker.domain.service.LocationSyncService
  */
 class StopTrackingUseCase(
     private val trackingRepository: TrackingRepository,
-    private val locationSyncService: LocationSyncService
+    private val locationSyncManager: LocationSyncService
 ) {
     
     suspend operator fun invoke(): Result<Unit> {
         // Останавливаем синхронизацию
-        locationSyncService.stopSync()
-        println("StopTrackingUseCase: Location sync service stopped")
+        locationSyncManager.stopSync()
+        println("StopTrackingUseCase: Location sync stopped")
         
         // Останавливаем трекинг
         return trackingRepository.stopTracking()

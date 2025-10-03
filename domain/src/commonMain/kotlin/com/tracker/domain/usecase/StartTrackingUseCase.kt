@@ -10,7 +10,7 @@ import com.tracker.domain.service.LocationSyncService
 class StartTrackingUseCase(
     private val permissionRepository: PermissionRepository,
     private val trackingRepository: TrackingRepository,
-    private val locationSyncService: LocationSyncService
+    private val locationSyncManager: LocationSyncService
 ) {
     
     suspend operator fun invoke(): Result<Unit> {
@@ -22,8 +22,8 @@ class StartTrackingUseCase(
             
             // Запускаем синхронизацию неотправленных координат
             if (result.isSuccess) {
-                locationSyncService.startSync()
-                println("StartTrackingUseCase: Location sync service started")
+                locationSyncManager.startSync()
+                println("StartTrackingUseCase: Location sync started")
             }
             
             result

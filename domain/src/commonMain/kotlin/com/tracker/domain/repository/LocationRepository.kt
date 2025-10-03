@@ -10,7 +10,7 @@ interface LocationRepository {
     /**
      * Сохраняет GPS координату (отправляет на сервер)
      */
-    suspend fun saveLocation(location: Location): Result<Unit>
+    suspend fun sendLocation(location: Location): Result<Unit>
     
     /**
      * Сохраняет координату в локальную БД
@@ -43,24 +43,4 @@ interface LocationRepository {
      * Получает количество неотправленных координат
      */
     suspend fun getUnsentCount(): Int
-    
-    /**
-     * Получает все сохраненные координаты
-     */
-    suspend fun getAllLocations(): List<Location>
-    
-    /**
-     * Получает последние N координат
-     */
-    suspend fun getRecentLocations(limit: Int): List<Location>
-    
-    /**
-     * Очищает старые координаты
-     */
-    suspend fun clearOldLocations(olderThanDays: Int)
-    
-    /**
-     * Наблюдает за новыми координатами
-     */
-    fun observeLocations(): kotlinx.coroutines.flow.Flow<Location>
 }

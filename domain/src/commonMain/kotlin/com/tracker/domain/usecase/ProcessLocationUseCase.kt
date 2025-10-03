@@ -26,7 +26,7 @@ class ProcessLocationUseCase(
                 println("ProcessLocationUseCase: Location saved to DB with id: $locationId")
                 
                 // Пытаемся отправить на сервер
-                val uploadResult = locationRepository.saveLocation(location)
+                val uploadResult = locationRepository.sendLocation(location)
                 
                 if (uploadResult.isSuccess) {
                     // Если отправка успешна - удаляем из БД
