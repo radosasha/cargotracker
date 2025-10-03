@@ -16,9 +16,4 @@ interface LocationRemoteDataSource {
      * Отправляет GPS координаты на сервер
      */
     suspend fun sendLocations(locations: List<LocationDataModel>): Result<Unit>
-    
-    /**
-     * Проверяет соединение с сервером
-     */
-    suspend fun checkConnection(): Result<Boolean>
 }

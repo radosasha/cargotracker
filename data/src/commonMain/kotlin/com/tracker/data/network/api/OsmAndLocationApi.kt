@@ -2,19 +2,14 @@ package com.tracker.data.network.api
 
 import com.tracker.data.model.LocationDataModel
 import io.ktor.client.HttpClient
-import io.ktor.client.call.body
 import io.ktor.client.request.forms.submitForm
-import io.ktor.client.request.forms.FormDataContent
-import io.ktor.client.request.parameter
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.request.url
-import io.ktor.client.statement.HttpResponse
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.Parameters
 import io.ktor.http.contentType
-import kotlinx.datetime.Clock
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonObject
@@ -22,7 +17,7 @@ import kotlinx.serialization.json.putJsonObject
 /**
  * API для отправки координат на Traccar сервер через OsmAnd протокол
  */
-class LocationApi(
+class OsmAndLocationApi(
     private val httpClient: HttpClient,
     private val serverUrl: String,
     private val deviceId: String

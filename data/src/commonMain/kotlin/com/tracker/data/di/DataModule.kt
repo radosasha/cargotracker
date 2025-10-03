@@ -6,7 +6,8 @@ import com.tracker.data.config.ServerConfig
 import com.tracker.data.database.TrackerDatabase
 import com.tracker.data.datasource.LocationRemoteDataSource
 import com.tracker.data.datasource.impl.LocationRemoteDataSourceImpl
-import com.tracker.data.network.api.LocationApi
+import com.tracker.data.network.api.OsmAndLocationApi
+import com.tracker.data.network.api.FlespiLocationApi
 import com.tracker.data.repository.LocationRepositoryImpl
 import com.tracker.data.repository.PermissionRepositoryImpl
 import com.tracker.data.repository.TrackingRepositoryImpl
@@ -21,10 +22,11 @@ import org.koin.dsl.module
 val dataModule = module {
     
     // Network API
-    single { LocationApi(get(), ServerConfig.SERVER_URL, DeviceConfig.DEVICE_ID) }
+    single { OsmAndLocationApi(get(), ServerConfig.SERVER_URL, DeviceConfig.DEVICE_ID) }
+    single { FlespiLocationApi(get(), ServerConfig.SERVER_URL, DeviceConfig.DEVICE_ID) }
     
     // Data Sources
-    single<LocationRemoteDataSource> { LocationRemoteDataSourceImpl(get()) }
+    single<LocationRemoteDataSource> { LocationRemoteDataSourceImpl(get(), get()) }
     
     // Device ID
     single { DeviceConfig.DEVICE_ID }
