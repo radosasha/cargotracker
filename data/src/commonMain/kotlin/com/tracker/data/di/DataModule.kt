@@ -26,8 +26,8 @@ import org.koin.dsl.module
 val dataModule = module {
     
     // Network API
-    single { OsmAndLocationApi(get(), ServerConfig.SERVER_URL, DeviceConfig.DEVICE_ID) }
-    single { FlespiLocationApi(get(), ServerConfig.SERVER_URL, DeviceConfig.DEVICE_ID) }
+    single { OsmAndLocationApi(get(), ServerConfig.OSMAND_SERVER_URL, DeviceConfig.DEVICE_ID) }
+    single { FlespiLocationApi(get(), ServerConfig.FLESPI_SERVER_URL, DeviceConfig.DEVICE_ID) }
     
     // Data Sources
     single<LocationRemoteDataSource> { LocationRemoteDataSourceImpl(get(), get()) }

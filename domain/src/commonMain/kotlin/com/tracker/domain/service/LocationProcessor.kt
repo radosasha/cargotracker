@@ -1,6 +1,10 @@
 package com.tracker.domain.service
 
+import com.tracker.domain.model.FilteredLocationInfo
 import com.tracker.domain.model.Location
+import com.tracker.domain.model.LocationInfo
+import com.tracker.domain.model.SendErrorInfo
+import com.tracker.domain.model.TrackingStats
 import kotlinx.datetime.Clock
 
 /**
@@ -15,6 +19,14 @@ class LocationProcessor {
     private var totalLocationsSent = 0
     private var totalLocationsReceived = 0
     private var lastForcedSaveTime = 0L
+    
+    // Статистика для уведомлений
+    private var totalSaved = 0
+    private var totalSent = 0
+    private var totalFiltered = 0
+    private var lastFilteredLocation: FilteredLocationInfo? = null
+    private var lastSentLocation: LocationInfo? = null
+    private var lastSendError: SendErrorInfo? = null
     
     companion object {
         // Настройки отправки на сервер
@@ -62,15 +74,31 @@ class LocationProcessor {
                 reason = reason,
                 totalReceived = totalLocationsReceived,
                 totalSent = totalLocationsSent,
-                lastSentTime = lastLocationSentTime
+                lastSentTime = lastLocationSentTime,
+                trackingStats = createCurrentTrackingStats()
             )
         } else {
+            val filterReason = getFilterReason(location)
+            
+            // Обновляем статистику отфильтрованных координат
+            totalFiltered++
+            lastFilteredLocation = FilteredLocationInfo(
+                latitude = location.latitude,
+                longitude = location.longitude,
+                accuracy = location.accuracy,
+                timestamp = location.timestamp,
+                speed = location.speed,
+                altitude = location.altitude,
+                filterReason = filterReason
+            )
+            
             return LocationProcessResult(
                 shouldSend = false,
-                reason = getFilterReason(location),
+                reason = filterReason,
                 totalReceived = totalLocationsReceived,
                 totalSent = totalLocationsSent,
-                lastSentTime = lastLocationSentTime
+                lastSentTime = lastLocationSentTime,
+                trackingStats = createCurrentTrackingStats()
             )
         }
     }
@@ -181,6 +209,60 @@ class LocationProcessor {
         return (earthRadius * c).toFloat()
     }
     
+    /**
+     * Обновляет статистику сохранения координаты
+     */
+    fun updateSavedLocation() {
+        totalSaved++
+    }
+    
+    /**
+     * Обновляет статистику отправки координат
+     */
+    fun updateSentLocations(location: Location, count: Int) {
+        totalSent += count
+        lastSentLocation = LocationInfo(
+            latitude = location.latitude,
+            longitude = location.longitude,
+            accuracy = location.accuracy,
+            timestamp = location.timestamp,
+            speed = location.speed,
+            altitude = location.altitude
+        )
+        // Очищаем ошибку при успешной отправке
+        lastSendError = null
+    }
+    
+    /**
+     * Обновляет статистику ошибки отправки координат
+     */
+    fun updateSendError(location: Location, errorMessage: String, errorType: String = "Network Error") {
+        lastSendError = SendErrorInfo(
+            latitude = location.latitude,
+            longitude = location.longitude,
+            accuracy = location.accuracy,
+            timestamp = location.timestamp,
+            speed = location.speed,
+            altitude = location.altitude,
+            errorMessage = errorMessage,
+            errorType = errorType
+        )
+    }
+    
+    /**
+     * Создает текущую статистику трекинга
+     */
+    fun createCurrentTrackingStats(): TrackingStats {
+        return TrackingStats(
+            lastFilteredLocation = lastFilteredLocation,
+            lastSentLocation = lastSentLocation,
+            lastSendError = lastSendError,
+            isTracking = true,
+            totalSaved = totalSaved,
+            totalSent = totalSent,
+            totalFiltered = totalFiltered
+        )
+    }
 }
 
 /**
@@ -191,6 +273,8 @@ data class LocationProcessResult(
     val reason: String,
     val totalReceived: Int,
     val totalSent: Int,
-    val lastSentTime: Long
+    val lastSentTime: Long,
+    // Расширенная статистика для уведомлений
+    val trackingStats: TrackingStats
 )
 

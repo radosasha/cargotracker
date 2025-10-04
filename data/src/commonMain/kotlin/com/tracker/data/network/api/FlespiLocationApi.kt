@@ -67,12 +67,11 @@ class FlespiLocationApi(
                 )
             }
             
-            val url = "$serverUrl:5149" // Flespi протокол использует порт 5149
-            println("FlespiLocationApi: Sending ${locations.size} locations to $url")
+            println("FlespiLocationApi: Sending ${locations.size} locations to $serverUrl")
             println("FlespiLocationApi: Device ID: $deviceId")
             
             val response = httpClient.post {
-                url(url)
+                url(serverUrl)
                 contentType(ContentType.Application.Json)
                 setBody(flespiPositions)
             }

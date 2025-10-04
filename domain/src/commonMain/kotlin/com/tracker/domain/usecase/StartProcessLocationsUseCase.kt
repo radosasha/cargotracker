@@ -5,10 +5,9 @@ import com.tracker.domain.repository.DeviceRepository
 import com.tracker.domain.repository.LocationRepository
 import com.tracker.domain.service.LocationProcessResult
 import com.tracker.domain.service.LocationProcessor
-import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.map
 
 /**
  * Use Case для обработки GPS координат
@@ -21,16 +20,15 @@ class StartProcessLocationsUseCase(
 ) {
     
     /**
-     * Запускает GPS трекинг и начинает обработку координат
+     * Запускает GPS трекинг и возвращает Flow с результатами обработки координат
+     * @return Flow<LocationProcessResult> поток результатов обработки GPS координат
      */
-    operator fun invoke(scope: CoroutineScope) {
+    operator fun invoke(): Flow<LocationProcessResult> {
         println("StartProcessLocationsUseCase: Starting GPS location processing")
         
-        // Запускаем GPS трекинг и подписываемся на поток координат
-        val locationFlow = locationRepository.startGpsTracking()
-        
-        locationFlow
-            .onEach { location ->
+        // Запускаем GPS трекинг и конвертируем Flow<Location> в Flow<LocationProcessResult>
+        return locationRepository.startGpsTracking()
+            .map { location ->
                 try {
                     println("StartProcessLocationsUseCase: 🔥 RECEIVED GPS location: Lat=${location.latitude}, Lon=${location.longitude}")
                     
@@ -45,16 +43,27 @@ class StartProcessLocationsUseCase(
                         println("StartProcessLocationsUseCase: Reason: ${result.reason}")
                     }
                     
+                    result
                 } catch (e: Exception) {
                     println("StartProcessLocationsUseCase: ❌ Error processing location: ${e.message}")
                     e.printStackTrace()
+                    
+                    // Возвращаем ошибку как результат обработки
+                    LocationProcessResult(
+                        shouldSend = false,
+                        reason = "Failed to process location: ${e.message}",
+                        totalReceived = 0,
+                        totalSent = 0,
+                        lastSentTime = 0,
+                        trackingStats = locationProcessor.createCurrentTrackingStats()
+                    )
                 }
             }
             .catch { e ->
                 println("StartProcessLocationsUseCase: Error in GPS flow: ${e.message}")
                 e.printStackTrace()
+                // Пропускаем ошибку в потоке, но логируем её
             }
-            .launchIn(scope)
     }
     
     /**
@@ -74,6 +83,9 @@ class StartProcessLocationsUseCase(
                 val locationId = locationRepository.saveLocationToDb(location, batteryLevel)
                 println("StartProcessLocationsUseCase: Location saved to DB with id: $locationId")
                 
+                // Обновляем статистику сохранения
+                locationProcessor.updateSavedLocation()
+                
                 // Получаем все неотправленные координаты из БД
                 val unsentLocations = locationRepository.getUnsentLocations()
                 println("StartProcessLocationsUseCase: Found ${unsentLocations.size} unsent locations in DB")
@@ -91,6 +103,9 @@ class StartProcessLocationsUseCase(
                 }
                 
                 if (uploadResult.isSuccess) {
+                    // Обновляем статистику отправки
+                    locationProcessor.updateSentLocations(location, unsentLocations.size)
+                    
                     // Если отправка успешна - удаляем все отправленные координаты из БД
                     if (unsentLocations.size == 1) {
                         locationRepository.deleteLocationFromDb(locationId)
@@ -102,8 +117,12 @@ class StartProcessLocationsUseCase(
                     }
                     return processResult.copy(reason = "Successfully sent to server and deleted from DB")
                 } else {
-                    // Если отправка не удалась - оставляем в БД для последующей отправки
-                    println("StartProcessLocationsUseCase: Locations saved to DB, will retry later: ${uploadResult.exceptionOrNull()?.message}")
+                    // Если отправка не удалась - обновляем статистику ошибки
+                    val errorMessage = uploadResult.exceptionOrNull()?.message ?: "Unknown error"
+                    locationProcessor.updateSendError(location, errorMessage, "Server Upload Failed")
+                    
+                    // Оставляем в БД для последующей отправки
+                    println("StartProcessLocationsUseCase: Locations saved to DB, will retry later: $errorMessage")
                     return processResult.copy(reason = "Saved to DB, server upload failed (will retry later)")
                 }
             } catch (e: Exception) {

@@ -60,8 +60,8 @@ val iosDataModule = module {
     single { get<DataStoreProvider>().createDataStore() }
     
     // Network API
-    single { OsmAndLocationApi(get(), ServerConfig.SERVER_URL, DeviceConfig.DEVICE_ID) }
-    single { FlespiLocationApi(get(), ServerConfig.SERVER_URL, DeviceConfig.DEVICE_ID) }
+    single { OsmAndLocationApi(get(), ServerConfig.OSMAND_SERVER_URL, DeviceConfig.DEVICE_ID) }
+    single { FlespiLocationApi(get(), ServerConfig.FLESPI_SERVER_URL, DeviceConfig.DEVICE_ID) }
     
     // Remote Location Data Source
     single<LocationRemoteDataSource> { LocationRemoteDataSourceImpl(get(), get()) }
