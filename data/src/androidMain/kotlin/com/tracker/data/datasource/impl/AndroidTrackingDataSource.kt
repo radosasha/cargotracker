@@ -3,16 +3,14 @@ package com.tracker.data.datasource.impl
 import com.tracker.data.datasource.TrackingDataSource
 import com.tracker.data.model.TrackingDataStatus
 import com.tracker.domain.datasource.TrackingRequester
-import org.koin.core.component.KoinComponent
-import org.koin.core.component.inject
 
 /**
  * Android реализация TrackingDataSource
  * Stateless - только делегирует вызовы в TrackingRequester
  */
-class AndroidTrackingDataSource : TrackingDataSource, KoinComponent {
-
-    private val trackingRequester: TrackingRequester by inject()
+class AndroidTrackingDataSource(
+    private val trackingRequester: TrackingRequester
+) : TrackingDataSource {
 
     override suspend fun startTracking(): Result<Unit> {
         return trackingRequester.startTracking()

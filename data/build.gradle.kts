@@ -67,6 +67,10 @@ kotlin {
             // Room Database
             implementation(libs.room.runtime)
             implementation(libs.sqlite.bundled)
+            
+            // DataStore
+            implementation("androidx.datastore:datastore:1.1.7")
+            implementation("androidx.datastore:datastore-preferences:1.1.7")
         }
         
         androidMain.dependencies {

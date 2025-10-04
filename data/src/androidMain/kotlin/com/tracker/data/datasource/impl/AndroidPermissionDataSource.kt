@@ -3,15 +3,13 @@ package com.tracker.data.datasource.impl
 import com.tracker.data.datasource.PermissionDataSource
 import com.tracker.data.model.PermissionDataModel
 import com.tracker.domain.datasource.PermissionRequester
-import org.koin.core.component.KoinComponent
-import org.koin.core.component.inject
 
 /**
  * Android реализация PermissionDataSource
  */
-class AndroidPermissionDataSource : PermissionDataSource, KoinComponent {
-    
-    private val permissionRequester: PermissionRequester by inject()
+class AndroidPermissionDataSource(
+    private val permissionRequester: PermissionRequester
+) : PermissionDataSource {
     
     override suspend fun getPermissionStatus(): PermissionDataModel {
         return PermissionDataModel(
