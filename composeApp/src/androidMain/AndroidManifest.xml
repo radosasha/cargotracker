@@ -41,7 +41,7 @@
         
         <!-- Foreground Service для GPS трекинга -->
         <service
-            android:name=".LocationTrackingService"
+            android:name=".AndroidTrackingService"
             android:enabled="true"
             android:exported="false"
             android:foregroundServiceType="location" />

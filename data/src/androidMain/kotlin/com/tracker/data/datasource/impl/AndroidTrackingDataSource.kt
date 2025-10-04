@@ -18,7 +18,6 @@ import org.koin.core.component.inject
 class AndroidTrackingDataSource : TrackingDataSource, KoinComponent {
     
     private val trackingRequester: TrackingRequester by inject()
-    private val locationMapper: LocationMapper by inject()
     
     private val _trackingStatusFlow = MutableSharedFlow<TrackingDataStatus>()
     private var currentStatus = TrackingDataStatus.STOPPED

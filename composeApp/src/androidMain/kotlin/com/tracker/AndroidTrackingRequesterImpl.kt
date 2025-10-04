@@ -2,11 +2,6 @@ package com.tracker
 
 import android.content.Intent
 import com.tracker.domain.datasource.TrackingRequester
-import com.tracker.domain.model.Location
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.datetime.Clock
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
@@ -22,7 +17,7 @@ class AndroidTrackingRequesterImpl : TrackingRequester, KoinComponent {
     override suspend fun startTracking(): Result<Unit> {
         return try {
             val context = activityContextProvider.getContext()
-            val intent = Intent(context, LocationTrackingService::class.java)
+            val intent = Intent(context, AndroidTrackingService::class.java)
             context.startForegroundService(intent)
             isTracking = true
             println("AndroidTrackingRequesterImpl: Tracking started, isTracking = $isTracking")
@@ -36,7 +31,7 @@ class AndroidTrackingRequesterImpl : TrackingRequester, KoinComponent {
     override suspend fun stopTracking(): Result<Unit> {
         return try {
             val context = activityContextProvider.getContext()
-            val intent = Intent(context, LocationTrackingService::class.java)
+            val intent = Intent(context, AndroidTrackingService::class.java)
             context.stopService(intent)
             isTracking = false
             println("AndroidTrackingRequesterImpl: Tracking stopped, isTracking = $isTracking")

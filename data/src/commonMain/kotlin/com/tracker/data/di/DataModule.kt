@@ -8,9 +8,11 @@ import com.tracker.data.datasource.LocationRemoteDataSource
 import com.tracker.data.datasource.impl.LocationRemoteDataSourceImpl
 import com.tracker.data.network.api.OsmAndLocationApi
 import com.tracker.data.network.api.FlespiLocationApi
+import com.tracker.data.repository.DeviceRepositoryImpl
 import com.tracker.data.repository.LocationRepositoryImpl
 import com.tracker.data.repository.PermissionRepositoryImpl
 import com.tracker.data.repository.TrackingRepositoryImpl
+import com.tracker.domain.repository.DeviceRepository
 import com.tracker.domain.repository.LocationRepository
 import com.tracker.domain.repository.PermissionRepository
 import com.tracker.domain.repository.TrackingRepository
@@ -32,7 +34,8 @@ val dataModule = module {
     single { DeviceConfig.DEVICE_ID }
     
     // Repositories
-    single<LocationRepository> { LocationRepositoryImpl(get(), get(), get()) }
+    single<DeviceRepository> { DeviceRepositoryImpl(get()) }
+    single<LocationRepository> { LocationRepositoryImpl(get(), get(), get(), get()) }
     single<PermissionRepository> { PermissionRepositoryImpl(get()) }
     single<TrackingRepository> { TrackingRepositoryImpl(get()) }
     

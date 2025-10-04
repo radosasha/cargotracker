@@ -21,20 +21,3 @@ data class LocationDataModel(
     val deviceId: String? = null
 )
 
-/**
- * Data модель для запроса отправки координат на сервер
- */
-@Serializable
-data class LocationRequestDataModel(
-    val locations: List<LocationDataModel>
-)
-
-/**
- * Data модель ответа сервера
- */
-@Serializable
-data class LocationResponseDataModel(
-    val success: Boolean,
-    val message: String? = null,
-    val processedCount: Int = 0
-)

@@ -1,6 +1,7 @@
 package com.tracker.domain.repository
 
 import com.tracker.domain.model.Location
+import kotlinx.coroutines.flow.Flow
 
 /**
  * Repository для работы с GPS координатами
@@ -48,4 +49,18 @@ interface LocationRepository {
      * Получает количество неотправленных координат
      */
     suspend fun getUnsentCount(): Int
+    
+    // GPS методы
+    
+    /**
+     * Запускает GPS трекинг и возвращает поток координат
+     * @return Flow<Location> - поток GPS координат в Domain модели
+     */
+    fun startGpsTracking(): Flow<Location>
+    
+    /**
+     * Останавливает GPS трекинг
+     * @return Result<Unit> - результат операции
+     */
+    suspend fun stopGpsTracking(): Result<Unit>
 }

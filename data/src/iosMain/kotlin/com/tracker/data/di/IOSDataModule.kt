@@ -4,10 +4,16 @@ import androidx.sqlite.SQLiteDriver
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import com.tracker.data.config.DeviceConfig
 import com.tracker.data.database.TrackerDatabase
+import com.tracker.data.datasource.DeviceDataSource
+import com.tracker.data.datasource.GpsLocationDataSource
+import com.tracker.data.datasource.GpsManager
 import com.tracker.data.datasource.LocationLocalDataSource
 import com.tracker.data.datasource.LocationRemoteDataSource
 import com.tracker.data.datasource.PermissionDataSource
 import com.tracker.data.datasource.TrackingDataSource
+import com.tracker.data.datasource.impl.GpsLocationDataSourceImpl
+import com.tracker.data.datasource.impl.IOSDeviceDataSource
+import com.tracker.data.datasource.impl.IOSGpsManager
 import com.tracker.data.datasource.impl.IOSPermissionDataSource
 import com.tracker.data.datasource.impl.IOSTrackingDataSource
 import com.tracker.data.datasource.impl.LocationLocalDataSourceImpl
@@ -58,11 +64,14 @@ val iosDataModule = module {
     single { DeviceConfig.DEVICE_ID }
     
     // iOS-specific Data Sources
+    single<GpsManager> { IOSGpsManager() }
+    single<GpsLocationDataSource> { GpsLocationDataSourceImpl(get()) }
+    single<DeviceDataSource> { IOSDeviceDataSource() }
     single<PermissionDataSource> { IOSPermissionDataSource(get()) }
     single<TrackingDataSource> { IOSTrackingDataSource() }
     
     // Repositories
     single<PermissionRepository> { PermissionRepositoryImpl(get()) }
     single<TrackingRepository> { TrackingRepositoryImpl(get()) }
-    single<LocationRepository> { LocationRepositoryImpl(get(), get(), get()) }
+    single<LocationRepository> { LocationRepositoryImpl(get(), get(), get(), get()) }
 }

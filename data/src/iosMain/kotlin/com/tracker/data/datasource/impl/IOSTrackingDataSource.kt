@@ -1,17 +1,12 @@
 package com.tracker.data.datasource.impl
 
 import com.tracker.data.datasource.TrackingDataSource
-import com.tracker.data.mapper.LocationMapper
-import com.tracker.data.model.LocationDataModel
 import com.tracker.data.model.TrackingDataStatus
 import com.tracker.domain.datasource.IOSLocationService
-import com.tracker.domain.usecase.ProcessLocationUseCase
+import com.tracker.domain.usecase.StartProcessLocationsUseCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -22,7 +17,7 @@ import org.koin.core.component.inject
 class IOSTrackingDataSource : TrackingDataSource, KoinComponent {
 
     private val locationService: IOSLocationService by inject()
-    private val processLocationUseCase: ProcessLocationUseCase by inject()
+    private val processLocationUseCase: StartProcessLocationsUseCase by inject()
     
     private val _trackingStatusFlow = MutableSharedFlow<TrackingDataStatus>()
 
@@ -105,18 +100,10 @@ class IOSTrackingDataSource : TrackingDataSource, KoinComponent {
                     try {
                         println("IOSTrackingDataSource: 🔥 RECEIVED location in collect: Lat: ${domainLocation.latitude}, Lon: ${domainLocation.longitude}")
                         
-                        // Обрабатываем координату через Use Case (без batteryLevel для iOS)
-                        val result = processLocationUseCase(domainLocation, null)
+                        // Обрабатываем координату через Use Case
+                        processLocationUseCase(scope)
                         
-                        if (result.shouldSend) {
-                            println("IOSTrackingDataSource: ✅ Successfully processed location")
-                            println("IOSTrackingDataSource: Reason: ${result.reason}")
-                        } else {
-                            println("IOSTrackingDataSource: ⏭️ Location filtered out")
-                            println("IOSTrackingDataSource: Reason: ${result.reason}")
-                        }
-                        
-                        println("IOSTrackingDataSource: Total sent: ${result.totalSent}, Total received: ${result.totalReceived}")
+                        println("IOSTrackingDataSource: ✅ Successfully processed location")
                         
                     } catch (e: Exception) {
                         println("IOSTrackingDataSource: Error processing location: ${e.message}")

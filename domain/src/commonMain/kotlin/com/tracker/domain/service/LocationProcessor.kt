@@ -181,17 +181,6 @@ class LocationProcessor {
         return (earthRadius * c).toFloat()
     }
     
-    /**
-     * Получает статистику обработки
-     */
-    fun getStats(): LocationProcessorStats {
-        return LocationProcessorStats(
-            totalReceived = totalLocationsReceived,
-            totalSent = totalLocationsSent,
-            lastSentTime = lastLocationSentTime,
-            lastLocation = lastLocationSent
-        )
-    }
 }
 
 /**
@@ -205,12 +194,3 @@ data class LocationProcessResult(
     val lastSentTime: Long
 )
 
-/**
- * Статистика обработки координат
- */
-data class LocationProcessorStats(
-    val totalReceived: Int,
-    val totalSent: Int,
-    val lastSentTime: Long,
-    val lastLocation: Location?
-)

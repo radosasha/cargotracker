@@ -18,13 +18,6 @@ data class Location(
     val deviceId: String? = null
 )
 
-/**
- * Результат операции с GPS данными
- */
-sealed class LocationResult {
-    data class Success(val location: Location) : LocationResult()
-    data class Error(val exception: Throwable) : LocationResult()
-}
 
 /**
  * Статус GPS трекинга
