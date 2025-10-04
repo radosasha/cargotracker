@@ -32,6 +32,8 @@ class HomeViewModel(
     
     init {
         observeStatus()
+        // Проверяем, был ли запущен трекинг при предыдущем запуске
+        checkAndRestoreTrackingState()
     }
     
     private fun observeStatus() {
@@ -195,5 +197,50 @@ class HomeViewModel(
             message = null,
             messageType = null
         )
+    }
+    
+    /**
+     * Проверяет, был ли запущен трекинг при предыдущем запуске
+     * Если в DataStore сохранено true, автоматически запускает трекинг
+     */
+    private fun checkAndRestoreTrackingState() {
+        viewModelScope.launch {
+            try {
+                println("HomeViewModel: Checking if tracking was active before...")
+                
+                // Проверяем состояние из DataStore
+                val currentStatus = getTrackingStatusUseCase()
+                val isTrackingActive = currentStatus == com.tracker.domain.model.TrackingStatus.ACTIVE
+                
+                if (isTrackingActive) {
+                    println("HomeViewModel: Tracking was active before, restoring...")
+                    
+                    // Автоматически запускаем трекинг
+                    val result = startTrackingUseCase()
+                    if (result.isSuccess) {
+                        println("HomeViewModel: ✅ Tracking restored successfully")
+                        _uiState.value = _uiState.value.copy(
+                            trackingStatus = currentStatus,
+                            message = "Трекинг восстановлен",
+                            messageType = MessageType.SUCCESS
+                        )
+                    } else {
+                        println("HomeViewModel: ❌ Failed to restore tracking: ${result.exceptionOrNull()?.message}")
+                        _uiState.value = _uiState.value.copy(
+                            message = "Не удалось восстановить трекинг: ${result.exceptionOrNull()?.message}",
+                            messageType = MessageType.ERROR
+                        )
+                    }
+                } else {
+                    println("HomeViewModel: Tracking was not active, no restoration needed")
+                }
+            } catch (e: Exception) {
+                println("HomeViewModel: ❌ Error checking tracking state: ${e.message}")
+                _uiState.value = _uiState.value.copy(
+                    message = "Ошибка при проверке состояния трекинга: ${e.message}",
+                    messageType = MessageType.ERROR
+                )
+            }
+        }
     }
 }
