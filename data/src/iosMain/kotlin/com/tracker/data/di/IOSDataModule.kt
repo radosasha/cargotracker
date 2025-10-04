@@ -15,11 +15,12 @@ import com.tracker.data.datasource.impl.GpsLocationDataSourceImpl
 import com.tracker.data.datasource.impl.IOSDeviceDataSource
 import com.tracker.data.datasource.impl.IOSGpsManager
 import com.tracker.data.datasource.impl.IOSPermissionDataSource
-import com.tracker.data.datasource.impl.IOSTrackingDataSource
 import com.tracker.data.datasource.impl.LocationLocalDataSourceImpl
 import com.tracker.data.network.api.OsmAndLocationApi
 import com.tracker.data.network.api.FlespiLocationApi
 import com.tracker.data.config.ServerConfig
+import com.tracker.data.datasource.impl.IOSTrackingDataSource
+import com.tracker.data.datasource.impl.LocationRemoteDataSourceImpl
 import com.tracker.data.network.client.HttpClientProvider
 import com.tracker.data.repository.LocationRepositoryImpl
 import com.tracker.data.repository.PermissionRepositoryImpl
@@ -57,7 +58,7 @@ val iosDataModule = module {
     single { FlespiLocationApi(get(), ServerConfig.SERVER_URL, DeviceConfig.DEVICE_ID) }
     
     // Remote Location Data Source
-    single<LocationRemoteDataSource> { com.tracker.data.datasource.impl.LocationRemoteDataSourceImpl(get(), get()) }
+    single<LocationRemoteDataSource> { LocationRemoteDataSourceImpl(get(), get()) }
     
     
     // Device ID
