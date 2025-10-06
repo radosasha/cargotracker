@@ -8,5 +8,5 @@ import androidx.datastore.preferences.core.Preferences
  * Каждая платформа должна предоставить actual реализацию
  */
 expect class DataStoreProvider() {
-    fun createDataStore(): DataStore<Preferences>
+    fun createDataStore(fileName: String): DataStore<Preferences>
 }

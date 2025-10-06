@@ -11,8 +11,6 @@ import okio.Path.Companion.toPath
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
-private const val dataStoreFileName = "tracker.preferences_pb"
-
 /**
  * Android actual реализация DataStoreProvider
  * Получает Context через Koin DI
@@ -21,10 +19,10 @@ actual class DataStoreProvider actual constructor() : KoinComponent {
     
     private val context: Context by inject()
     
-    actual fun createDataStore(): DataStore<Preferences> {
+    actual fun createDataStore(fileName: String): DataStore<Preferences> {
         return PreferenceDataStoreFactory.createWithPath(
             produceFile = { 
-                context.filesDir.resolve(dataStoreFileName).absolutePath.toPath()
+                context.filesDir.resolve(fileName).absolutePath.toPath()
             },
             corruptionHandler = null,
             migrations = emptyList(),

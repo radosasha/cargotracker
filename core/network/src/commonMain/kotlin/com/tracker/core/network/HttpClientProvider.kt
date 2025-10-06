@@ -12,7 +12,7 @@ import kotlinx.serialization.json.Json
  * Провайдер HTTP клиента для сетевых запросов
  */
 expect class HttpClientProvider {
-    fun createHttpClient(): HttpClient
+     fun createHttpClient(): HttpClient
 }
 
 /**
@@ -27,7 +27,7 @@ fun createHttpClient(engine: HttpClientEngine): HttpClient {
                 ignoreUnknownKeys = true
             })
         }
-        
+
         install(Logging) {
             level = LogLevel.INFO
         }

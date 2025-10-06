@@ -1,19 +1,17 @@
 package com.tracker.data.di
 
-import androidx.room.Room
-import androidx.room.RoomDatabase
 import com.tracker.core.database.TrackerDatabase
 import com.tracker.core.database.createDatabaseBuilder
-import com.tracker.core.network.HttpClientProvider
 import com.tracker.core.datastore.DataStoreProvider
-import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.Preferences
+import com.tracker.core.network.HttpClientProvider
 import com.tracker.data.config.DeviceConfig
 import com.tracker.data.config.ServerConfig
+import com.tracker.data.datasource.LocationLocalDataSource
 import com.tracker.data.datasource.LocationRemoteDataSource
+import com.tracker.data.datasource.impl.LocationLocalDataSourceImpl
 import com.tracker.data.datasource.impl.LocationRemoteDataSourceImpl
-import com.tracker.data.network.api.OsmAndLocationApi
 import com.tracker.data.network.api.FlespiLocationApi
+import com.tracker.data.network.api.OsmAndLocationApi
 import com.tracker.data.repository.DeviceRepositoryImpl
 import com.tracker.data.repository.LocationRepositoryImpl
 import com.tracker.data.repository.PermissionRepositoryImpl
@@ -32,6 +30,21 @@ import org.koin.dsl.module
  * Содержит только общие зависимости, не зависящие от платформы
  */
 val dataModule = module {
+    
+    // HTTP Client
+    single<HttpClient> { HttpClientProvider().createHttpClient() }
+    
+    // DataStore
+    single<DataStoreProvider> { DataStoreProvider() }
+    single { get<DataStoreProvider>().createDataStore("tracker.preferences_pb") }
+    
+    // Database - создается через core модуль
+    single<TrackerDatabase> { 
+        createDatabaseBuilder().build()
+    }
+    
+    // Local Data Source (Room)
+    single<LocationLocalDataSource> { LocationLocalDataSourceImpl(get()) }
     
     // Network API
     single { OsmAndLocationApi(get(), ServerConfig.OSMAND_SERVER_URL, DeviceConfig.DEVICE_ID) }

@@ -13,8 +13,6 @@ import platform.Foundation.NSFileManager
 import platform.Foundation.NSURL
 import platform.Foundation.NSUserDomainMask
 
-private const val dataStoreFileName = "tracker.preferences_pb"
-
 /**
  * iOS actual реализация DataStoreProvider
  * Не требует Context, использует NSDocumentDirectory
@@ -22,7 +20,7 @@ private const val dataStoreFileName = "tracker.preferences_pb"
 actual class DataStoreProvider actual constructor() {
 
     @OptIn(ExperimentalForeignApi::class)
-    actual fun createDataStore(): DataStore<Preferences> {
+    actual fun createDataStore(fileName: String): DataStore<Preferences> {
         return PreferenceDataStoreFactory.createWithPath(
             produceFile = {
                 val documentDirectory: NSURL? = NSFileManager.defaultManager.URLForDirectory(
@@ -32,7 +30,7 @@ actual class DataStoreProvider actual constructor() {
                     create = false,
                     error = null,
                 )
-                (requireNotNull(documentDirectory).path + "/$dataStoreFileName").toPath()
+                (requireNotNull(documentDirectory).path + "/$fileName").toPath()
             },
             corruptionHandler = null,
             migrations = emptyList(),
