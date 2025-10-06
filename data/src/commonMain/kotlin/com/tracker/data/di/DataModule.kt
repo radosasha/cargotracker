@@ -1,9 +1,15 @@
 package com.tracker.data.di
 
+import androidx.room.Room
 import androidx.room.RoomDatabase
+import com.tracker.core.database.TrackerDatabase
+import com.tracker.core.database.createDatabaseBuilder
+import com.tracker.core.network.HttpClientProvider
+import com.tracker.core.datastore.DataStoreProvider
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
 import com.tracker.data.config.DeviceConfig
 import com.tracker.data.config.ServerConfig
-import com.tracker.data.database.TrackerDatabase
 import com.tracker.data.datasource.LocationRemoteDataSource
 import com.tracker.data.datasource.impl.LocationRemoteDataSourceImpl
 import com.tracker.data.network.api.OsmAndLocationApi
@@ -18,10 +24,12 @@ import com.tracker.domain.repository.LocationRepository
 import com.tracker.domain.repository.PermissionRepository
 import com.tracker.domain.repository.PrefsRepository
 import com.tracker.domain.repository.TrackingRepository
+import io.ktor.client.HttpClient
 import org.koin.dsl.module
 
 /**
  * Data модуль с реализациями репозиториев и data sources
+ * Содержит только общие зависимости, не зависящие от платформы
  */
 val dataModule = module {
     
@@ -44,7 +52,3 @@ val dataModule = module {
     
 }
 
-/**
- * Функция для создания Room Database билдера (должна быть реализована на платформах)
- */
-expect fun getRoomDatabaseBuilder(): RoomDatabase.Builder<TrackerDatabase>

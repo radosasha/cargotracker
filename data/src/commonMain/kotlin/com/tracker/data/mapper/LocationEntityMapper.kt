@@ -1,6 +1,6 @@
 package com.tracker.data.mapper
 
-import com.tracker.data.database.entity.LocationEntity
+import com.tracker.core.database.entity.LocationEntity
 import com.tracker.domain.model.Location
 import kotlinx.datetime.Instant
 

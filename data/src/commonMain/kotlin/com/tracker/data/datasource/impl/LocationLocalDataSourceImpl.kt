@@ -1,7 +1,7 @@
 package com.tracker.data.datasource.impl
 
-import com.tracker.data.database.TrackerDatabase
-import com.tracker.data.database.entity.LocationEntity
+import com.tracker.core.database.TrackerDatabase
+import com.tracker.core.database.entity.LocationEntity
 import com.tracker.data.datasource.LocationLocalDataSource
 import kotlinx.coroutines.flow.Flow
 

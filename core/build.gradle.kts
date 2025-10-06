@@ -6,83 +6,76 @@ plugins {
     alias(libs.plugins.kotlinx.serialization)
 }
 
-android {
-    namespace = "com.tracker.data"
-    compileSdk = 34
-    
-    defaultConfig {
-        minSdk = 24
-    }
-    
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
-    }
-}
-
 kotlin {
     androidTarget {
         compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_11)
+            jvmTarget.set(JvmTarget.JVM_1_8)
         }
     }
-    
+
     listOf(
+        iosX64(),
         iosArm64(),
         iosSimulatorArm64()
     ).forEach { iosTarget ->
         iosTarget.binaries.framework {
-            baseName = "Data"
+            baseName = "core"
             isStatic = true
         }
     }
-    
+
     sourceSets {
         commonMain.dependencies {
-            // Domain module
-            implementation(project(":domain"))
-            
-            // Core modules
-            implementation(project(":core:database"))
-            implementation(project(":core:network"))
-            implementation(project(":core:datastore"))
-            
             // Kotlin
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.kotlinx.datetime)
-            
-            // Room Database
-            implementation(libs.room.runtime)
-            
+
             // Ktor
             implementation(libs.ktor.client.core)
             implementation(libs.ktor.client.content.negotiation)
             implementation(libs.ktor.serialization.kotlinx.json)
             implementation(libs.ktor.client.logging)
-            
+
             // DataStore
             implementation("androidx.datastore:datastore:1.1.7")
             implementation("androidx.datastore:datastore-preferences:1.1.7")
-            
-            // Koin
-            implementation(libs.koin.core)
+
+            // Modules
+            api(project(":core:database"))
+            api(project(":core:network"))
+            api(project(":core:datastore"))
         }
-        
-        androidMain.dependencies {
-            implementation(libs.koin.android)
-        }
-        
-        iosMain.dependencies {
-            // iOS specific dependencies if needed
-        }
-        
+
         commonTest.dependencies {
             implementation(libs.kotlin.test)
+        }
+
+        androidMain.dependencies {
+            // Android
+            implementation(libs.androidx.core.ktx)
+            // DataStore
+            implementation("androidx.datastore:datastore:1.1.7")
+            implementation("androidx.datastore:datastore-preferences:1.1.7")
+            // Ktor
+            implementation(libs.ktor.client.android)
+        }
+
+        iosMain.dependencies {
+            // Ktor
+            implementation(libs.ktor.client.ios)
         }
     }
 }
 
-dependencies {
-    // KSP dependencies moved to core:database module
+android {
+    namespace = "com.tracker.core"
+    compileSdk = libs.versions.android.compileSdk.get().toInt()
+    defaultConfig {
+        minSdk = libs.versions.android.minSdk.get().toInt()
+    }
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
+    }
 }

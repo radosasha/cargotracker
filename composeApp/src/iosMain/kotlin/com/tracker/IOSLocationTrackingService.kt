@@ -107,8 +107,8 @@ class IOSLocationTrackingService private constructor() : KoinComponent {
         try {
             println("$TAG: Starting GPS tracking through StartProcessLocationsUseCase")
             
-            // Запускаем обработку GPS координат через StartProcessLocationsUseCase с serviceScope
-            startProcessLocationsUseCase(serviceScope)
+            // Запускаем обработку GPS координат через StartProcessLocationsUseCase
+            startProcessLocationsUseCase()
             isTracking = true
             
             // Сохраняем состояние для восстановления
