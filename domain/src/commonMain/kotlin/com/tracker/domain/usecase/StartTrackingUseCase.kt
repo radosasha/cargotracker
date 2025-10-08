@@ -13,7 +13,7 @@ class StartTrackingUseCase(
     private val permissionRepository: PermissionRepository,
     private val trackingRepository: TrackingRepository,
     private val prefsRepository: PrefsRepository,
-    private val locationSyncManager: LocationSyncService
+    private val locationSyncService: LocationSyncService
 ) {
     
     suspend operator fun invoke(): Result<Unit> {
@@ -35,7 +35,7 @@ class StartTrackingUseCase(
             // Если трекинг успешно запущен, сохраняем состояние в DataStore
             if (result.isSuccess) {
                 prefsRepository.saveTrackingState(true)
-                locationSyncManager.startSync()
+                locationSyncService.startSync()
                 println("StartTrackingUseCase: Tracking started and state saved to DataStore")
             }
             

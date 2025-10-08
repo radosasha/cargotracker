@@ -18,8 +18,8 @@ import com.tracker.data.datasource.impl.PrefsDataSourceImpl
 import com.tracker.data.datasource.impl.TrackingDataSourceImpl
 import com.tracker.data.network.api.FlespiLocationApi
 import com.tracker.data.network.api.OsmAndLocationApi
-import com.tracker.domain.service.LocationProcessor
-import com.tracker.domain.service.LocationSyncService
+import com.tracker.data.services.LocationProcessorImpl
+import com.tracker.data.services.LocationSyncServiceImpl
 import com.tracker.data.repository.DeviceRepositoryImpl
 import com.tracker.data.repository.LocationRepositoryImpl
 import com.tracker.data.repository.PermissionRepositoryImpl
@@ -30,6 +30,8 @@ import com.tracker.domain.repository.LocationRepository
 import com.tracker.domain.repository.PermissionRepository
 import com.tracker.domain.repository.PrefsRepository
 import com.tracker.domain.repository.TrackingRepository
+import com.tracker.domain.service.LocationProcessor
+import com.tracker.domain.service.LocationSyncService
 import io.ktor.client.HttpClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -76,9 +78,9 @@ val dataModule = module {
     single<PrefsRepository> { PrefsRepositoryImpl(get()) }
     single<TrackingRepository> { TrackingRepositoryImpl(get()) }
     
-    // Domain Services (перенесены из domain модуля)
-    single { LocationProcessor() }
-    single { LocationSyncService(get(), get()) }
+    // Domain Services - реализации в data слое
+    single<LocationProcessor> { LocationProcessorImpl() }
+    single<LocationSyncService> { LocationSyncServiceImpl(get(), get()) }
     
     // CoroutineScope для LocationSyncService
     single<CoroutineScope> { CoroutineScope(SupervisorJob() + Dispatchers.Default) }

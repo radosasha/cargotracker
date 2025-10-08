@@ -3,8 +3,8 @@ package com.tracker.domain.usecase
 import com.tracker.domain.model.Location
 import com.tracker.domain.repository.DeviceRepository
 import com.tracker.domain.repository.LocationRepository
-import com.tracker.domain.service.LocationProcessResult
 import com.tracker.domain.service.LocationProcessor
+import com.tracker.domain.service.LocationProcessResult
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map

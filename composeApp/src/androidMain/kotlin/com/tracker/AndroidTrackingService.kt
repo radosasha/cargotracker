@@ -4,20 +4,19 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
-import android.app.Service
 import android.content.Intent
 import android.os.Binder
 import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.lifecycle.LifecycleService
+import androidx.lifecycle.coroutineScope
 import com.tracker.domain.usecase.StartProcessLocationsUseCase
 import com.tracker.domain.usecase.StopProcessLocationsUseCase
 import com.tracker.domain.util.DateFormatter
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.runBlocking
@@ -25,7 +24,7 @@ import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
 
-class AndroidTrackingService : Service(), KoinComponent {
+class AndroidTrackingService : LifecycleService(), KoinComponent {
 
     private val binder = LocationBinder()
     private var isTracking = false
@@ -33,9 +32,6 @@ class AndroidTrackingService : Service(), KoinComponent {
     // Koin DI - используем новые Use Cases
     private val startProcessLocationsUseCase: StartProcessLocationsUseCase by inject()
     private val stopProcessLocationsUseCase: StopProcessLocationsUseCase by inject()
-
-    // Coroutine scope for network operations
-    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     companion object Companion {
         private const val NOTIFICATION_ID = 1
@@ -53,12 +49,16 @@ class AndroidTrackingService : Service(), KoinComponent {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        super.onStartCommand(intent, flags, startId)
         startForeground(NOTIFICATION_ID, createNotification())
         startLocationTracking()
         return START_STICKY // Перезапуск сервиса если он был убит системой
     }
 
-    override fun onBind(intent: Intent?): IBinder = binder
+    override fun onBind(intent: Intent): IBinder {
+        super.onBind(intent)
+        return binder
+    }
 
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -107,17 +107,20 @@ class AndroidTrackingService : Service(), KoinComponent {
             println("LocationTrackingService: Starting GPS tracking through StartProcessLocationsUseCase")
 
             // Запускаем обработку GPS координат и подписываемся на Flow результатов
-            startProcessLocationsUseCase().onEach { result ->
-                // Обновляем уведомление с актуальной статистикой
-                updateNotificationWithStats(result.trackingStats)
+            startProcessLocationsUseCase()
+                .flowOn(Dispatchers.IO)
+                .onEach { result ->
+                    // Обновляем уведомление с актуаьной статистикой
+                    updateNotificationWithStats(result.trackingStats)
 
-                // Логируем результат обработки
-                if (result.shouldSend) {
-                    println("AndroidTrackingService: ✅ Location processed successfully: ${result.reason}")
-                } else {
-                    println("AndroidTrackingService: ⏭️ Location filtered: ${result.reason}")
+                    // Логируем результат обработки
+                    if (result.shouldSend) {
+                        println("AndroidTrackingService: ✅ Location processed successfully: ${result.reason}")
+                    } else {
+                        println("AndroidTrackingService: ⏭️ Location filtered: ${result.reason}")
+                    }
                 }
-            }.launchIn(serviceScope)
+                .launchIn(lifecycle.coroutineScope)
             isTracking = true
 
             println("LocationTrackingService: ✅ GPS tracking started successfully")
@@ -230,23 +233,16 @@ class AndroidTrackingService : Service(), KoinComponent {
     }
 
     override fun onDestroy() {
-        super.onDestroy()
-
         // Синхронная остановка GPS трекинга перед отменой scope
         if (isTracking) {
-            try {
-                // Используем runBlocking для синхронного выполнения
-                runBlocking {
-                    stopLocationTrackingSync()
-                }
-            } catch (e: Exception) {
-                println("LocationTrackingService: Error in runBlocking: ${e.message}")
+            // Используем runBlocking для синхронного выполнения
+            runBlocking {
+                stopLocationTrackingSync()
             }
         }
 
-        // Останавливаем serviceScope, что отменит все корутины
-        serviceScope.cancel()
         println("LocationTrackingService: Service scope cancelled")
+        super.onDestroy()
     }
 
     fun isLocationTrackingActive(): Boolean = isTracking

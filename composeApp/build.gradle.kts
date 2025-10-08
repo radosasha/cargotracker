@@ -17,6 +17,7 @@ kotlin {
             
             // Coroutines Android
             implementation(libs.kotlinx.coroutines.android)
+            implementation(libs.androidx.lifecycle.service)
         }
         
         commonMain.dependencies {
