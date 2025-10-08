@@ -45,12 +45,17 @@ configure<KotlinMultiplatformExtension> {
         }
     }
     
+    // iOS targets с framework
     listOf(
         iosX64(),
         iosArm64(),
         iosSimulatorArm64()
     ).forEach { iosTarget ->
         iosTarget.binaries.framework {
+            // baseName по умолчанию = имя модуля
+            // Можно переопределить в конкретном модуле через:
+            // kotlin.targets.withType<KotlinNativeTarget> { binaries.framework { baseName = "..." } }
+            baseName = "ComposeApp"
             isStatic = true
         }
     }
