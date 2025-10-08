@@ -1,10 +1,8 @@
-package com.tracker.domain.datasource
-
-import com.tracker.domain.model.Location
-import kotlinx.coroutines.flow.Flow
+package com.tracker.data.datasource
 
 /**
  * Интерфейс для GPS трекинга
+ * Находится в data слое, так как это деталь реализации (DataSource)
  */
 interface TrackingRequester {
     suspend fun startTracking(): Result<Unit>

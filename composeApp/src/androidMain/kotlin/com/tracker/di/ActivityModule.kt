@@ -4,9 +4,8 @@ import com.tracker.ActivityContextProvider
 import com.tracker.AndroidPermissionRequesterImpl
 import com.tracker.AndroidTrackingRequesterImpl
 import com.tracker.PermissionChecker
-import com.tracker.domain.datasource.PermissionRequester
-import com.tracker.domain.datasource.TrackingRequester
-import org.koin.android.ext.koin.androidContext
+import com.tracker.data.datasource.PermissionRequester
+import com.tracker.data.datasource.TrackingRequester
 import org.koin.dsl.module
 
 /**

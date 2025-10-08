@@ -1,7 +1,8 @@
-package com.tracker.domain.datasource
+package com.tracker.data.datasource
 
 /**
  * Интерфейс для запроса разрешений
+ * Находится в data слое, так как это деталь реализации (DataSource)
  */
 interface PermissionRequester {
     suspend fun hasLocationPermissions(): Boolean

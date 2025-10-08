@@ -2,7 +2,7 @@ package com.tracker.data.datasource.impl
 
 import com.tracker.data.datasource.TrackingDataSource
 import com.tracker.data.model.TrackingDataStatus
-import com.tracker.domain.datasource.TrackingRequester
+import com.tracker.data.datasource.TrackingRequester
 
 /**
  * Общая реализация TrackingDataSource для всех платформ

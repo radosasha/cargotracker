@@ -2,7 +2,7 @@ package com.tracker.data.datasource.impl
 
 import com.tracker.data.datasource.PermissionDataSource
 import com.tracker.data.model.PermissionDataModel
-import com.tracker.domain.datasource.PermissionRequester
+import com.tracker.data.datasource.PermissionRequester
 
 /**
  * Android реализация PermissionDataSource

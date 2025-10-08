@@ -2,7 +2,7 @@ package com.tracker.di
 
 import com.tracker.IOSPermissionCheckerImpl
 import com.tracker.IOSTrackingRequesterImpl
-import com.tracker.domain.datasource.TrackingRequester
+import com.tracker.data.datasource.TrackingRequester
 import com.tracker.data.datasource.PermissionChecker
 import org.koin.dsl.module
 

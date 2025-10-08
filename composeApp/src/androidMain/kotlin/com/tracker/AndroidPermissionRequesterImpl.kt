@@ -1,6 +1,6 @@
 package com.tracker
 
-import com.tracker.domain.datasource.PermissionRequester
+import com.tracker.data.datasource.PermissionRequester
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 

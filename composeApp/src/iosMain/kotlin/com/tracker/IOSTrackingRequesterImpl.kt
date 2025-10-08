@@ -1,6 +1,6 @@
 package com.tracker
 
-import com.tracker.domain.datasource.TrackingRequester
+import com.tracker.data.datasource.TrackingRequester
 import org.koin.core.component.KoinComponent
 
 /**

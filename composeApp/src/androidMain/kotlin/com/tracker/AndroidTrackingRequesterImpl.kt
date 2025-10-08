@@ -1,7 +1,7 @@
 package com.tracker
 
 import android.content.Intent
-import com.tracker.domain.datasource.TrackingRequester
+import com.tracker.data.datasource.TrackingRequester
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
