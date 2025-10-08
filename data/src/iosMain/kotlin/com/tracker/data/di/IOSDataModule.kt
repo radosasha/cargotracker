@@ -1,6 +1,7 @@
 package com.tracker.data.di
 
 import com.tracker.core.database.DatabaseProvider
+import com.tracker.core.datastore.DataStoreProvider
 import com.tracker.data.datasource.DeviceDataSource
 import com.tracker.data.datasource.GpsManager
 import com.tracker.data.datasource.PermissionDataSource
@@ -13,6 +14,9 @@ import org.koin.dsl.module
  * iOS-специфичный модуль для data слоя
  */
 val iosDataModule = module {
+    
+    // DataStore Provider для iOS (не требует Context)
+    single<DataStoreProvider> { DataStoreProvider() }
     
     // Database Provider для iOS (не требует Context)
     single<DatabaseProvider> { DatabaseProvider() }

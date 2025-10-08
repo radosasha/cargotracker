@@ -44,9 +44,6 @@ kotlin {
             // DataStore
             implementation("androidx.datastore:datastore:1.1.7")
             implementation("androidx.datastore:datastore-preferences:1.1.7")
-            // Koin
-            implementation(libs.koin.core)
-            implementation(libs.koin.android)
         }
 
         iosMain.dependencies {

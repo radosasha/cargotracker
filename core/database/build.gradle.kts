@@ -40,9 +40,7 @@ kotlin {
         }
 
         androidMain.dependencies {
-            // Koin для получения Context
-            implementation(libs.koin.core)
-            implementation(libs.koin.android)
+            // Android specific dependencies if needed
         }
 
         iosMain.dependencies {

@@ -7,6 +7,6 @@ import androidx.datastore.preferences.core.Preferences
  * Expect класс для создания DataStore в KMP
  * Каждая платформа должна предоставить actual реализацию
  */
-expect class DataStoreProvider() {
+expect class DataStoreProvider {
     fun createDataStore(fileName: String): DataStore<Preferences>
 }

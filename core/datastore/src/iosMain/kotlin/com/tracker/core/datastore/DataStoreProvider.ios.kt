@@ -17,7 +17,7 @@ import platform.Foundation.NSUserDomainMask
  * iOS actual реализация DataStoreProvider
  * Не требует Context, использует NSDocumentDirectory
  */
-actual class DataStoreProvider actual constructor() {
+actual class DataStoreProvider {
 
     @OptIn(ExperimentalForeignApi::class)
     actual fun createDataStore(fileName: String): DataStore<Preferences> {

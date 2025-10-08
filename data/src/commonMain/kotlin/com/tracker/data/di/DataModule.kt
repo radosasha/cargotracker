@@ -18,6 +18,8 @@ import com.tracker.data.datasource.impl.PrefsDataSourceImpl
 import com.tracker.data.datasource.impl.TrackingDataSourceImpl
 import com.tracker.data.network.api.FlespiLocationApi
 import com.tracker.data.network.api.OsmAndLocationApi
+import com.tracker.domain.service.LocationProcessor
+import com.tracker.domain.service.LocationSyncService
 import com.tracker.data.repository.DeviceRepositoryImpl
 import com.tracker.data.repository.LocationRepositoryImpl
 import com.tracker.data.repository.PermissionRepositoryImpl
@@ -29,6 +31,9 @@ import com.tracker.domain.repository.PermissionRepository
 import com.tracker.domain.repository.PrefsRepository
 import com.tracker.domain.repository.TrackingRepository
 import io.ktor.client.HttpClient
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import org.koin.dsl.module
 
 /**
@@ -40,8 +45,7 @@ val dataModule = module {
     // HTTP Client
     single<HttpClient> { HttpClientProvider().createHttpClient() }
 
-    // DataStore
-    single<DataStoreProvider> { DataStoreProvider() }
+    // DataStore - создается через DataStoreProvider (определен в платформо-специфичных модулях)
     single { get<DataStoreProvider>().createDataStore(fileName = "tracker.preferences_pb") }
 
     // Database - создается через DatabaseProvider
@@ -71,6 +75,13 @@ val dataModule = module {
     single<PermissionRepository> { PermissionRepositoryImpl(get()) }
     single<PrefsRepository> { PrefsRepositoryImpl(get()) }
     single<TrackingRepository> { TrackingRepositoryImpl(get()) }
+    
+    // Domain Services (перенесены из domain модуля)
+    single { LocationProcessor() }
+    single { LocationSyncService(get(), get()) }
+    
+    // CoroutineScope для LocationSyncService
+    single<CoroutineScope> { CoroutineScope(SupervisorJob() + Dispatchers.Default) }
 
 }
 

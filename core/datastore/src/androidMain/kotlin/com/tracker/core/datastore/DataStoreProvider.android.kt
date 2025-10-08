@@ -8,16 +8,12 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import okio.Path.Companion.toPath
-import org.koin.core.component.KoinComponent
-import org.koin.core.component.inject
 
 /**
  * Android actual реализация DataStoreProvider
- * Получает Context через Koin DI
+ * Получает Context через конструктор
  */
-actual class DataStoreProvider actual constructor() : KoinComponent {
-    
-    private val context: Context by inject()
+actual class DataStoreProvider(private val context: Context) {
     
     actual fun createDataStore(fileName: String): DataStore<Preferences> {
         return PreferenceDataStoreFactory.createWithPath(
