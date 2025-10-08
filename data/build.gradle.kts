@@ -82,7 +82,3 @@ kotlin {
         }
     }
 }
-
-dependencies {
-    // KSP dependencies moved to core:database module
-}

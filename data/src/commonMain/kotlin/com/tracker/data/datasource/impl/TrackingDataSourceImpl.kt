@@ -5,10 +5,10 @@ import com.tracker.data.model.TrackingDataStatus
 import com.tracker.domain.datasource.TrackingRequester
 
 /**
- * iOS реализация TrackingDataSource
+ * Общая реализация TrackingDataSource для всех платформ
  * Stateless - только делегирует вызовы в TrackingRequester
  */
-class IOSTrackingDataSource(
+class TrackingDataSourceImpl(
     private val trackingRequester: TrackingRequester
 ) : TrackingDataSource {
 

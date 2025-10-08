@@ -11,7 +11,7 @@ import kotlinx.serialization.json.Json
 /**
  * Провайдер HTTP клиента для сетевых запросов
  */
-expect class HttpClientProvider {
+expect class HttpClientProvider() {
      fun createHttpClient(): HttpClient
 }
 
