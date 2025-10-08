@@ -30,8 +30,8 @@ kotlin {
             implementation(libs.kotlinx.datetime)
 
             // DataStore
-            implementation("androidx.datastore:datastore:1.1.7")
-            implementation("androidx.datastore:datastore-preferences:1.1.7")
+            implementation(libs.datastore)
+            implementation(libs.datastore.preferences)
         }
 
         commonTest.dependencies {
@@ -41,9 +41,6 @@ kotlin {
         androidMain.dependencies {
             // Android
             implementation(libs.androidx.core.ktx)
-            // DataStore
-            implementation("androidx.datastore:datastore:1.1.7")
-            implementation("androidx.datastore:datastore-preferences:1.1.7")
         }
 
         iosMain.dependencies {

@@ -8,10 +8,10 @@ plugins {
 
 android {
     namespace = "com.tracker.data"
-    compileSdk = 34
+    compileSdk = libs.versions.android.compileSdk.get().toInt()
     
     defaultConfig {
-        minSdk = 24
+        minSdk = libs.versions.android.minSdk.get().toInt()
     }
     
     compileOptions {
@@ -52,20 +52,20 @@ kotlin {
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.kotlinx.datetime)
             
-            // Room Database
+            // Room Database (нужен для работы с TrackerDatabase)
             implementation(libs.room.runtime)
             
-            // Ktor
+            // Ktor (нужен для API классов в data)
             implementation(libs.ktor.client.core)
             implementation(libs.ktor.client.content.negotiation)
             implementation(libs.ktor.serialization.kotlinx.json)
             implementation(libs.ktor.client.logging)
             
-            // DataStore
-            implementation("androidx.datastore:datastore:1.1.7")
-            implementation("androidx.datastore:datastore-preferences:1.1.7")
+            // DataStore (нужен для PrefsDataSourceImpl)
+            implementation(libs.datastore)
+            implementation(libs.datastore.preferences)
             
-            // Koin
+            // Koin (только для DI в data слое)
             implementation(libs.koin.core)
         }
         
