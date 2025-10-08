@@ -26,6 +26,7 @@ abstract class TrackerDatabase : RoomDatabase() {
 
 /**
  * Constructor для Room Database
+ * KSP автоматически генерирует actual реализацию
  */
 @Suppress("NO_ACTUAL_FOR_EXPECT")
 expect object TrackerDatabaseConstructor : RoomDatabaseConstructor<TrackerDatabase> {
