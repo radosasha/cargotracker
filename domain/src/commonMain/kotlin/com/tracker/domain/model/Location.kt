@@ -1,12 +1,10 @@
 package com.tracker.domain.model
 
-import kotlinx.serialization.Serializable
 import kotlinx.datetime.Instant
 
 /**
  * Domain модель для GPS координат
  */
-@Serializable
 data class Location(
     val latitude: Double,
     val longitude: Double,

@@ -1,6 +1,5 @@
 plugins {
     id("tracker.android.library")
-    alias(libs.plugins.kotlinx.serialization)
 }
 
 android {
@@ -10,8 +9,7 @@ android {
 kotlin {
     sourceSets {
         commonMain.dependencies {
-            // Serialization
-            implementation(libs.kotlinx.serialization.json)
+            // DateTime (for Instant in models)
             implementation(libs.kotlinx.datetime)
             
             // Coroutines
