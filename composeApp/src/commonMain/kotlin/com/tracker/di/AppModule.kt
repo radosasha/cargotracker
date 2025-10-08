@@ -5,8 +5,11 @@ import com.tracker.presentation.di.presentationModule
 
 /**
  * Главный модуль приложения, объединяющий все слои
+ * 
+ * Структура:
+ * - dataModule: Data слой (Repositories, DataSources, Services)
+ * - presentationModule: Presentation слой (Use Cases + ViewModels)
+ *   - useCasesModule: Domain Use Cases
+ *   - viewModelModule: Presentation ViewModels
  */
-val appModule = listOf(
-    dataModule,
-    presentationModule
-)
+val appModule = dataModule + presentationModule
