@@ -8,8 +8,8 @@ import org.koin.core.component.inject
  */
 actual class PermissionChecker : KoinComponent {
     
-    private val activityContextProvider: ActivityContextProvider by inject()
-    private val permissionRequester = AndroidPermissionRequester(activityContextProvider.getContext())
+    private val activityContextProvider: ActivityProvider by inject()
+    private val permissionRequester = AndroidPermissionRequester(activityContextProvider.getActivity())
     
     actual suspend fun hasLocationPermissions(): Boolean {
         return permissionRequester.hasLocationPermissions()

@@ -1,7 +1,6 @@
 package com.tracker
 
 import android.content.Context
-import android.app.Application
 
 /**
  * Провайдер Application Context
@@ -29,15 +28,15 @@ object ApplicationContextProvider {
 /**
  * Провайдер Activity Context (управляется через Koin)
  */
-class ActivityContextProvider {
+class ActivityProvider {
     private var activityContext: Context? = null
     
-    fun setContext(context: Context) {
+    fun setActivity(context: Context) {
         println("ActivityContextProvider.setContext() called with context: ${context.javaClass}")
         activityContext = context
     }
     
-    fun getContext(): Context {
+    fun getActivity(): Context {
         val context = activityContext
         if (context == null) {
             println("ActivityContextProvider.getContext() failed - context is null")
@@ -47,7 +46,7 @@ class ActivityContextProvider {
         return context
     }
     
-    fun clearContext() {
+    fun clearActivity() {
         println("ActivityContextProvider.clearContext() called")
         activityContext = null
     }

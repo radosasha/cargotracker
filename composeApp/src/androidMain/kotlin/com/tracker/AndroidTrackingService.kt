@@ -162,23 +162,6 @@ class AndroidTrackingService : LifecycleService(), KoinComponent {
         }
     }
 
-
-    private fun updateNotification(status: String = "GPS tracking active") {
-        val notification = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("GPS Трекинг активен")
-            .setContentText(status)
-            .setSmallIcon(android.R.drawable.ic_menu_mylocation)
-            .setOngoing(true)
-            .setPriority(NotificationCompat.PRIORITY_LOW)
-            .setCategory(NotificationCompat.CATEGORY_SERVICE)
-            .build()
-
-        val notificationManager = NotificationManagerCompat.from(this)
-        if (notificationManager.areNotificationsEnabled()) {
-            notificationManager.notify(NOTIFICATION_ID, notification)
-        }
-    }
-
     /**
      * Обновляет уведомление с подробной статистикой
      */

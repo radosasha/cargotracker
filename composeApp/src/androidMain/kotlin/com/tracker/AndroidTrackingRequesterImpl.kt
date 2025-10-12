@@ -10,13 +10,13 @@ import org.koin.core.component.inject
  */
 class AndroidTrackingRequesterImpl : TrackingRequester, KoinComponent {
     
-    private val activityContextProvider: ActivityContextProvider by inject()
+    private val activityContextProvider: ActivityProvider by inject()
 
     private var isTracking = false
     
     override suspend fun startTracking(): Result<Unit> {
         return try {
-            val context = activityContextProvider.getContext()
+            val context = activityContextProvider.getActivity()
             val intent = Intent(context, AndroidTrackingService::class.java)
             context.startForegroundService(intent)
             isTracking = true
@@ -30,7 +30,7 @@ class AndroidTrackingRequesterImpl : TrackingRequester, KoinComponent {
     
     override suspend fun stopTracking(): Result<Unit> {
         return try {
-            val context = activityContextProvider.getContext()
+            val context = activityContextProvider.getActivity()
             val intent = Intent(context, AndroidTrackingService::class.java)
             context.stopService(intent)
             isTracking = false

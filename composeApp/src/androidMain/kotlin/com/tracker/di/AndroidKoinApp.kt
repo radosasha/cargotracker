@@ -1,6 +1,6 @@
 package com.tracker.di
 
-import com.tracker.ActivityContextProvider
+import com.tracker.ActivityProvider
 import com.tracker.data.di.androidDataModule
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.startKoin
@@ -54,8 +54,8 @@ object AndroidKoinApp {
      */
     fun initActivityContext(context: android.content.Context) {
         
-        val activityContextProvider = GlobalContext.get().get<ActivityContextProvider>()
-        activityContextProvider.setContext(context)
+        val activityContextProvider = GlobalContext.get().get<ActivityProvider>()
+        activityContextProvider.setActivity(context)
         println("AndroidKoinApp: Activity context set successfully")
     }
     
@@ -64,8 +64,8 @@ object AndroidKoinApp {
      * Вызывается в Activity.onDestroy()
      */
     fun clearActivityContext() {
-        val activityContextProvider = GlobalContext.get().get<ActivityContextProvider>()
-        activityContextProvider.clearContext()
+        val activityContextProvider = GlobalContext.get().get<ActivityProvider>()
+        activityContextProvider.clearActivity()
         hasActivityScope = false
         println("AndroidKoinApp: Activity context cleared successfully")
     }

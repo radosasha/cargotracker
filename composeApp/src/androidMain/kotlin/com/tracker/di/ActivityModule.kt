@@ -1,6 +1,6 @@
 package com.tracker.di
 
-import com.tracker.ActivityContextProvider
+import com.tracker.ActivityProvider
 import com.tracker.AndroidPermissionRequesterImpl
 import com.tracker.AndroidTrackingRequesterImpl
 import com.tracker.PermissionChecker
@@ -14,8 +14,8 @@ import org.koin.dsl.module
  */
 val activityModule = module {
     // ActivityContextProvider как singleton в scope Activity
-    single<ActivityContextProvider> {
-        ActivityContextProvider()
+    single<ActivityProvider> {
+        ActivityProvider()
     }
     
     // PermissionChecker как singleton в scope Activity
