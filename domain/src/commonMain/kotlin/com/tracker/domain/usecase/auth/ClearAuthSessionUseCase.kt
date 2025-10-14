@@ -12,8 +12,3 @@ class ClearAuthSessionUseCase(
         authPreferencesRepository.clearSession()
     }
 }
-
-
-
-
-

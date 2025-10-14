@@ -8,9 +8,3 @@ data class SmsCodeVerify(
     val code: String,
     val deviceInfo: String? = null
 )
-
-
-
-
-
-

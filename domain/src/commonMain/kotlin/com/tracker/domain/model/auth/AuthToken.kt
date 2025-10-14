@@ -7,9 +7,3 @@ data class AuthToken(
     val token: String,
     val user: AuthUser
 )
-
-
-
-
-
-

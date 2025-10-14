@@ -14,6 +14,7 @@ import com.tracker.domain.usecase.auth.HasAuthSessionUseCase
 import com.tracker.domain.usecase.auth.RequestSmsCodeUseCase
 import com.tracker.domain.usecase.auth.SaveAuthSessionUseCase
 import com.tracker.domain.usecase.auth.VerifySmsCodeUseCase
+import com.tracker.domain.usecase.load.GetLoadsUseCase
 import org.koin.core.module.dsl.factoryOf
 import org.koin.dsl.module
 
@@ -50,4 +51,7 @@ val useCasesModule = module {
     factoryOf(::GetAuthSessionUseCase)
     factoryOf(::HasAuthSessionUseCase)
     factoryOf(::ClearAuthSessionUseCase)
+    
+    // Load Use Cases
+    factoryOf(::GetLoadsUseCase)
 }

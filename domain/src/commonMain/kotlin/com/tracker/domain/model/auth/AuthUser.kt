@@ -8,9 +8,3 @@ data class AuthUser(
     val phone: String,
     val name: String
 )
-
-
-
-
-
-

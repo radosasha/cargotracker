@@ -13,8 +13,3 @@ class GetAuthSessionUseCase(
         return authPreferencesRepository.getSession()
     }
 }
-
-
-
-
-

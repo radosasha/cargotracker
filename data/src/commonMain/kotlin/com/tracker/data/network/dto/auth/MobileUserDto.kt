@@ -11,9 +11,3 @@ data class MobileUserDto(
     val phone: String,
     val name: String
 )
-
-
-
-
-
-

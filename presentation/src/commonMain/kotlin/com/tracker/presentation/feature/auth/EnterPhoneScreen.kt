@@ -16,6 +16,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tracker.domain.model.auth.Country
 
 @Composable
@@ -23,7 +24,7 @@ fun EnterPhoneScreen(
     onNavigateToPin: (String) -> Unit,
     viewModel: EnterPhoneViewModel
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     // Handle navigation
     LaunchedEffect(uiState.navigateToPinScreen) {

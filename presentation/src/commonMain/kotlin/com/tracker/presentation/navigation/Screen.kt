@@ -7,6 +7,7 @@ package com.tracker.presentation.navigation
 object Screen {
     const val ENTER_PHONE = "enter_phone"
     const val ENTER_PIN = "enter_pin/{phone}"
+    const val LOADS = "loads"
     const val HOME = "home"
     
     fun enterPin(phone: String) = "enter_pin/$phone"

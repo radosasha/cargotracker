@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import com.tracker.presentation.feature.auth.EnterPhoneViewModel
 import com.tracker.presentation.feature.auth.EnterPinViewModel
 import com.tracker.presentation.feature.home.HomeViewModel
+import com.tracker.presentation.feature.loads.LoadsViewModel
 import org.koin.androidx.compose.koinViewModel
 
 /**
@@ -17,3 +18,6 @@ actual fun koinEnterPhoneViewModel(): EnterPhoneViewModel = koinViewModel()
 
 @Composable
 actual fun koinEnterPinViewModel(): EnterPinViewModel = koinViewModel()
+
+@Composable
+actual fun koinLoadsViewModel(): LoadsViewModel = koinViewModel()

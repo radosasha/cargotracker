@@ -16,16 +16,21 @@ import com.tracker.data.datasource.impl.LocationLocalDataSourceImpl
 import com.tracker.data.datasource.impl.LocationRemoteDataSourceImpl
 import com.tracker.data.datasource.impl.PrefsDataSourceImpl
 import com.tracker.data.datasource.impl.TrackingDataSourceImpl
+import com.tracker.data.datasource.load.LoadLocalDataSource
+import com.tracker.data.datasource.load.LoadRemoteDataSource
 import com.tracker.data.datasource.remote.AuthRemoteDataSource
 import com.tracker.data.network.api.AuthApi
 import com.tracker.data.network.api.AuthApiImpl
 import com.tracker.data.network.api.FlespiLocationApi
+import com.tracker.data.network.api.LoadApi
+import com.tracker.data.network.api.LoadApiImpl
 import com.tracker.data.network.api.OsmAndLocationApi
 import com.tracker.data.services.LocationProcessorImpl
 import com.tracker.data.services.LocationSyncServiceImpl
 import com.tracker.data.repository.AuthPreferencesRepositoryImpl
 import com.tracker.data.repository.AuthRepositoryImpl
 import com.tracker.data.repository.DeviceRepositoryImpl
+import com.tracker.data.repository.LoadRepositoryImpl
 import com.tracker.data.repository.LocationRepositoryImpl
 import com.tracker.data.repository.PermissionRepositoryImpl
 import com.tracker.data.repository.PrefsRepositoryImpl
@@ -33,6 +38,7 @@ import com.tracker.data.repository.TrackingRepositoryImpl
 import com.tracker.domain.repository.AuthPreferencesRepository
 import com.tracker.domain.repository.AuthRepository
 import com.tracker.domain.repository.DeviceRepository
+import com.tracker.domain.repository.LoadRepository
 import com.tracker.domain.repository.LocationRepository
 import com.tracker.domain.repository.PermissionRepository
 import com.tracker.domain.repository.PrefsRepository
@@ -86,6 +92,14 @@ val dataModule = module {
             baseUrl = "http://${ServerConfig.BASE_URL}:8082"
         )
     }
+    
+    // Load API
+    single<LoadApi> {
+        LoadApiImpl(
+            httpClient = get(),
+            baseUrl = "http://${ServerConfig.BASE_URL}:8082"
+        )
+    }
 
     // Data Sources
     single<GpsLocationDataSource> { GpsLocationDataSourceImpl(get()) }
@@ -93,6 +107,8 @@ val dataModule = module {
     single<TrackingDataSource> { TrackingDataSourceImpl(get()) }
     single<PrefsDataSource> { PrefsDataSourceImpl(get()) }
     single<AuthRemoteDataSource> { AuthRemoteDataSource(get(), get()) }
+    single { LoadRemoteDataSource(get()) }
+    single { LoadLocalDataSource(get()) }
 
     // Device ID
     single { DeviceConfig.DEVICE_ID }
@@ -105,6 +121,7 @@ val dataModule = module {
     single<TrackingRepository> { TrackingRepositoryImpl(get()) }
     single<AuthRepository> { AuthRepositoryImpl(get()) }
     single<AuthPreferencesRepository> { AuthPreferencesRepositoryImpl(get()) }
+    single<LoadRepository> { LoadRepositoryImpl(get(), get()) }
     
     // Domain Services - реализации в data слое
     single<LocationProcessor> { LocationProcessorImpl() }

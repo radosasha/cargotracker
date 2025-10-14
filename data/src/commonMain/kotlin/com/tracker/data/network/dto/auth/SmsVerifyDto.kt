@@ -12,9 +12,3 @@ data class SmsVerifyDto(
     val code: String,
     val deviceInfo: String? = null
 )
-
-
-
-
-
-

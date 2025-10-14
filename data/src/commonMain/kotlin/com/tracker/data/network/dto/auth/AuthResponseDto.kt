@@ -10,9 +10,3 @@ data class AuthResponseDto(
     val token: String,
     val user: MobileUserDto
 )
-
-
-
-
-
-

@@ -17,9 +17,11 @@ import com.tracker.presentation.di.koinEnterPhoneViewModel
 import com.tracker.presentation.di.koinEnterPinViewModel
 import com.tracker.presentation.di.koinHomeViewModel
 import com.tracker.presentation.di.koinInject
+import com.tracker.presentation.di.koinLoadsViewModel
 import com.tracker.presentation.feature.auth.EnterPhoneScreen
 import com.tracker.presentation.feature.auth.EnterPinScreen
 import com.tracker.presentation.feature.home.HomeScreen
+import com.tracker.presentation.feature.loads.LoadsScreen
 import kotlinx.coroutines.launch
 
 /**
@@ -41,7 +43,7 @@ fun TrackerNavigation() {
     LaunchedEffect(Unit) {
         scope.launch {
             val hasSession = hasAuthSessionUseCase()
-            startDestination = if (hasSession) Screen.HOME else Screen.ENTER_PHONE
+            startDestination = if (hasSession) Screen.LOADS else Screen.ENTER_PHONE
             isCheckingAuth = false
         }
     }
@@ -78,8 +80,8 @@ fun TrackerNavigation() {
             EnterPinScreen(
                 phone = phone,
                 onNavigateToHome = {
-                    // Clear back stack and navigate to home
-                    navController.navigate(Screen.HOME) {
+                    // Clear back stack and navigate to loads
+                    navController.navigate(Screen.LOADS) {
                         popUpTo(Screen.ENTER_PHONE) { inclusive = true }
                     }
                 },
@@ -91,6 +93,11 @@ fun TrackerNavigation() {
         }
         
         // Main app screens
+        composable(Screen.LOADS) {
+            val viewModel = koinLoadsViewModel()
+            LoadsScreen(viewModel = viewModel)
+        }
+        
         composable(Screen.HOME) {
             val viewModel = koinHomeViewModel()
             HomeScreen(viewModel = viewModel)

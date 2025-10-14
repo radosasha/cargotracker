@@ -10,9 +10,3 @@ import kotlinx.serialization.Serializable
 data class SmsRequestDto(
     val phone: String
 )
-
-
-
-
-
-

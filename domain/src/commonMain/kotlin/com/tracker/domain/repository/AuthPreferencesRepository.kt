@@ -11,8 +11,3 @@ interface AuthPreferencesRepository {
     suspend fun clearSession()
     suspend fun hasSession(): Boolean
 }
-
-
-
-
-

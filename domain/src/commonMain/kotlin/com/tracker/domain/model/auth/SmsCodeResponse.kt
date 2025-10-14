@@ -7,9 +7,3 @@ data class SmsCodeResponse(
     val status: String,
     val message: String
 )
-
-
-
-
-
-
