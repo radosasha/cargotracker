@@ -1,6 +1,8 @@
 package com.tracker.presentation.di
 
 import androidx.compose.runtime.Composable
+import com.tracker.presentation.feature.auth.EnterPhoneViewModel
+import com.tracker.presentation.feature.auth.EnterPinViewModel
 import com.tracker.presentation.feature.home.HomeViewModel
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -12,5 +14,19 @@ import org.koin.core.component.inject
 actual fun koinHomeViewModel(): HomeViewModel {
     return object : KoinComponent {
         val viewModel: HomeViewModel by inject()
+    }.viewModel
+}
+
+@Composable
+actual fun koinEnterPhoneViewModel(): EnterPhoneViewModel {
+    return object : KoinComponent {
+        val viewModel: EnterPhoneViewModel by inject()
+    }.viewModel
+}
+
+@Composable
+actual fun koinEnterPinViewModel(): EnterPinViewModel {
+    return object : KoinComponent {
+        val viewModel: EnterPinViewModel by inject()
     }.viewModel
 }

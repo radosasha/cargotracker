@@ -16,15 +16,22 @@ import com.tracker.data.datasource.impl.LocationLocalDataSourceImpl
 import com.tracker.data.datasource.impl.LocationRemoteDataSourceImpl
 import com.tracker.data.datasource.impl.PrefsDataSourceImpl
 import com.tracker.data.datasource.impl.TrackingDataSourceImpl
+import com.tracker.data.datasource.remote.AuthRemoteDataSource
+import com.tracker.data.network.api.AuthApi
+import com.tracker.data.network.api.AuthApiImpl
 import com.tracker.data.network.api.FlespiLocationApi
 import com.tracker.data.network.api.OsmAndLocationApi
 import com.tracker.data.services.LocationProcessorImpl
 import com.tracker.data.services.LocationSyncServiceImpl
+import com.tracker.data.repository.AuthPreferencesRepositoryImpl
+import com.tracker.data.repository.AuthRepositoryImpl
 import com.tracker.data.repository.DeviceRepositoryImpl
 import com.tracker.data.repository.LocationRepositoryImpl
 import com.tracker.data.repository.PermissionRepositoryImpl
 import com.tracker.data.repository.PrefsRepositoryImpl
 import com.tracker.data.repository.TrackingRepositoryImpl
+import com.tracker.domain.repository.AuthPreferencesRepository
+import com.tracker.domain.repository.AuthRepository
 import com.tracker.domain.repository.DeviceRepository
 import com.tracker.domain.repository.LocationRepository
 import com.tracker.domain.repository.PermissionRepository
@@ -32,6 +39,7 @@ import com.tracker.domain.repository.PrefsRepository
 import com.tracker.domain.repository.TrackingRepository
 import com.tracker.domain.service.LocationProcessor
 import com.tracker.domain.service.LocationSyncService
+import kotlinx.serialization.json.Json
 import io.ktor.client.HttpClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -58,15 +66,33 @@ val dataModule = module {
     // Local Data Source (Room)
     single<LocationLocalDataSource> { LocationLocalDataSourceImpl(get()) }
 
+    // JSON serialization
+    single {
+        Json {
+            ignoreUnknownKeys = true
+            isLenient = true
+            encodeDefaults = true
+        }
+    }
+
     // Network API
     single { OsmAndLocationApi(get(), ServerConfig.OSMAND_SERVER_URL, DeviceConfig.DEVICE_ID) }
     single { FlespiLocationApi(get(), ServerConfig.FLESPI_SERVER_URL, DeviceConfig.DEVICE_ID) }
+    
+    // Auth API
+    single<AuthApi> {
+        AuthApiImpl(
+            httpClient = get(),
+            baseUrl = "http://${ServerConfig.BASE_URL}:8082"
+        )
+    }
 
     // Data Sources
     single<GpsLocationDataSource> { GpsLocationDataSourceImpl(get()) }
     single<LocationRemoteDataSource> { LocationRemoteDataSourceImpl(get(), get()) }
     single<TrackingDataSource> { TrackingDataSourceImpl(get()) }
     single<PrefsDataSource> { PrefsDataSourceImpl(get()) }
+    single<AuthRemoteDataSource> { AuthRemoteDataSource(get(), get()) }
 
     // Device ID
     single { DeviceConfig.DEVICE_ID }
@@ -77,6 +103,8 @@ val dataModule = module {
     single<PermissionRepository> { PermissionRepositoryImpl(get()) }
     single<PrefsRepository> { PrefsRepositoryImpl(get()) }
     single<TrackingRepository> { TrackingRepositoryImpl(get()) }
+    single<AuthRepository> { AuthRepositoryImpl(get()) }
+    single<AuthPreferencesRepository> { AuthPreferencesRepositoryImpl(get()) }
     
     // Domain Services - реализации в data слое
     single<LocationProcessor> { LocationProcessorImpl() }

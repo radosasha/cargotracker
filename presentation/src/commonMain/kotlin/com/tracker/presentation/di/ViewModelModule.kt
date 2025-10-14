@@ -1,5 +1,7 @@
 package com.tracker.presentation.di
 
+import com.tracker.presentation.feature.auth.EnterPhoneViewModel
+import com.tracker.presentation.feature.auth.EnterPinViewModel
 import com.tracker.presentation.feature.home.HomeViewModel
 import org.koin.core.module.dsl.factoryOf
 import org.koin.dsl.module
@@ -13,4 +15,8 @@ val viewModelModule = module {
     
     // Feature ViewModels
     factoryOf(::HomeViewModel)
+    
+    // Auth ViewModels
+    factoryOf(::EnterPhoneViewModel)
+    factoryOf(::EnterPinViewModel)
 }
