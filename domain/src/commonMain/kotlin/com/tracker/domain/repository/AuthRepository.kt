@@ -25,3 +25,4 @@ interface AuthRepository {
      */
     suspend fun verifySmsCode(verify: SmsCodeVerify): Result<AuthToken>
 }
+

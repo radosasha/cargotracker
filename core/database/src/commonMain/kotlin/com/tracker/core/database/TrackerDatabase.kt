@@ -14,7 +14,7 @@ import com.tracker.core.database.entity.LocationEntity
  */
 @Database(
     entities = [LocationEntity::class, LoadEntity::class],
-    version = 2,
+    version = 4,
     exportSchema = true
 )
 @ConstructedBy(TrackerDatabaseConstructor::class)

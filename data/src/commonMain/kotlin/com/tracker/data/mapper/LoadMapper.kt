@@ -16,7 +16,8 @@ fun LoadDto.toDomain(): Load {
         loadId = loadId,
         description = description,
         lastUpdated = lastUpdated,
-        createdAt = createdAt
+        createdAt = createdAt,
+        loadStatus = loadStatus
     )
 }
 
@@ -28,7 +29,8 @@ fun LoadDto.toEntity(): LoadEntity {
         loadId = loadId,
         description = description,
         lastUpdated = lastUpdated,
-        createdAt = createdAt
+        createdAt = createdAt,
+        loadStatus = loadStatus
     )
 }
 
@@ -40,8 +42,10 @@ fun LoadEntity.toDomain(): Load {
         loadId = loadId,
         description = description,
         lastUpdated = lastUpdated,
-        createdAt = createdAt
+        createdAt = createdAt,
+        loadStatus = loadStatus
     )
 }
+
 
 

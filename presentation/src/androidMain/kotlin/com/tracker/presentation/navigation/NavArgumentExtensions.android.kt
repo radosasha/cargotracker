@@ -8,3 +8,4 @@ import androidx.navigation.NavBackStackEntry
 actual fun NavBackStackEntry.getStringArgument(key: String): String? {
     return arguments?.getString(key)
 }
+

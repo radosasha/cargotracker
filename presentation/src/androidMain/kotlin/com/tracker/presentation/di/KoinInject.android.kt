@@ -10,3 +10,4 @@ import org.koin.compose.koinInject as koinInjectAndroid
 actual inline fun <reified T> koinInject(): T {
     return koinInjectAndroid()
 }
+

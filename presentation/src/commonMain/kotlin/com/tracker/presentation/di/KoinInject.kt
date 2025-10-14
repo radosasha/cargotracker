@@ -7,3 +7,4 @@ import androidx.compose.runtime.Composable
  */
 @Composable
 expect inline fun <reified T> koinInject(): T
+

@@ -95,12 +95,26 @@ fun TrackerNavigation() {
         // Main app screens
         composable(Screen.LOADS) {
             val viewModel = koinLoadsViewModel()
-            LoadsScreen(viewModel = viewModel)
+            LoadsScreen(
+                viewModel = viewModel,
+                onLoadClick = { loadId ->
+                    navController.navigate(Screen.home(loadId))
+                }
+            )
         }
         
-        composable(Screen.HOME) {
+        composable(
+            route = Screen.HOME,
+            arguments = listOf(
+                navArgument("loadId") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val loadId = backStackEntry.getStringArgument("loadId") ?: ""
             val viewModel = koinHomeViewModel()
-            HomeScreen(viewModel = viewModel)
+            HomeScreen(
+                viewModel = viewModel,
+                loadId = loadId
+            )
         }
     }
 }

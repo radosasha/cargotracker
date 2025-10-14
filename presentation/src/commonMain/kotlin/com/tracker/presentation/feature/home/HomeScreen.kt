@@ -15,9 +15,16 @@ import com.tracker.presentation.component.MessageCard
  */
 @Composable
 fun HomeScreen(
-    viewModel: HomeViewModel
+    viewModel: HomeViewModel,
+    loadId: String
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    
+    // Initialize with loadId
+    LaunchedEffect(loadId) {
+        println("🏠 HomeScreen: Received loadId: $loadId")
+        // TODO: Use loadId to fetch load details or configure tracking
+    }
     
     Column(
         modifier = Modifier
@@ -31,6 +38,15 @@ fun HomeScreen(
             text = "GPS Tracker",
             style = MaterialTheme.typography.headlineLarge,
             fontWeight = FontWeight.Bold
+        )
+        
+        Spacer(modifier = Modifier.height(8.dp))
+        
+        // Load ID
+        Text(
+            text = "Load: $loadId",
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.primary
         )
         
         Spacer(modifier = Modifier.height(32.dp))

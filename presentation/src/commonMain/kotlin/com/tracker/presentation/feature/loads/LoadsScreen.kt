@@ -28,6 +28,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -42,7 +43,8 @@ import com.tracker.presentation.util.DateFormatter
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoadsScreen(
-    viewModel: LoadsViewModel
+    viewModel: LoadsViewModel,
+    onLoadClick: (String) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
@@ -78,7 +80,8 @@ fun LoadsScreen(
                 is LoadsUiState.Success -> LoadsListWithRefresh(
                     loads = state.loads,
                     isRefreshing = isRefreshing,
-                    onRefresh = { viewModel.refresh() }
+                    onRefresh = { viewModel.refresh() },
+                    onLoadClick = onLoadClick
                 )
             }
         }
@@ -199,7 +202,8 @@ private fun ErrorContentWithRefresh(
 private fun LoadsListWithRefresh(
     loads: List<Load>,
     isRefreshing: Boolean,
-    onRefresh: () -> Unit
+    onRefresh: () -> Unit,
+    onLoadClick: (String) -> Unit
 ) {
     PullToRefreshBox(
         isRefreshing = isRefreshing,
@@ -212,15 +216,22 @@ private fun LoadsListWithRefresh(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             items(loads, key = { it.loadId }) { load ->
-                LoadItem(load = load)
+                LoadItem(
+                    load = load,
+                    onClick = { onLoadClick(load.loadId) }
+                )
             }
         }
     }
 }
 
 @Composable
-private fun LoadItem(load: Load) {
+private fun LoadItem(
+    load: Load,
+    onClick: () -> Unit
+) {
     Card(
+        onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
@@ -237,28 +248,64 @@ private fun LoadItem(load: Load) {
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             // Load ID
-            Text(
-                text = load.loadId,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
-            )
+            Row(
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = "Load ID:",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                )
+                Text(
+                    text = load.loadId,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
             
             // Description
             load.description?.let { description ->
                 if (description.isNotBlank()) {
-                    Text(
-                        text = description,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
+                    Row(
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = "Description:",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                        )
+                        Text(
+                            text = description,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
                 }
             }
             
-            HorizontalDivider(
-                modifier = Modifier.padding(vertical = 4.dp),
-                color = MaterialTheme.colorScheme.outlineVariant
-            )
+            // Load Status
+            Row(
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = "Status:",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                )
+                Text(
+                    text = formatLoadStatus(load.loadStatus),
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = getLoadStatusColor(load.loadStatus)
+                )
+            }
             
             // Last Updated
             load.lastUpdated?.let { lastUpdated ->
@@ -268,35 +315,61 @@ private fun LoadItem(load: Load) {
                 ) {
                     Text(
                         text = "Last Updated:",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                     )
                     Text(
                         text = DateFormatter.formatTimestamp(lastUpdated),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 }
             }
             
             // Created At
-            load.createdAt?.let { createdAt ->
-                Row(
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(
-                        text = "Created:",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                    )
-                    Text(
-                        text = DateFormatter.formatTimestamp(createdAt),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
-                    )
-                }
+            Row(
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = "Created:",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                )
+                Text(
+                    text = DateFormatter.formatTimestamp(load.createdAt),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
             }
         }
+    }
+}
+
+private fun formatLoadStatus(status: Int): String {
+    return when (status) {
+        0 -> "Not connected"
+        1 -> "Connected"
+        2 -> "Disconnected"
+        else -> "Unknown ($status)"
+    }
+}
+
+/**
+ * Get color for load status
+ * 0 = Not connected (Gray)
+ * 1 = Connected (Green)
+ * 2 = Disconnected (Orange)
+ * Other = Unknown (Gray)
+ */
+@Composable
+private fun getLoadStatusColor(status: Int): Color {
+    return when (status) {
+        0 -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f) // Gray for Not connected
+        1 -> Color(0xFF4CAF50) // Green for Connected
+        2 -> Color(0xFFFF9800) // Orange for Disconnected
+        else -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f) // Gray for Unknown
     }
 }

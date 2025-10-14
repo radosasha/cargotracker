@@ -19,7 +19,8 @@ data class LoadDto(
     val lastUpdated: Long? = null,
     
     @SerialName("createdAt")
-    val createdAt: Long? = null
+    val createdAt: Long,
+    
+    @SerialName("loadStatus")
+    val loadStatus: Int
 )
-
-

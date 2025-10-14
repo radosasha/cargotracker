@@ -6,3 +6,4 @@ package com.tracker.domain.model.auth
 data class SmsCodeRequest(
     val phone: String
 )
+
