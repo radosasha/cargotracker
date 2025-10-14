@@ -24,5 +24,23 @@ interface LoadRepository {
      * Clear all cached loads
      */
     suspend fun clearCache()
+    
+    /**
+     * Connect to load
+     * Sets loadstatus=1 for the specified load and loadstatus=2 for all other loads with loadstatus=1
+     * @param token Authentication token
+     * @param loadId Load ID to connect to
+     * @return Updated list of loads
+     */
+    suspend fun connectToLoad(token: String, loadId: String): Result<List<Load>>
+    
+    /**
+     * Disconnect from load
+     * Sets loadstatus=2 for the specified load
+     * @param token Authentication token
+     * @param loadId Load ID to disconnect from
+     * @return Updated list of loads
+     */
+    suspend fun disconnectFromLoad(token: String, loadId: String): Result<List<Load>>
 }
 
