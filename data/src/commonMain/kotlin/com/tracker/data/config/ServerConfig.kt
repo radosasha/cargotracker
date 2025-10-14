@@ -4,15 +4,15 @@ package com.tracker.data.config
  * Конфигурация сервера Traccar
  */
 object ServerConfig {
-    // Базовый URL сервера
-//    private const val BASE_URL = "http://demo.traccar.org"
-    private const val BASE_URL = "http://192.168.31.180"
+    // Базовый URL сервера (без http://)
+//    const val BASE_URL = "demo.traccar.org"
+    const val BASE_URL = "192.168.31.116"
 
     // URL для OsmAnd протокола (порт 5055)
-    const val OSMAND_SERVER_URL = "$BASE_URL:5055"
+    const val OSMAND_SERVER_URL = "http://$BASE_URL:5055"
     
     // URL для Flespi протокола (порт 5149)
-    const val FLESPI_SERVER_URL = "$BASE_URL:5149"
+    const val FLESPI_SERVER_URL = "http://$BASE_URL:5149"
     
 
     // Таймауты для HTTP запросов
