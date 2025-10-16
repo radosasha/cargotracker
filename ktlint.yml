@@ -9,6 +9,9 @@ disabled_rules:
   - discouraged-comment-location
   - no-empty-first-line-in-class-body
   - blank-line-before-declaration
+  - wrapping
+  - parameter-list-wrapping
+  - multiline-expression-wrapping
 
 # Disable experimental rules
 experimental:
@@ -22,3 +25,7 @@ additional_editorconfig:
   ktlint_allow_underscore_in_private_variable_name: true
   # Удалять лишние пустые строки в конце файлов
   ktlint_remove_redundant_blank_lines: true
+  # Настройки для переносов строк
+  ktlint_wrapping: off
+  ktlint_parameter_list_wrapping: off
+  ktlint_multiline_expression_wrapping: off
