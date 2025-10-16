@@ -22,22 +22,5 @@ insert_final_newline = true
 max_line_length = 140
 ktlint_code_style = ktlint_official
 
-# Разрешить @Composable и @Preview функциям начинаться с заглавной буквы
-ktlint_function_naming_ignore_annotated = "Composable,Preview"
-
-# Разрешить приватным переменным начинаться с "_"
-ktlint_allow_underscore_in_private_variable_name = true
-
-# Удалять лишние пустые строки в конце файлов
-ktlint_remove_redundant_blank_lines = true
-
-# Настройки для переносов строк
-# Не переносить простые присваивания
-ktlint_wrapping = off
-# Не переносить вызовы функций с короткими параметрами
-ktlint_parameter_list_wrapping = off
-# Не переносить многострочные выражения
-ktlint_multiline_expression_wrapping = off
-
 [*.md]
 trim_trailing_whitespace = false

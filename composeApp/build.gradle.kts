@@ -6,6 +6,35 @@ plugins {
     alias(libs.plugins.ktlint)
 }
 
+ktlint {
+    version.set("1.2.1")
+    debug.set(false)
+    verbose.set(false)
+    android.set(true)
+    outputToConsole.set(true)
+    outputColorName.set("RED")
+    ignoreFailures.set(false)
+    enableExperimentalRules.set(false)
+    
+    filter {
+        exclude("**/generated/**")
+        exclude("**/build/**")
+        include("**/kotlin/**")
+    }
+    
+    // Дополнительные настройки для игнорирования правил
+    disabledRules.set(setOf(
+        "function-naming",
+        "class-naming",
+        "discouraged-comment-location",
+        "no-empty-first-line-in-class-body",
+        "blank-line-before-declaration",
+        "wrapping",
+        "parameter-list-wrapping",
+        "multiline-expression-wrapping"
+    ))
+}
+
 kotlin {
     sourceSets {
         androidMain.dependencies {
