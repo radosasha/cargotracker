@@ -9,4 +9,3 @@ import androidx.navigation.NavBackStackEntry
 actual fun NavBackStackEntry.getStringArgument(key: String): String? {
     return savedStateHandle.get<String>(key)
 }
-
