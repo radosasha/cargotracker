@@ -13,5 +13,8 @@
 # iOS specific files
 composeApp/src/iosMain/kotlin/MainViewController.kt
 
+# Files with Composable functions that need uppercase names
+composeApp/src/commonMain/kotlin/com/tracker/App.kt
+
 # Note: XML files like AndroidManifest.xml will be processed by ktlint
 # to remove extra blank lines at the end

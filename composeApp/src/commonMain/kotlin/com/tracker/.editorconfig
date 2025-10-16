@@ -1,0 +1,4 @@
+root = true
+
+[App.kt]
+ktlint_function_naming_ignore_annotated = "Composable,Preview"
