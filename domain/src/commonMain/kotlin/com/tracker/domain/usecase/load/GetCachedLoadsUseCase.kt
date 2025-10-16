@@ -8,7 +8,7 @@ import com.tracker.domain.repository.LoadRepository
  * Used when returning from other screens to refresh the list with latest cached data
  */
 class GetCachedLoadsUseCase(
-    private val loadRepository: LoadRepository
+    private val loadRepository: LoadRepository,
 ) {
     /**
      * Get cached loads from local database
@@ -19,7 +19,3 @@ class GetCachedLoadsUseCase(
         return loadRepository.getCachedLoads()
     }
 }
-
-
-
-

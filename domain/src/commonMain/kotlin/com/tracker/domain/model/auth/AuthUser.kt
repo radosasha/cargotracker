@@ -6,9 +6,5 @@ package com.tracker.domain.model.auth
 data class AuthUser(
     val id: Long,
     val phone: String,
-    val name: String
+    val name: String,
 )
-
-
-
-

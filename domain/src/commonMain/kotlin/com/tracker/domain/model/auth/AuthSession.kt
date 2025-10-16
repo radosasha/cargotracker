@@ -5,9 +5,5 @@ package com.tracker.domain.model.auth
  */
 data class AuthSession(
     val token: String,
-    val user: AuthUser
+    val user: AuthUser,
 )
-
-
-
-

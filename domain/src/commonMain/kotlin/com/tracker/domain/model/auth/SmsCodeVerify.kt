@@ -6,9 +6,5 @@ package com.tracker.domain.model.auth
 data class SmsCodeVerify(
     val phone: String,
     val code: String,
-    val deviceInfo: String? = null
+    val deviceInfo: String? = null,
 )
-
-
-
-

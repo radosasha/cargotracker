@@ -10,7 +10,7 @@ import com.tracker.domain.repository.LoadRepository
  */
 class DisconnectFromLoadUseCase(
     private val loadRepository: LoadRepository,
-    private val authPreferencesRepository: AuthPreferencesRepository
+    private val authPreferencesRepository: AuthPreferencesRepository,
 ) {
     /**
      * Disconnect from load
@@ -20,16 +20,16 @@ class DisconnectFromLoadUseCase(
      */
     suspend operator fun invoke(loadId: String): Result<List<Load>> {
         println("🔌 DisconnectFromLoadUseCase: Disconnecting from load $loadId")
-        
+
         // Get auth token
         val authSession = authPreferencesRepository.getSession()
         val token = authSession?.token
-        
+
         if (token == null) {
             println("❌ DisconnectFromLoadUseCase: Not authenticated")
             return Result.failure(Exception("Not authenticated"))
         }
-        
+
         return loadRepository.disconnectFromLoad(token, loadId)
     }
 }

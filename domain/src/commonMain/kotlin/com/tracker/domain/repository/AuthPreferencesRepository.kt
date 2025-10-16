@@ -7,11 +7,10 @@ import com.tracker.domain.model.auth.AuthSession
  */
 interface AuthPreferencesRepository {
     suspend fun saveSession(session: AuthSession)
+
     suspend fun getSession(): AuthSession?
+
     suspend fun clearSession()
+
     suspend fun hasSession(): Boolean
 }
-
-
-
-

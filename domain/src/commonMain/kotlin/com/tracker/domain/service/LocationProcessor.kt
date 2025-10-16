@@ -8,29 +8,35 @@ import com.tracker.domain.model.TrackingStats
  * Содержит бизнес-логику определения качества и необходимости отправки координат
  */
 interface LocationProcessor {
-    
     /**
      * Обрабатывает новую GPS координату
      * @param location новая координата
      * @return результат обработки с информацией о том, была ли координата отправлена
      */
     fun processLocation(location: Location): LocationProcessResult
-    
+
     /**
      * Обновляет статистику сохранения координаты
      */
     fun updateSavedLocation()
-    
+
     /**
      * Обновляет статистику отправки координат
      */
-    fun updateSentLocations(location: Location, count: Int)
-    
+    fun updateSentLocations(
+        location: Location,
+        count: Int,
+    )
+
     /**
      * Обновляет статистику ошибки отправки координат
      */
-    fun updateSendError(location: Location, errorMessage: String, errorType: String = "Network Error")
-    
+    fun updateSendError(
+        location: Location,
+        errorMessage: String,
+        errorType: String = "Network Error",
+    )
+
     /**
      * Создает текущую статистику трекинга
      */
@@ -46,5 +52,5 @@ data class LocationProcessResult(
     val totalReceived: Int,
     val totalSent: Int,
     val lastSentTime: Long,
-    val trackingStats: TrackingStats
+    val trackingStats: TrackingStats,
 )

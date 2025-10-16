@@ -12,7 +12,7 @@ data class TrackingStats(
     val isTracking: Boolean = false,
     val totalSaved: Int = 0,
     val totalSent: Int = 0,
-    val totalFiltered: Int = 0
+    val totalFiltered: Int = 0,
 )
 
 /**
@@ -24,7 +24,7 @@ data class LocationInfo(
     val accuracy: Float?,
     val timestamp: Instant,
     val speed: Float? = null,
-    val altitude: Double? = null
+    val altitude: Double? = null,
 )
 
 /**
@@ -37,7 +37,7 @@ data class FilteredLocationInfo(
     val timestamp: Instant,
     val speed: Float? = null,
     val altitude: Double? = null,
-    val filterReason: String
+    val filterReason: String,
 )
 
 /**
@@ -51,5 +51,5 @@ data class SendErrorInfo(
     val speed: Float? = null,
     val altitude: Double? = null,
     val errorMessage: String,
-    val errorType: String = "Network Error"
+    val errorType: String = "Network Error",
 )

@@ -5,9 +5,5 @@ package com.tracker.domain.model.auth
  */
 data class SmsCodeResponse(
     val status: String,
-    val message: String
+    val message: String,
 )
-
-
-
-

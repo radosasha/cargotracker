@@ -9,8 +9,5 @@ data class Load(
     val description: String?,
     val lastUpdated: Long?,
     val createdAt: Long,
-    val loadStatus: Int
+    val loadStatus: Int,
 )
-
-
-

@@ -10,7 +10,7 @@ import com.tracker.domain.repository.LoadRepository
  */
 class ConnectToLoadUseCase(
     private val loadRepository: LoadRepository,
-    private val authPreferencesRepository: AuthPreferencesRepository
+    private val authPreferencesRepository: AuthPreferencesRepository,
 ) {
     /**
      * Connect to load
@@ -20,16 +20,16 @@ class ConnectToLoadUseCase(
      */
     suspend operator fun invoke(loadId: String): Result<List<Load>> {
         println("🔌 ConnectToLoadUseCase: Connecting to load $loadId")
-        
+
         // Get auth token
         val authSession = authPreferencesRepository.getSession()
         val token = authSession?.token
-        
+
         if (token == null) {
             println("❌ ConnectToLoadUseCase: Not authenticated")
             return Result.failure(Exception("Not authenticated"))
         }
-        
+
         return loadRepository.connectToLoad(token, loadId)
     }
 }

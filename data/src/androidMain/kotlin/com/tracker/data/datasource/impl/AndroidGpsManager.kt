@@ -2,9 +2,7 @@ package com.tracker.data.datasource.impl
 
 import android.content.Context
 import android.content.pm.PackageManager
-import android.location.Location as AndroidLocation
 import android.location.LocationListener
-import android.location.LocationManager as AndroidLocationManager
 import android.os.Looper
 import androidx.core.app.ActivityCompat
 import com.tracker.data.datasource.GpsManager
@@ -18,22 +16,23 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Instant
+import android.location.Location as AndroidLocation
+import android.location.LocationManager as AndroidLocationManager
 
 /**
  * Android-специфичная реализация GpsManager
  * Отвечает за получение GPS координат через Android LocationManager
  */
 class AndroidGpsManager(
-    private val context: Context
+    private val context: Context,
 ) : GpsManager {
-
     private val androidLocationManager = context.getSystemService(Context.LOCATION_SERVICE) as AndroidLocationManager
-    private val _gpsLocationFlow = MutableSharedFlow<GpsLocation>(replay = 1)
+    private val gpsLocationFlow = MutableSharedFlow<GpsLocation>(replay = 1)
     private var isTracking = false
-    
+
     // Coroutine scope for emitting to flow
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
-    
+
     companion object {
         // Интервалы обновления GPS (в миллисекундах)
         private const val MIN_TIME_MS = 60 * 1000L // 1 минута
@@ -49,7 +48,7 @@ class AndroidGpsManager(
         // Проверяем разрешения
         if (ActivityCompat.checkSelfPermission(
                 context,
-                android.Manifest.permission.ACCESS_FINE_LOCATION
+                android.Manifest.permission.ACCESS_FINE_LOCATION,
             ) != PackageManager.PERMISSION_GRANTED
         ) {
             println("AndroidGpsManager: Location permission not granted")
@@ -58,25 +57,25 @@ class AndroidGpsManager(
 
         try {
             println("AndroidGpsManager: Starting GPS tracking")
-            
+
             // Запрашиваем обновления GPS
             androidLocationManager.requestLocationUpdates(
                 AndroidLocationManager.GPS_PROVIDER,
                 MIN_TIME_MS,
                 MIN_DISTANCE_M,
                 locationListener,
-                Looper.getMainLooper()
+                Looper.getMainLooper(),
             )
-            
+
             // Также используем Network Provider как резерв
             androidLocationManager.requestLocationUpdates(
                 AndroidLocationManager.NETWORK_PROVIDER,
                 MIN_TIME_MS,
                 MIN_DISTANCE_M,
                 locationListener,
-                Looper.getMainLooper()
+                Looper.getMainLooper(),
             )
-            
+
             isTracking = true
             println("AndroidGpsManager: GPS tracking started successfully")
             return Result.success(Unit)
@@ -111,7 +110,7 @@ class AndroidGpsManager(
     }
 
     override fun observeGpsLocations(): Flow<GpsLocation> {
-        return _gpsLocationFlow.asSharedFlow()
+        return gpsLocationFlow.asSharedFlow()
             .onStart {
                 // Автоматически запускаем GPS трекинг при подписке
                 if (!isTracking) {
@@ -120,22 +119,23 @@ class AndroidGpsManager(
             }
     }
 
-    private val locationListener = LocationListener { androidLocation ->
-        println("AndroidGpsManager: GPS Location received")
-        println("AndroidGpsManager: Lat: ${androidLocation.latitude}, Lon: ${androidLocation.longitude}")
-        println("AndroidGpsManager: Accuracy: ${androidLocation.accuracy}m, Time: ${androidLocation.time}")
-        println("AndroidGpsManager: Speed: ${if (androidLocation.hasSpeed()) androidLocation.speed else "N/A"} m/s")
-        println("AndroidGpsManager: Bearing: ${if (androidLocation.hasBearing()) androidLocation.bearing else "N/A"}°")
+    private val locationListener =
+        LocationListener { androidLocation ->
+            println("AndroidGpsManager: GPS Location received")
+            println("AndroidGpsManager: Lat: ${androidLocation.latitude}, Lon: ${androidLocation.longitude}")
+            println("AndroidGpsManager: Accuracy: ${androidLocation.accuracy}m, Time: ${androidLocation.time}")
+            println("AndroidGpsManager: Speed: ${if (androidLocation.hasSpeed()) androidLocation.speed else "N/A"} m/s")
+            println("AndroidGpsManager: Bearing: ${if (androidLocation.hasBearing()) androidLocation.bearing else "N/A"}°")
 
-        // Конвертируем Android Location в GpsLocation
-        val gpsLocation = convertToGpsLocation(androidLocation)
+            // Конвертируем Android Location в GpsLocation
+            val gpsLocation = convertToGpsLocation(androidLocation)
 
-        // Эмитим в flow
-        scope.launch {
-            _gpsLocationFlow.emit(gpsLocation)
-            println("AndroidGpsManager: Location emitted to flow")
+            // Эмитим в flow
+            scope.launch {
+                gpsLocationFlow.emit(gpsLocation)
+                println("AndroidGpsManager: Location emitted to flow")
+            }
         }
-    }
 
     private fun convertToGpsLocation(androidLocation: AndroidLocation): GpsLocation {
         return GpsLocation(
@@ -146,8 +146,7 @@ class AndroidGpsManager(
             speed = if (androidLocation.hasSpeed()) androidLocation.speed else null,
             bearing = if (androidLocation.hasBearing()) androidLocation.bearing else null,
             timestamp = Instant.fromEpochMilliseconds(androidLocation.time),
-            provider = androidLocation.provider ?: "unknown"
+            provider = androidLocation.provider ?: "unknown",
         )
     }
 }
-

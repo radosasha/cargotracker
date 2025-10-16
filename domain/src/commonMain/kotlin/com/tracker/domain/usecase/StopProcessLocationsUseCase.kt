@@ -7,9 +7,8 @@ import com.tracker.domain.repository.LocationRepository
  * Останавливает GPS трекинг
  */
 class StopProcessLocationsUseCase(
-    private val locationRepository: LocationRepository
+    private val locationRepository: LocationRepository,
 ) {
-    
     suspend operator fun invoke(): Result<Unit> {
         return try {
             println("StopGpsTrackingUseCase: Stopping GPS tracking")
@@ -26,4 +25,3 @@ class StopProcessLocationsUseCase(
         }
     }
 }
-

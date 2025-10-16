@@ -10,7 +10,7 @@ import com.tracker.domain.repository.LoadRepository
  */
 class GetLoadsUseCase(
     private val loadRepository: LoadRepository,
-    private val authPreferencesRepository: AuthPreferencesRepository
+    private val authPreferencesRepository: AuthPreferencesRepository,
 ) {
     /**
      * Get loads from server or cache
@@ -21,12 +21,11 @@ class GetLoadsUseCase(
         // Get auth token
         val authSession = authPreferencesRepository.getSession()
         val token = authSession?.token
-        
+
         if (token == null) {
             return Result.failure(Exception("Not authenticated"))
         }
-        
+
         return loadRepository.getLoads(token)
     }
 }
-

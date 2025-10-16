@@ -7,7 +7,7 @@ import com.tracker.domain.repository.AuthPreferencesRepository
  * Use case for saving authentication session
  */
 class SaveAuthSessionUseCase(
-    private val authPreferencesRepository: AuthPreferencesRepository
+    private val authPreferencesRepository: AuthPreferencesRepository,
 ) {
     suspend operator fun invoke(session: AuthSession) {
         println("💾 SaveAuthSessionUseCase: Saving session for user: ${session.user.name}")
@@ -15,4 +15,3 @@ class SaveAuthSessionUseCase(
         println("💾 SaveAuthSessionUseCase: ✅ Session saved")
     }
 }
-

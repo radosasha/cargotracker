@@ -13,13 +13,12 @@ class StartTrackingUseCase(
     private val permissionRepository: PermissionRepository,
     private val trackingRepository: TrackingRepository,
     private val prefsRepository: PrefsRepository,
-    private val locationSyncService: LocationSyncService
+    private val locationSyncService: LocationSyncService,
 ) {
-    
     suspend operator fun invoke(): Result<Unit> {
         // Проверяем разрешения перед запуском
         val permissionStatus = permissionRepository.getPermissionStatus()
-        
+
         return if (permissionStatus.hasAllPermissions) {
             // Проверяем, не активен ли уже трекинг
             val currentStatus = trackingRepository.getTrackingStatus()
@@ -29,20 +28,20 @@ class StartTrackingUseCase(
                 prefsRepository.saveTrackingState(true)
                 return Result.success(Unit)
             }
-            
+
             val result = trackingRepository.startTracking()
-            
+
             // Если трекинг успешно запущен, сохраняем состояние в DataStore
             if (result.isSuccess) {
                 prefsRepository.saveTrackingState(true)
                 locationSyncService.startSync()
                 println("StartTrackingUseCase: Tracking started and state saved to DataStore")
             }
-            
+
             result
         } else {
             Result.failure(
-                IllegalStateException("Не все необходимые разрешения получены")
+                IllegalStateException("Не все необходимые разрешения получены"),
             )
         }
     }

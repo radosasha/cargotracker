@@ -22,7 +22,6 @@ class StartProcessLocationsUseCase(
     private val deviceRepository: DeviceRepository,
     private val loadRepository: LoadRepository,
 ) {
-
     /**
      * Запускает GPS трекинг и возвращает Flow с результатами обработки координат
      * @return Flow<LocationProcessResult> поток результатов обработки GPS координат
@@ -31,9 +30,10 @@ class StartProcessLocationsUseCase(
         println("StartProcessLocationsUseCase: Starting GPS location processing")
 
         // Запускаем GPS трекинг и конвертируем Flow<Location> в Flow<LocationProcessResult>
-        val connectedLoad = withContext(Dispatchers.Default) {
-            loadRepository.getConnectedLoad()
-        } ?: throw IllegalStateException("Connected Load not found")
+        val connectedLoad =
+            withContext(Dispatchers.Default) {
+                loadRepository.getConnectedLoad()
+            } ?: throw IllegalStateException("Connected Load not found")
         return locationRepository.startGpsTracking(connectedLoad.loadId)
             .map { location ->
                 try {
@@ -62,7 +62,7 @@ class StartProcessLocationsUseCase(
                         totalReceived = 0,
                         totalSent = 0,
                         lastSentTime = 0,
-                        trackingStats = locationProcessor.createCurrentTrackingStats()
+                        trackingStats = locationProcessor.createCurrentTrackingStats(),
                     )
                 }
             }
@@ -76,7 +76,10 @@ class StartProcessLocationsUseCase(
     /**
      * Обрабатывает одну GPS координату
      */
-    private suspend fun processLocation(loadId: String, location: Location): LocationProcessResult {
+    private suspend fun processLocation(
+        loadId: String,
+        location: Location,
+    ): LocationProcessResult {
         // Обрабатываем координату через LocationProcessor
         val processResult = locationProcessor.processLocation(location)
 
@@ -98,16 +101,17 @@ class StartProcessLocationsUseCase(
                 println("StartProcessLocationsUseCase: Found ${unsentLocations.size} unsent locations in DB")
 
                 // Определяем стратегию отправки
-                val uploadResult = if (unsentLocations.size == 1) {
-                    // Если только одна координата - отправляем через OsmAnd протокол
-                    println("StartProcessLocationsUseCase: Sending single location via OsmAnd protocol")
-                    locationRepository.sendLocation(loadId, location)
-                } else {
-                    // Если несколько координат - отправляем все через Flespi протокол
-                    println("StartProcessLocationsUseCase: Sending ${unsentLocations.size} locations via Flespi protocol")
-                    val locations = unsentLocations.map { it.second }
-                    locationRepository.sendLocations(loadId, locations)
-                }
+                val uploadResult =
+                    if (unsentLocations.size == 1) {
+                        // Если только одна координата - отправляем через OsmAnd протокол
+                        println("StartProcessLocationsUseCase: Sending single location via OsmAnd protocol")
+                        locationRepository.sendLocation(loadId, location)
+                    } else {
+                        // Если несколько координат - отправляем все через Flespi протокол
+                        println("StartProcessLocationsUseCase: Sending ${unsentLocations.size} locations via Flespi protocol")
+                        val locations = unsentLocations.map { it.second }
+                        locationRepository.sendLocations(loadId, locations)
+                    }
 
                 if (uploadResult.isSuccess) {
                     // Обновляем статистику отправки
@@ -136,7 +140,7 @@ class StartProcessLocationsUseCase(
                 println("StartProcessLocationsUseCase: Error: ${e.message}")
                 return processResult.copy(
                     shouldSend = false,
-                    reason = "Failed to process location: ${e.message}"
+                    reason = "Failed to process location: ${e.message}",
                 )
             }
         }

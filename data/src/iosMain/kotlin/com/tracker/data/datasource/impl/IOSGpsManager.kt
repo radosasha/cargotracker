@@ -33,11 +33,11 @@ import platform.darwin.dispatch_get_main_queue
 @OptIn(ExperimentalForeignApi::class)
 class IOSGpsManager : GpsManager {
 
-    private val _gpsLocationFlow = MutableSharedFlow<GpsLocation>(replay = 1)
+    private val gpsLocationFlow = MutableSharedFlow<GpsLocation>(replay = 1)
     private val locationManager = CLLocationManager()
     private val delegate = LocationDelegate()
     private var isTracking = false
-    
+
     // Coroutine scope for emitting to flow
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
@@ -57,15 +57,15 @@ class IOSGpsManager : GpsManager {
         delegate.onLocationUpdate = { location ->
             println("IOSGpsManager: onNewLocation callback called")
             println("IOSGpsManager: Emitting location to flow")
-            
+
             // Всегда используем корутину для emit, чтобы гарантировать доставку
             scope.launch {
                 val gpsLocation = convertToGpsLocation(location)
-                _gpsLocationFlow.emit(gpsLocation)
+                gpsLocationFlow.emit(gpsLocation)
                 println("IOSGpsManager: Successfully emitted GPS location to flow")
             }
-            
-            println("IOSGpsManager: Flow has collectors: ${_gpsLocationFlow.subscriptionCount.value}")
+
+            println("IOSGpsManager: Flow has collectors: ${gpsLocationFlow.subscriptionCount.value}")
         }
 
         // Настраиваем callback для изменений разрешений (только для логирования)
@@ -98,7 +98,7 @@ class IOSGpsManager : GpsManager {
         return try {
             // Запускаем трекинг
             println("IOSGpsManager: Starting location tracking")
-            
+
             dispatch_async(dispatch_get_main_queue()) {
                 startActualTracking()
             }
@@ -132,7 +132,7 @@ class IOSGpsManager : GpsManager {
     }
 
     override fun observeGpsLocations(): Flow<GpsLocation> {
-        return _gpsLocationFlow.asSharedFlow()
+        return gpsLocationFlow.asSharedFlow()
             .onStart {
                 // Автоматически запускаем GPS трекинг при подписке
                 if (!isTracking) {
@@ -174,25 +174,25 @@ class IOSGpsManager : GpsManager {
  */
 @OptIn(ExperimentalForeignApi::class)
 class LocationDelegate : NSObject(), CLLocationManagerDelegateProtocol {
-    
+
     var onLocationUpdate: ((CLLocation) -> Unit)? = null
     var onAuthorizationChange: ((Int) -> Unit)? = null
-    
+
     override fun locationManager(manager: CLLocationManager, didUpdateLocations: List<*>) {
         println("LocationDelegate: didUpdateLocations called with ${didUpdateLocations.size} locations")
-        
+
         if (didUpdateLocations.isNotEmpty()) {
             val location = didUpdateLocations.last() as CLLocation
             println("LocationDelegate: Latest location received")
-            
+
             onLocationUpdate?.invoke(location)
         }
     }
-    
+
     override fun locationManager(manager: CLLocationManager, didFailWithError: NSError) {
         println("LocationDelegate: didFailWithError: ${didFailWithError.localizedDescription}")
     }
-    
+
     override fun locationManager(manager: CLLocationManager, didChangeAuthorizationStatus: Int) {
         println("LocationDelegate: didChangeAuthorizationStatus: $didChangeAuthorizationStatus")
         onAuthorizationChange?.invoke(didChangeAuthorizationStatus)

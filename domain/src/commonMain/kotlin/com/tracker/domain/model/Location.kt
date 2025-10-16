@@ -13,9 +13,8 @@ data class Location(
     val speed: Float? = null,
     val bearing: Float? = null,
     val timestamp: Instant,
-    val deviceId: String? = null
+    val deviceId: String? = null,
 )
-
 
 /**
  * Статус GPS трекинга
@@ -25,7 +24,7 @@ enum class TrackingStatus {
     STARTING,
     ACTIVE,
     STOPPING,
-    ERROR
+    ERROR,
 }
 
 /**
@@ -35,7 +34,7 @@ data class PermissionStatus(
     val hasLocationPermission: Boolean,
     val hasBackgroundLocationPermission: Boolean,
     val hasNotificationPermission: Boolean,
-    val isBatteryOptimizationDisabled: Boolean
+    val isBatteryOptimizationDisabled: Boolean,
 ) {
     val hasAllPermissions: Boolean
         get() = hasLocationPermission && hasBackgroundLocationPermission && hasNotificationPermission && isBatteryOptimizationDisabled

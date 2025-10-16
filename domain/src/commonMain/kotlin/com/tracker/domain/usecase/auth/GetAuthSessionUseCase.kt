@@ -7,13 +7,9 @@ import com.tracker.domain.repository.AuthPreferencesRepository
  * Use case for getting current authentication session
  */
 class GetAuthSessionUseCase(
-    private val authPreferencesRepository: AuthPreferencesRepository
+    private val authPreferencesRepository: AuthPreferencesRepository,
 ) {
     suspend operator fun invoke(): AuthSession? {
         return authPreferencesRepository.getSession()
     }
 }
-
-
-
-

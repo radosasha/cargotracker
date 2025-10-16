@@ -11,9 +11,8 @@ import com.tracker.domain.service.LocationSyncService
 class StopTrackingUseCase(
     private val trackingRepository: TrackingRepository,
     private val prefsRepository: PrefsRepository,
-    private val locationSyncManager: LocationSyncService
+    private val locationSyncManager: LocationSyncService,
 ) {
-    
     suspend operator fun invoke(): Result<Unit> {
         // Проверяем, не остановлен ли уже трекинг
         val currentStatus = trackingRepository.getTrackingStatus()
@@ -23,20 +22,20 @@ class StopTrackingUseCase(
             prefsRepository.saveTrackingState(false)
             return Result.success(Unit)
         }
-        
+
         // Останавливаем синхронизацию
         locationSyncManager.stopSync()
         println("StopTrackingUseCase: Location sync stopped")
-        
+
         // Останавливаем трекинг
         val result = trackingRepository.stopTracking()
-        
+
         // Если трекинг успешно остановлен, сохраняем состояние в DataStore
         if (result.isSuccess) {
             prefsRepository.saveTrackingState(false)
             println("StopTrackingUseCase: Tracking stopped and state saved to DataStore")
         }
-        
+
         return result
     }
 }
