@@ -10,5 +10,8 @@
 # KSP generated files
 **/ksp/**
 
+# iOS specific files
+composeApp/src/iosMain/kotlin/MainViewController.kt
+
 # Note: XML files like AndroidManifest.xml will be processed by ktlint
 # to remove extra blank lines at the end
