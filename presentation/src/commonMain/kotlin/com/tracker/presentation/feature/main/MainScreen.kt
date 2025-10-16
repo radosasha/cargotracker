@@ -14,7 +14,7 @@ import com.tracker.presentation.navigation.TrackerNavigation
 fun MainScreen() {
     MaterialTheme {
         Scaffold(
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier.fillMaxSize(),
         ) { paddingValues ->
             TrackerNavigation()
         }

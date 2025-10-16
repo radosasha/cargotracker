@@ -16,47 +16,51 @@ import com.tracker.presentation.model.MessageType
 fun MessageCard(
     message: String,
     messageType: MessageType?,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
 ) {
-    val backgroundColor = when (messageType) {
-        MessageType.SUCCESS -> MaterialTheme.colorScheme.primaryContainer
-        MessageType.ERROR -> MaterialTheme.colorScheme.errorContainer
-        MessageType.INFO -> MaterialTheme.colorScheme.secondaryContainer
-        null -> MaterialTheme.colorScheme.surfaceVariant
-    }
-    
-    val contentColor = when (messageType) {
-        MessageType.SUCCESS -> MaterialTheme.colorScheme.onPrimaryContainer
-        MessageType.ERROR -> MaterialTheme.colorScheme.onErrorContainer
-        MessageType.INFO -> MaterialTheme.colorScheme.onSecondaryContainer
-        null -> MaterialTheme.colorScheme.onSurfaceVariant
-    }
-    
+    val backgroundColor =
+        when (messageType) {
+            MessageType.SUCCESS -> MaterialTheme.colorScheme.primaryContainer
+            MessageType.ERROR -> MaterialTheme.colorScheme.errorContainer
+            MessageType.INFO -> MaterialTheme.colorScheme.secondaryContainer
+            null -> MaterialTheme.colorScheme.surfaceVariant
+        }
+
+    val contentColor =
+        when (messageType) {
+            MessageType.SUCCESS -> MaterialTheme.colorScheme.onPrimaryContainer
+            MessageType.ERROR -> MaterialTheme.colorScheme.onErrorContainer
+            MessageType.INFO -> MaterialTheme.colorScheme.onSecondaryContainer
+            null -> MaterialTheme.colorScheme.onSurfaceVariant
+        }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = backgroundColor
-        )
+        colors =
+            CardDefaults.cardColors(
+                containerColor = backgroundColor,
+            ),
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
                 text = message,
                 color = contentColor,
                 style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
             )
-            
+
             IconButton(onClick = onDismiss) {
                 Text(
                     text = "✕",
                     color = contentColor,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
                 )
             }
         }

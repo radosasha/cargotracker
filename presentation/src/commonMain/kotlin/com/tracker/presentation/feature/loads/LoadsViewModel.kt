@@ -22,21 +22,20 @@ class LoadsViewModel(
     private val getLoadsUseCase: GetLoadsUseCase,
     private val getCachedLoadsUseCase: GetCachedLoadsUseCase,
     private val getTrackingStatusUseCase: GetTrackingStatusUseCase,
-    private val startTrackingUseCase: StartTrackingUseCase
+    private val startTrackingUseCase: StartTrackingUseCase,
 ) : ViewModel() {
-    
     private val _uiState = MutableStateFlow<LoadsUiState>(LoadsUiState.Loading)
     val uiState: StateFlow<LoadsUiState> = _uiState.asStateFlow()
-    
+
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
-    
+
     init {
         println("🎯 LoadsViewModel: Initialized")
         checkAndRestoreTracking()
         loadLoads()
     }
-    
+
     /**
      * Проверяет, был ли запущен трекинг при предыдущем запуске
      * Если в DataStore сохранено true, автоматически запускает трекинг
@@ -45,20 +44,22 @@ class LoadsViewModel(
         viewModelScope.launch {
             try {
                 println("LoadsViewModel: Checking if tracking was active before...")
-                
+
                 // Проверяем состояние из DataStore
-                val currentStatus = withContext(Dispatchers.Default) {
-                    getTrackingStatusUseCase()
-                }
+                val currentStatus =
+                    withContext(Dispatchers.Default) {
+                        getTrackingStatusUseCase()
+                    }
                 val isTrackingActive = currentStatus == com.tracker.domain.model.TrackingStatus.ACTIVE
-                
+
                 if (isTrackingActive) {
                     println("LoadsViewModel: Tracking was active before, restoring...")
-                    
+
                     // Автоматически запускаем трекинг
-                    val result = withContext(Dispatchers.Default) {
-                        startTrackingUseCase()
-                    }
+                    val result =
+                        withContext(Dispatchers.Default) {
+                            startTrackingUseCase()
+                        }
                     if (result.isSuccess) {
                         println("LoadsViewModel: ✅ Tracking restored successfully")
                     } else {
@@ -72,25 +73,26 @@ class LoadsViewModel(
             }
         }
     }
-    
+
     /**
      * Load loads from server or cache
      * @param isRefresh true if triggered by pull-to-refresh
      */
     fun loadLoads(isRefresh: Boolean = false) {
         println("🔄 LoadsViewModel: Loading loads (refresh: $isRefresh)")
-        
+
         if (isRefresh) {
             _isRefreshing.value = true
         } else {
             _uiState.value = LoadsUiState.Loading
         }
-        
+
         viewModelScope.launch {
-            val result = withContext(Dispatchers.Default) {
-                getLoadsUseCase()
-            }
-            
+            val result =
+                withContext(Dispatchers.Default) {
+                    getLoadsUseCase()
+                }
+
             result.fold(
                 onSuccess = { loads ->
                     println("✅ LoadsViewModel: Successfully loaded ${loads.size} loads")
@@ -104,14 +106,15 @@ class LoadsViewModel(
                 onFailure = { error ->
                     println("❌ LoadsViewModel: Failed to load loads: ${error.message}")
                     _isRefreshing.value = false
-                    _uiState.value = LoadsUiState.Error(
-                        error.message ?: "Failed to load loads"
-                    )
-                }
+                    _uiState.value =
+                        LoadsUiState.Error(
+                            error.message ?: "Failed to load loads",
+                        )
+                },
             )
         }
     }
-    
+
     /**
      * Retry loading loads
      */
@@ -119,7 +122,7 @@ class LoadsViewModel(
         println("🔄 LoadsViewModel: Retrying")
         loadLoads()
     }
-    
+
     /**
      * Refresh loads (pull-to-refresh)
      */
@@ -127,20 +130,21 @@ class LoadsViewModel(
         println("🔄 LoadsViewModel: Refreshing via pull-to-refresh")
         loadLoads(isRefresh = true)
     }
-    
+
     /**
      * Load loads from cache only (called when returning from HomeScreen)
      */
     fun loadFromCache() {
         println("💾 LoadsViewModel: Loading from cache")
-        
+
         viewModelScope.launch {
             try {
-                val cachedLoads = withContext(Dispatchers.Default) {
-                    getCachedLoadsUseCase()
-                }
+                val cachedLoads =
+                    withContext(Dispatchers.Default) {
+                        getCachedLoadsUseCase()
+                    }
                 println("✅ LoadsViewModel: Successfully loaded ${cachedLoads.size} loads from cache")
-                
+
                 if (cachedLoads.isEmpty()) {
                     _uiState.value = LoadsUiState.Empty
                 } else {
@@ -149,9 +153,10 @@ class LoadsViewModel(
             } catch (e: Exception) {
                 println("❌ LoadsViewModel: Failed to load from cache: ${e.message}")
                 // Keep current state or show error
-                _uiState.value = LoadsUiState.Error(
-                    e.message ?: "Failed to load cached data"
-                )
+                _uiState.value =
+                    LoadsUiState.Error(
+                        e.message ?: "Failed to load cached data",
+                    )
             }
         }
     }
@@ -162,8 +167,10 @@ class LoadsViewModel(
  */
 sealed class LoadsUiState {
     data object Loading : LoadsUiState()
+
     data object Empty : LoadsUiState()
+
     data class Success(val loads: List<Load>) : LoadsUiState()
+
     data class Error(val message: String) : LoadsUiState()
 }
-

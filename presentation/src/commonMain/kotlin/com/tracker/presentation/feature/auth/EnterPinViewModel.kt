@@ -17,9 +17,8 @@ import kotlinx.coroutines.launch
  */
 class EnterPinViewModel(
     private val verifySmsCodeUseCase: VerifySmsCodeUseCase,
-    private val saveAuthSessionUseCase: SaveAuthSessionUseCase
+    private val saveAuthSessionUseCase: SaveAuthSessionUseCase,
 ) : ViewModel() {
-
     private val _uiState = MutableStateFlow(EnterPinUiState())
     val uiState: StateFlow<EnterPinUiState> = _uiState.asStateFlow()
 
@@ -32,20 +31,23 @@ class EnterPinViewModel(
         _uiState.update { it.copy(phone = phone) }
     }
 
-    fun onPinChanged(index: Int, digit: String) {
+    fun onPinChanged(
+        index: Int,
+        digit: String,
+    ) {
         val filtered = digit.filter { it.isDigit() }.take(1)
-        
+
         val newPinDigits = _uiState.value.pinDigits.toMutableList()
         newPinDigits[index] = filtered
-        
+
         println("🔑 EnterPinViewModel: PIN digit[$index] = '$filtered'")
-        
-        _uiState.update { 
+
+        _uiState.update {
             it.copy(
                 pinDigits = newPinDigits,
                 errorMessage = null,
-                remainingAttempts = null
-            ) 
+                remainingAttempts = null,
+            )
         }
 
         // Auto-submit when all 6 digits are entered
@@ -59,57 +61,58 @@ class EnterPinViewModel(
     fun onPinDigitCleared(index: Int) {
         val newPinDigits = _uiState.value.pinDigits.toMutableList()
         newPinDigits[index] = ""
-        
-        _uiState.update { 
+
+        _uiState.update {
             it.copy(
                 pinDigits = newPinDigits,
-                errorMessage = null
-            ) 
+                errorMessage = null,
+            )
         }
     }
 
     private fun verifyPin() {
         val state = _uiState.value
         val pin = state.pinDigits.joinToString("")
-        
+
         if (pin.length != 6) {
             println("🔑 EnterPinViewModel: ❌ PIN length invalid: ${pin.length}/6")
             return
         }
 
         println("🔑 EnterPinViewModel: 🔄 Verifying PIN: $pin for phone: ${state.phone}")
-        
-        _uiState.update { 
+
+        _uiState.update {
             it.copy(
                 isVerifying = true,
-                errorMessage = null
-            ) 
+                errorMessage = null,
+            )
         }
 
         viewModelScope.launch {
             verifySmsCodeUseCase(
                 phone = state.phone,
                 code = pin,
-                deviceInfo = getDeviceInfo()
+                deviceInfo = getDeviceInfo(),
             )
                 .onSuccess { authToken ->
                     println("🔑 EnterPinViewModel: ✅ Verification successful!")
                     println("🔑 EnterPinViewModel: Token: ${authToken.token.take(20)}...")
                     println("🔑 EnterPinViewModel: User: ${authToken.user.name} (${authToken.user.phone})")
-                    
+
                     // Save session
-                    val session = AuthSession(
-                        token = authToken.token,
-                        user = authToken.user
-                    )
+                    val session =
+                        AuthSession(
+                            token = authToken.token,
+                            user = authToken.user,
+                        )
                     saveAuthSessionUseCase(session)
                     println("🔑 EnterPinViewModel: 💾 Session saved")
-                    
-                    _uiState.update { 
+
+                    _uiState.update {
                         it.copy(
                             isVerifying = false,
-                            navigateToHome = true
-                        ) 
+                            navigateToHome = true,
+                        )
                     }
                 }
                 .onFailure { error ->
@@ -118,100 +121,101 @@ class EnterPinViewModel(
                             // Уже обработано: показываем inline с remainingAttempts
                             val attempts = error.remainingAttempts ?: 0
                             println("🔑 EnterPinViewModel: ❌ Invalid code: $attempts attempts remaining")
-                            _uiState.update { 
+                            _uiState.update {
                                 it.copy(
                                     isVerifying = false,
                                     errorMessage = error.message,
                                     remainingAttempts = attempts,
-                                    pinDigits = List(6) { "" } // Clear PIN
-                                ) 
+                                    pinDigits = List(6) { "" }, // Clear PIN
+                                )
                             }
                         }
                         is AuthError.TooManyAttempts -> {
                             // Уже обработано: возврат на EnterPhoneScreen с диалогом
                             println("🔑 EnterPinViewModel: ❌ Too many attempts - navigating back")
-                            _uiState.update { 
+                            _uiState.update {
                                 it.copy(
                                     isVerifying = false,
-                                    navigateBackWithError = error.message
-                                ) 
+                                    navigateBackWithError = error.message,
+                                )
                             }
                         }
                         is AuthError.CodeExpired,
                         is AuthError.CodeNotFound,
-                        is AuthError.CodeAlreadyUsed -> {
+                        is AuthError.CodeAlreadyUsed,
+                        -> {
                             // Критические ошибки - возврат на EnterPhoneScreen с диалогом
                             println("🔑 EnterPinViewModel: ❌ Critical error: ${error.code} - navigating back")
-                            _uiState.update { 
+                            _uiState.update {
                                 it.copy(
                                     isVerifying = false,
-                                    navigateBackWithError = error.message
-                                ) 
+                                    navigateBackWithError = error.message,
+                                )
                             }
                         }
                         is AuthError.UserBlocked -> {
                             // Блокировка пользователя - показываем диалог
                             println("🔑 EnterPinViewModel: ❌ User blocked")
-                            _uiState.update { 
+                            _uiState.update {
                                 it.copy(
                                     isVerifying = false,
                                     showErrorDialog = true,
                                     errorDialogTitle = "Account Blocked",
                                     errorDialogMessage = error.message,
-                                    pinDigits = List(6) { "" }
-                                ) 
+                                    pinDigits = List(6) { "" },
+                                )
                             }
                         }
                         is AuthError.ServiceUnavailable -> {
                             // Ошибка недоступности сервиса - показываем диалог
                             println("🔑 EnterPinViewModel: ❌ Service unavailable")
-                            _uiState.update { 
+                            _uiState.update {
                                 it.copy(
                                     isVerifying = false,
                                     showErrorDialog = true,
                                     errorDialogTitle = "Service Temporarily Unavailable",
                                     errorDialogMessage = "Our servers are currently undergoing maintenance. Please try again in a few minutes.",
-                                    pinDigits = List(6) { "" }
-                                ) 
+                                    pinDigits = List(6) { "" },
+                                )
                             }
                         }
                         is AuthError.NetworkError -> {
                             // Сетевая ошибка - показываем диалог
                             println("🔑 EnterPinViewModel: ❌ Network error")
-                            _uiState.update { 
+                            _uiState.update {
                                 it.copy(
                                     isVerifying = false,
                                     showErrorDialog = true,
                                     errorDialogTitle = "Network Error",
                                     errorDialogMessage = "Could not connect to server. Please check your internet connection and try again.",
-                                    pinDigits = List(6) { "" }
-                                ) 
+                                    pinDigits = List(6) { "" },
+                                )
                             }
                         }
                         is AuthError -> {
                             // Другие ошибки - показываем диалог
                             println("🔑 EnterPinViewModel: ❌ Auth error: ${error.code} - ${error.message}")
-                            _uiState.update { 
+                            _uiState.update {
                                 it.copy(
                                     isVerifying = false,
                                     showErrorDialog = true,
                                     errorDialogTitle = "Error",
                                     errorDialogMessage = error.message,
-                                    pinDigits = List(6) { "" }
-                                ) 
+                                    pinDigits = List(6) { "" },
+                                )
                             }
                         }
                         else -> {
                             // Неизвестные ошибки - показываем диалог
                             println("🔑 EnterPinViewModel: ❌ Unknown error: ${error.message}")
-                            _uiState.update { 
+                            _uiState.update {
                                 it.copy(
                                     isVerifying = false,
                                     showErrorDialog = true,
                                     errorDialogTitle = "Error",
                                     errorDialogMessage = error.message ?: "An unknown error occurred. Please try again.",
-                                    pinDigits = List(6) { "" }
-                                ) 
+                                    pinDigits = List(6) { "" },
+                                )
                             }
                         }
                     }
@@ -233,12 +237,12 @@ class EnterPinViewModel(
     }
 
     fun onDismissErrorDialog() {
-        _uiState.update { 
+        _uiState.update {
             it.copy(
                 showErrorDialog = false,
                 errorDialogTitle = null,
-                errorDialogMessage = null
-            ) 
+                errorDialogMessage = null,
+            )
         }
     }
 }
@@ -253,12 +257,11 @@ data class EnterPinUiState(
     val navigateBackWithError: String? = null,
     val showErrorDialog: Boolean = false,
     val errorDialogTitle: String? = null,
-    val errorDialogMessage: String? = null
+    val errorDialogMessage: String? = null,
 ) {
     val isPinComplete: Boolean
         get() = pinDigits.all { it.isNotEmpty() }
-    
+
     val isPinEmpty: Boolean
         get() = pinDigits.all { it.isEmpty() }
 }
-

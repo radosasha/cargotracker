@@ -32,7 +32,6 @@ import platform.darwin.dispatch_get_main_queue
  */
 @OptIn(ExperimentalForeignApi::class)
 class IOSGpsManager : GpsManager {
-
     private val gpsLocationFlow = MutableSharedFlow<GpsLocation>(replay = 1)
     private val locationManager = CLLocationManager()
     private val delegate = LocationDelegate()
@@ -163,7 +162,7 @@ class IOSGpsManager : GpsManager {
                 speed = location.speed.toFloat(),
                 bearing = location.course.toFloat(),
                 timestamp = Clock.System.now(),
-                provider = "ios"
+                provider = "ios",
             )
         }
     }
@@ -174,11 +173,13 @@ class IOSGpsManager : GpsManager {
  */
 @OptIn(ExperimentalForeignApi::class)
 class LocationDelegate : NSObject(), CLLocationManagerDelegateProtocol {
-
     var onLocationUpdate: ((CLLocation) -> Unit)? = null
     var onAuthorizationChange: ((Int) -> Unit)? = null
 
-    override fun locationManager(manager: CLLocationManager, didUpdateLocations: List<*>) {
+    override fun locationManager(
+        manager: CLLocationManager,
+        didUpdateLocations: List<*>,
+    ) {
         println("LocationDelegate: didUpdateLocations called with ${didUpdateLocations.size} locations")
 
         if (didUpdateLocations.isNotEmpty()) {
@@ -189,11 +190,17 @@ class LocationDelegate : NSObject(), CLLocationManagerDelegateProtocol {
         }
     }
 
-    override fun locationManager(manager: CLLocationManager, didFailWithError: NSError) {
+    override fun locationManager(
+        manager: CLLocationManager,
+        didFailWithError: NSError,
+    ) {
         println("LocationDelegate: didFailWithError: ${didFailWithError.localizedDescription}")
     }
 
-    override fun locationManager(manager: CLLocationManager, didChangeAuthorizationStatus: Int) {
+    override fun locationManager(
+        manager: CLLocationManager,
+        didChangeAuthorizationStatus: Int,
+    ) {
         println("LocationDelegate: didChangeAuthorizationStatus: $didChangeAuthorizationStatus")
         onAuthorizationChange?.invoke(didChangeAuthorizationStatus)
     }

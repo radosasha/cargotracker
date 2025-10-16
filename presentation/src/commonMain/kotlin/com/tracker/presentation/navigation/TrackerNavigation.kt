@@ -27,7 +27,7 @@ import kotlinx.coroutines.launch
 /**
  * Навигация с использованием строковых маршрутов
  * (Type-safe args не поддерживаются в KMP)
- * 
+ *
  * Проверяет наличие токена при старте
  */
 @Composable
@@ -35,10 +35,10 @@ fun TrackerNavigation() {
     val navController = rememberNavController()
     val hasAuthSessionUseCase: HasAuthSessionUseCase = koinInject()
     val scope = rememberCoroutineScope()
-    
+
     var isCheckingAuth by remember { mutableStateOf(true) }
     var startDestination by remember { mutableStateOf(Screen.ENTER_PHONE) }
-    
+
     // Check auth session on start
     LaunchedEffect(Unit) {
         scope.launch {
@@ -47,15 +47,15 @@ fun TrackerNavigation() {
             isCheckingAuth = false
         }
     }
-    
+
     if (isCheckingAuth) {
         // Show loading or splash screen
         return
     }
-    
+
     NavHost(
         navController = navController,
-        startDestination = startDestination
+        startDestination = startDestination,
     ) {
         // Auth screens
         composable(Screen.ENTER_PHONE) {
@@ -64,19 +64,20 @@ fun TrackerNavigation() {
                 onNavigateToPin = { phone ->
                     navController.navigate(Screen.enterPin(phone))
                 },
-                viewModel = viewModel
+                viewModel = viewModel,
             )
         }
-        
+
         composable(
             route = Screen.ENTER_PIN,
-            arguments = listOf(
-                navArgument("phone") { type = NavType.StringType }
-            )
+            arguments =
+                listOf(
+                    navArgument("phone") { type = NavType.StringType },
+                ),
         ) { backStackEntry ->
             val phone = backStackEntry.getStringArgument("phone") ?: ""
             val viewModel = koinEnterPinViewModel()
-            
+
             EnterPinScreen(
                 phone = phone,
                 onNavigateToHome = {
@@ -88,10 +89,10 @@ fun TrackerNavigation() {
                 onNavigateBack = { errorMessage ->
                     navController.popBackStack()
                 },
-                viewModel = viewModel
+                viewModel = viewModel,
             )
         }
-        
+
         // Main app screens
         composable(Screen.LOADS) {
             val viewModel = koinLoadsViewModel()
@@ -99,15 +100,16 @@ fun TrackerNavigation() {
                 viewModel = viewModel,
                 onLoadClick = { loadId ->
                     navController.navigate(Screen.home(loadId))
-                }
+                },
             )
         }
-        
+
         composable(
             route = Screen.HOME,
-            arguments = listOf(
-                navArgument("loadId") { type = NavType.StringType }
-            )
+            arguments =
+                listOf(
+                    navArgument("loadId") { type = NavType.StringType },
+                ),
         ) {
             val viewModel = koinHomeViewModel()
             HomeScreen(viewModel = viewModel)

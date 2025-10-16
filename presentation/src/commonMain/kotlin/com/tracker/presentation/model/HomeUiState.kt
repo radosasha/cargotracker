@@ -12,7 +12,7 @@ data class HomeUiState(
     val trackingStatus: TrackingStatus = TrackingStatus.STOPPED,
     val isLoading: Boolean = true,
     val message: String? = null,
-    val messageType: MessageType? = null
+    val messageType: MessageType? = null,
 )
 
 /**
@@ -21,5 +21,5 @@ data class HomeUiState(
 enum class MessageType {
     SUCCESS,
     ERROR,
-    INFO
+    INFO,
 }

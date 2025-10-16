@@ -23,41 +23,42 @@ import org.koin.dsl.module
 
 /**
  * Модуль для регистрации Use Cases (Domain слой)
- * 
+ *
  * Use Cases регистрируются здесь, а не в domain модуле,
  * чтобы domain оставался независимым от DI framework (Koin)
- * 
+ *
  * Factory scope - каждый Use Case создается заново при каждом использовании
  */
-val useCasesModule = module {
-    
-    // Permission Use Cases
-    factoryOf(::GetPermissionStatusUseCase)
-    factoryOf(::RequestAllPermissionsUseCase)
-    
-    // Tracking Use Cases
-    factoryOf(::GetTrackingStatusUseCase)
-    factoryOf(::StartTrackingUseCase)
-    factoryOf(::StopTrackingUseCase)
-    
-    // Location Processing Use Cases
-    factoryOf(::StartProcessLocationsUseCase)
-    factoryOf(::StopProcessLocationsUseCase)
-    
-    // Server Use Cases
-    factoryOf(::TestServerUseCase)
-    
-    // Auth Use Cases
-    factoryOf(::RequestSmsCodeUseCase)
-    factoryOf(::VerifySmsCodeUseCase)
-    factoryOf(::SaveAuthSessionUseCase)
-    factoryOf(::GetAuthSessionUseCase)
-    factoryOf(::HasAuthSessionUseCase)
-    factoryOf(::ClearAuthSessionUseCase)
-    
-    // Load Use Cases
-    factoryOf(::GetLoadsUseCase)
-    factoryOf(::GetCachedLoadsUseCase)
-    factoryOf(::ConnectToLoadUseCase)
-    factoryOf(::DisconnectFromLoadUseCase)
-}
+val useCasesModule =
+    module {
+
+        // Permission Use Cases
+        factoryOf(::GetPermissionStatusUseCase)
+        factoryOf(::RequestAllPermissionsUseCase)
+
+        // Tracking Use Cases
+        factoryOf(::GetTrackingStatusUseCase)
+        factoryOf(::StartTrackingUseCase)
+        factoryOf(::StopTrackingUseCase)
+
+        // Location Processing Use Cases
+        factoryOf(::StartProcessLocationsUseCase)
+        factoryOf(::StopProcessLocationsUseCase)
+
+        // Server Use Cases
+        factoryOf(::TestServerUseCase)
+
+        // Auth Use Cases
+        factoryOf(::RequestSmsCodeUseCase)
+        factoryOf(::VerifySmsCodeUseCase)
+        factoryOf(::SaveAuthSessionUseCase)
+        factoryOf(::GetAuthSessionUseCase)
+        factoryOf(::HasAuthSessionUseCase)
+        factoryOf(::ClearAuthSessionUseCase)
+
+        // Load Use Cases
+        factoryOf(::GetLoadsUseCase)
+        factoryOf(::GetCachedLoadsUseCase)
+        factoryOf(::ConnectToLoadUseCase)
+        factoryOf(::DisconnectFromLoadUseCase)
+    }

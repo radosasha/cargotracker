@@ -22,7 +22,7 @@ import com.tracker.domain.model.auth.Country
 @Composable
 fun EnterPhoneScreen(
     onNavigateToPin: (String) -> Unit,
-    viewModel: EnterPhoneViewModel
+    viewModel: EnterPhoneViewModel,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -44,7 +44,7 @@ fun EnterPhoneScreen(
                 TextButton(onClick = { viewModel.onDismissTooManyAttemptsDialog() }) {
                     Text("OK")
                 }
-            }
+            },
         )
     }
 
@@ -58,33 +58,34 @@ fun EnterPhoneScreen(
                 TextButton(onClick = { viewModel.onDismissErrorDialog() }) {
                     Text("OK")
                 }
-            }
+            },
         )
     }
 
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        contentAlignment = Alignment.Center
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .padding(24.dp),
+        contentAlignment = Alignment.Center,
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(24.dp)
+            verticalArrangement = Arrangement.spacedBy(24.dp),
         ) {
             // Title
             Text(
                 text = "Enter Your Phone Number",
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
             )
 
             Text(
                 text = "We'll send you a verification code",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -95,7 +96,7 @@ fun EnterPhoneScreen(
                 phoneNumber = uiState.phoneNumber,
                 onCountrySelected = viewModel::onCountrySelected,
                 onPhoneNumberChanged = viewModel::onPhoneNumberChanged,
-                enabled = !uiState.isLoading && !uiState.isRateLimited
+                enabled = !uiState.isLoading && !uiState.isRateLimited,
             )
 
             // Validation hint
@@ -103,7 +104,7 @@ fun EnterPhoneScreen(
                 Text(
                     text = "Enter ${uiState.remainingDigits} more digit${if (uiState.remainingDigits != 1) "s" else ""}",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.primary
+                    color = MaterialTheme.colorScheme.primary,
                 )
             }
 
@@ -113,7 +114,7 @@ fun EnterPhoneScreen(
                     text = uiState.errorMessage!!,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.error,
-                    textAlign = TextAlign.Center
+                    textAlign = TextAlign.Center,
                 )
             }
 
@@ -123,20 +124,21 @@ fun EnterPhoneScreen(
             Button(
                 onClick = viewModel::onSendCodeClicked,
                 enabled = uiState.canSendCode,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                shape = RoundedCornerShape(12.dp)
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+                shape = RoundedCornerShape(12.dp),
             ) {
                 if (uiState.isLoading) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(24.dp),
-                        color = MaterialTheme.colorScheme.onPrimary
+                        color = MaterialTheme.colorScheme.onPrimary,
                     )
                 } else {
                     Text(
                         text = "Get Code",
-                        style = MaterialTheme.typography.titleMedium
+                        style = MaterialTheme.typography.titleMedium,
                     )
                 }
             }
@@ -155,56 +157,59 @@ private fun PhoneInputField(
     phoneNumber: String,
     onCountrySelected: (Country) -> Unit,
     onPhoneNumberChanged: (String) -> Unit,
-    enabled: Boolean
+    enabled: Boolean,
 ) {
     var showCountryPicker by remember { mutableStateOf(false) }
 
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(64.dp)
-            .border(
-                width = 1.dp,
-                color = MaterialTheme.colorScheme.outline,
-                shape = RoundedCornerShape(12.dp)
-            )
-            .background(
-                color = if (enabled) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceVariant,
-                shape = RoundedCornerShape(12.dp)
-            )
-            .padding(horizontal = 16.dp),
-        verticalAlignment = Alignment.CenterVertically
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .height(64.dp)
+                .border(
+                    width = 1.dp,
+                    color = MaterialTheme.colorScheme.outline,
+                    shape = RoundedCornerShape(12.dp),
+                )
+                .background(
+                    color = if (enabled) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceVariant,
+                    shape = RoundedCornerShape(12.dp),
+                )
+                .padding(horizontal = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         // Country picker button
         Row(
-            modifier = Modifier
-                .clickable(enabled = enabled) { showCountryPicker = true }
-                .padding(end = 12.dp),
+            modifier =
+                Modifier
+                    .clickable(enabled = enabled) { showCountryPicker = true }
+                    .padding(end = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             Text(
                 text = selectedCountry.flag,
-                fontSize = 24.sp
+                fontSize = 24.sp,
             )
             Text(
                 text = selectedCountry.dialCode,
                 style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Medium
+                fontWeight = FontWeight.Medium,
             )
             Text(
                 text = "▼",
                 fontSize = 12.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
 
         // Divider
         Box(
-            modifier = Modifier
-                .width(1.dp)
-                .height(32.dp)
-                .background(MaterialTheme.colorScheme.outline)
+            modifier =
+                Modifier
+                    .width(1.dp)
+                    .height(32.dp)
+                    .background(MaterialTheme.colorScheme.outline),
         )
 
         // Phone number input
@@ -216,19 +221,20 @@ private fun PhoneInputField(
             placeholder = {
                 Text(
                     text = "0".repeat(selectedCountry.phoneLength),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
                 )
             },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             singleLine = true,
-            colors = TextFieldDefaults.colors(
-                focusedContainerColor = Color.Transparent,
-                unfocusedContainerColor = Color.Transparent,
-                disabledContainerColor = Color.Transparent,
-                focusedIndicatorColor = Color.Transparent,
-                unfocusedIndicatorColor = Color.Transparent,
-                disabledIndicatorColor = Color.Transparent
-            )
+            colors =
+                TextFieldDefaults.colors(
+                    focusedContainerColor = Color.Transparent,
+                    unfocusedContainerColor = Color.Transparent,
+                    disabledContainerColor = Color.Transparent,
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent,
+                    disabledIndicatorColor = Color.Transparent,
+                ),
         )
     }
 
@@ -240,7 +246,7 @@ private fun PhoneInputField(
                 onCountrySelected(it)
                 showCountryPicker = false
             },
-            onDismiss = { showCountryPicker = false }
+            onDismiss = { showCountryPicker = false },
         )
     }
 }
@@ -249,7 +255,7 @@ private fun PhoneInputField(
 private fun CountryPickerDialog(
     selectedCountry: Country,
     onCountrySelected: (Country) -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -258,34 +264,37 @@ private fun CountryPickerDialog(
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Country.entries.forEach { country ->
                     Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { onCountrySelected(country) }
-                            .background(
-                                color = if (country == selectedCountry) 
-                                    MaterialTheme.colorScheme.primaryContainer 
-                                else 
-                                    Color.Transparent,
-                                shape = RoundedCornerShape(8.dp)
-                            )
-                            .padding(12.dp),
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .clickable { onCountrySelected(country) }
+                                .background(
+                                    color =
+                                        if (country == selectedCountry) {
+                                            MaterialTheme.colorScheme.primaryContainer
+                                        } else {
+                                            Color.Transparent
+                                        },
+                                    shape = RoundedCornerShape(8.dp),
+                                )
+                                .padding(12.dp),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
                         Text(
                             text = country.flag,
-                            fontSize = 24.sp
+                            fontSize = 24.sp,
                         )
                         Column {
                             Text(
                                 text = country.name,
                                 style = MaterialTheme.typography.bodyLarge,
-                                fontWeight = FontWeight.Medium
+                                fontWeight = FontWeight.Medium,
                             )
                             Text(
                                 text = country.dialCode,
                                 style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
                     }
@@ -296,7 +305,7 @@ private fun CountryPickerDialog(
             TextButton(onClick = onDismiss) {
                 Text("Cancel")
             }
-        }
+        },
     )
 }
 
@@ -305,25 +314,24 @@ private fun RateLimitTimer(seconds: Long) {
     val hours = seconds / 3600
     val minutes = (seconds % 3600) / 60
     val secs = seconds % 60
-    
+
     val timeString = "${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}"
-    
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Text(
             text = "Too many requests",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.error,
-            fontWeight = FontWeight.Medium
+            fontWeight = FontWeight.Medium,
         )
         Text(
             text = "Please wait: $timeString",
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.error,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
         )
     }
 }
-

@@ -19,7 +19,6 @@ import kotlinx.coroutines.launch
 class EnterPhoneViewModel(
     private val requestSmsCodeUseCase: RequestSmsCodeUseCase,
 ) : ViewModel() {
-
     private val _uiState = MutableStateFlow(EnterPhoneUiState())
     val uiState: StateFlow<EnterPhoneUiState> = _uiState.asStateFlow()
 
@@ -47,7 +46,7 @@ class EnterPhoneViewModel(
         _uiState.update {
             it.copy(
                 phoneNumber = limited,
-                errorMessage = null
+                errorMessage = null,
             )
         }
     }
@@ -81,7 +80,7 @@ class EnterPhoneViewModel(
                         it.copy(
                             isLoading = false,
                             navigateToPinScreen = true,
-                            sentPhone = fullPhone
+                            sentPhone = fullPhone,
                         )
                     }
                 }
@@ -95,7 +94,7 @@ class EnterPhoneViewModel(
                                     isLoading = false,
                                     isRateLimited = true,
                                     rateLimitSeconds = error.retryAfterSeconds,
-                                    errorMessage = null // Очищаем, т.к. таймер уже показывает состояние
+                                    errorMessage = null, // Очищаем, т.к. таймер уже показывает состояние
                                 )
                             }
                             startRateLimitTimer(error.retryAfterSeconds)
@@ -109,7 +108,7 @@ class EnterPhoneViewModel(
                                     isLoading = false,
                                     showErrorDialog = true,
                                     errorDialogTitle = "Invalid Phone Number",
-                                    errorDialogMessage = error.message
+                                    errorDialogMessage = error.message,
                                 )
                             }
                         }
@@ -123,7 +122,7 @@ class EnterPhoneViewModel(
                                     isLoading = false,
                                     showErrorDialog = true,
                                     errorDialogTitle = "Service Temporarily Unavailable",
-                                    errorDialogMessage = "Our servers are currently undergoing maintenance. Please try again in a few minutes."
+                                    errorDialogMessage = "Our servers are currently undergoing maintenance. Please try again in a few minutes.",
                                 )
                             }
                         }
@@ -136,7 +135,7 @@ class EnterPhoneViewModel(
                                     isLoading = false,
                                     showErrorDialog = true,
                                     errorDialogTitle = "Network Error",
-                                    errorDialogMessage = "Could not connect to server. Please check your internet connection and try again."
+                                    errorDialogMessage = "Could not connect to server. Please check your internet connection and try again.",
                                 )
                             }
                         }
@@ -149,7 +148,7 @@ class EnterPhoneViewModel(
                                     isLoading = false,
                                     showErrorDialog = true,
                                     errorDialogTitle = "Error",
-                                    errorDialogMessage = error.message
+                                    errorDialogMessage = error.message,
                                 )
                             }
                         }
@@ -162,7 +161,7 @@ class EnterPhoneViewModel(
                                     isLoading = false,
                                     showErrorDialog = true,
                                     errorDialogTitle = "Error",
-                                    errorDialogMessage = error.message ?: "An unknown error occurred. Please try again."
+                                    errorDialogMessage = error.message ?: "An unknown error occurred. Please try again.",
                                 )
                             }
                         }
@@ -174,22 +173,23 @@ class EnterPhoneViewModel(
     private fun startRateLimitTimer(seconds: Long) {
         println("🔐 EnterPhoneViewModel: ⏱️ Starting rate limit timer: ${seconds}s")
         timerJob?.cancel()
-        timerJob = viewModelScope.launch {
-            var remaining = seconds
-            while (remaining > 0) {
-                _uiState.update { it.copy(rateLimitSeconds = remaining) }
-                delay(1000)
-                remaining--
+        timerJob =
+            viewModelScope.launch {
+                var remaining = seconds
+                while (remaining > 0) {
+                    _uiState.update { it.copy(rateLimitSeconds = remaining) }
+                    delay(1000)
+                    remaining--
+                }
+                println("🔐 EnterPhoneViewModel: ✅ Rate limit timer finished")
+                _uiState.update {
+                    it.copy(
+                        isRateLimited = false,
+                        rateLimitSeconds = 0,
+                        errorMessage = null,
+                    )
+                }
             }
-            println("🔐 EnterPhoneViewModel: ✅ Rate limit timer finished")
-            _uiState.update {
-                it.copy(
-                    isRateLimited = false,
-                    rateLimitSeconds = 0,
-                    errorMessage = null
-                )
-            }
-        }
     }
 
     fun onNavigatedToPinScreen() {
@@ -200,7 +200,7 @@ class EnterPhoneViewModel(
         _uiState.update {
             it.copy(
                 showTooManyAttemptsDialog = true,
-                tooManyAttemptsMessage = message
+                tooManyAttemptsMessage = message,
             )
         }
     }
@@ -209,7 +209,7 @@ class EnterPhoneViewModel(
         _uiState.update {
             it.copy(
                 showTooManyAttemptsDialog = false,
-                tooManyAttemptsMessage = null
+                tooManyAttemptsMessage = null,
             )
         }
     }
@@ -219,7 +219,7 @@ class EnterPhoneViewModel(
             it.copy(
                 showErrorDialog = false,
                 errorDialogTitle = null,
-                errorDialogMessage = null
+                errorDialogMessage = null,
             )
         }
     }
@@ -255,4 +255,3 @@ data class EnterPhoneUiState(
     val remainingDigits: Int
         get() = selectedCountry.phoneLength - phoneNumber.length
 }
-

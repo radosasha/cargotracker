@@ -9,16 +9,17 @@ import org.koin.dsl.module
 
 /**
  * Модуль для регистрации ViewModels (Presentation слой)
- * 
+ *
  * Factory scope - каждый ViewModel создается заново при каждом использовании
  */
-val viewModelModule = module {
-    
-    // Feature ViewModels
-    factoryOf(::HomeViewModel)
-    factoryOf(::LoadsViewModel)
-    
-    // Auth ViewModels
-    factoryOf(::EnterPhoneViewModel)
-    factoryOf(::EnterPinViewModel)
-}
+val viewModelModule =
+    module {
+
+        // Feature ViewModels
+        factoryOf(::HomeViewModel)
+        factoryOf(::LoadsViewModel)
+
+        // Auth ViewModels
+        factoryOf(::EnterPhoneViewModel)
+        factoryOf(::EnterPinViewModel)
+    }

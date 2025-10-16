@@ -56,7 +56,7 @@ fun EnterPinScreen(
     phone: String,
     onNavigateToHome: () -> Unit,
     onNavigateBack: (String?) -> Unit,
-    viewModel: EnterPinViewModel
+    viewModel: EnterPinViewModel,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -91,52 +91,54 @@ fun EnterPinScreen(
                 TextButton(onClick = { viewModel.onDismissErrorDialog() }) {
                     Text("OK")
                 }
-            }
+            },
         )
     }
 
     // Detect keyboard visibility (simplified approach using WindowInsets)
     val imeVisible = if (WindowInsets.ime.getBottom(LocalDensity.current) > 0) true else false
-    
+
     // Animate vertical offset when keyboard appears
     val verticalOffset by animateDpAsState(
         targetValue = if (imeVisible) (-80).dp else 0.dp,
         animationSpec = tween(durationMillis = 300),
-        label = "verticalOffset"
+        label = "verticalOffset",
     )
 
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .imePadding() // Adjust for keyboard
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .imePadding(), // Adjust for keyboard
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 24.dp)
-                .offset(y = verticalOffset),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 24.dp)
+                    .offset(y = verticalOffset),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            verticalArrangement = Arrangement.Center,
         ) {
             // Top content (above PIN fields)
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.padding(bottom = 32.dp)
+                modifier = Modifier.padding(bottom = 32.dp),
             ) {
                 Text(
                     text = "Enter Verification Code",
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center
+                    textAlign = TextAlign.Center,
                 )
 
                 Text(
                     text = "Code sent to $phone",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center
+                    textAlign = TextAlign.Center,
                 )
             }
 
@@ -145,32 +147,32 @@ fun EnterPinScreen(
                 pinDigits = uiState.pinDigits,
                 onPinChanged = viewModel::onPinChanged,
                 onPinDigitCleared = viewModel::onPinDigitCleared,
-                enabled = !uiState.isVerifying
+                enabled = !uiState.isVerifying,
             )
 
             // Bottom content (below PIN fields)
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(16.dp),
-                modifier = Modifier.padding(top = 32.dp)
+                modifier = Modifier.padding(top = 32.dp),
             ) {
                 // Verifying indicator
                 AnimatedVisibility(
                     visible = uiState.isVerifying,
                     enter = fadeIn(),
-                    exit = fadeOut()
+                    exit = fadeOut(),
                 ) {
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
                         CircularProgressIndicator(
-                            modifier = Modifier.size(24.dp)
+                            modifier = Modifier.size(24.dp),
                         )
                         Text(
                             text = "Verifying code...",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.primary
+                            color = MaterialTheme.colorScheme.primary,
                         )
                     }
                 }
@@ -179,13 +181,13 @@ fun EnterPinScreen(
                 AnimatedVisibility(
                     visible = uiState.errorMessage != null,
                     enter = fadeIn(),
-                    exit = fadeOut()
+                    exit = fadeOut(),
                 ) {
                     Text(
                         text = uiState.errorMessage ?: "",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.error,
-                        textAlign = TextAlign.Center
+                        textAlign = TextAlign.Center,
                     )
                 }
 
@@ -193,19 +195,20 @@ fun EnterPinScreen(
                 AnimatedVisibility(
                     visible = uiState.remainingAttempts != null,
                     enter = fadeIn(),
-                    exit = fadeOut()
+                    exit = fadeOut(),
                 ) {
                     val attempts = uiState.remainingAttempts ?: 0
                     Text(
-                        text = if (attempts > 0) {
-                            "$attempts attempt${if (attempts != 1) "s" else ""} remaining"
-                        } else {
-                            "No attempts remaining"
-                        },
+                        text =
+                            if (attempts > 0) {
+                                "$attempts attempt${if (attempts != 1) "s" else ""} remaining"
+                            } else {
+                                "No attempts remaining"
+                            },
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.error,
                         fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center
+                        textAlign = TextAlign.Center,
                     )
                 }
             }
@@ -218,14 +221,14 @@ private fun PinInputFields(
     pinDigits: List<String>,
     onPinChanged: (Int, String) -> Unit,
     onPinDigitCleared: (Int) -> Unit,
-    enabled: Boolean
+    enabled: Boolean,
 ) {
     val focusRequesters = remember { List(6) { FocusRequester() } }
 
     Row(
         horizontalArrangement = Arrangement.spacedBy(4.dp), // Уменьшено с 8dp до 4dp
         modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         pinDigits.forEachIndexed { index, digit ->
             PinDigitField(
@@ -254,7 +257,7 @@ private fun PinInputFields(
                 },
                 focusRequester = focusRequesters[index],
                 enabled = enabled,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
             )
         }
     }
@@ -272,7 +275,7 @@ private fun PinDigitField(
     onDigitCleared: () -> Unit,
     focusRequester: FocusRequester,
     enabled: Boolean,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     var localValue by remember(digit) { mutableStateOf(digit) }
 
@@ -310,36 +313,40 @@ private fun PinDigitField(
                 }
             }
         },
-        modifier = modifier
-            .aspectRatio(1f / 1.5f) // Высота в 1.5 раза больше ширины
-            .focusRequester(focusRequester)
-            .border(
-                width = 2.dp,
-                color = if (digit.isNotEmpty()) 
-                    MaterialTheme.colorScheme.primary 
-                else 
-                    MaterialTheme.colorScheme.outline,
-                shape = RoundedCornerShape(12.dp)
-            )
-            .background(
-                color = if (enabled) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceVariant,
-                shape = RoundedCornerShape(12.dp)
-            ),
+        modifier =
+            modifier
+                .aspectRatio(1f / 1.5f) // Высота в 1.5 раза больше ширины
+                .focusRequester(focusRequester)
+                .border(
+                    width = 2.dp,
+                    color =
+                        if (digit.isNotEmpty()) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.outline
+                        },
+                    shape = RoundedCornerShape(12.dp),
+                )
+                .background(
+                    color = if (enabled) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceVariant,
+                    shape = RoundedCornerShape(12.dp),
+                ),
         enabled = enabled,
-        textStyle = MaterialTheme.typography.headlineLarge.copy(
-            textAlign = TextAlign.Center,
-            fontWeight = FontWeight.Bold
-        ),
+        textStyle =
+            MaterialTheme.typography.headlineLarge.copy(
+                textAlign = TextAlign.Center,
+                fontWeight = FontWeight.Bold,
+            ),
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
         singleLine = true,
-        colors = TextFieldDefaults.colors(
-            focusedContainerColor = Color.Transparent,
-            unfocusedContainerColor = Color.Transparent,
-            disabledContainerColor = Color.Transparent,
-            focusedIndicatorColor = Color.Transparent,
-            unfocusedIndicatorColor = Color.Transparent,
-            disabledIndicatorColor = Color.Transparent
-        )
+        colors =
+            TextFieldDefaults.colors(
+                focusedContainerColor = Color.Transparent,
+                unfocusedContainerColor = Color.Transparent,
+                disabledContainerColor = Color.Transparent,
+                focusedIndicatorColor = Color.Transparent,
+                unfocusedIndicatorColor = Color.Transparent,
+                disabledIndicatorColor = Color.Transparent,
+            ),
     )
 }
-
