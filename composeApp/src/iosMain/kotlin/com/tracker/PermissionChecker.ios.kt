@@ -6,19 +6,14 @@ import platform.CoreLocation.kCLAuthorizationStatusAuthorizedWhenInUse
 import platform.CoreLocation.kCLAuthorizationStatusDenied
 import platform.CoreLocation.kCLAuthorizationStatusNotDetermined
 import platform.CoreLocation.kCLAuthorizationStatusRestricted
-import platform.Foundation.NSBundle
+import platform.Foundation.NSURL
 import platform.UIKit.UIApplication
 import platform.UIKit.UIApplicationOpenSettingsURLString
-import platform.Foundation.NSURL
-import platform.UserNotifications.UNUserNotificationCenter
-import platform.UserNotifications.UNAuthorizationStatus
-import platform.UserNotifications.UNAuthorizationStatusAuthorized
-import platform.UserNotifications.UNAuthorizationStatusDenied
-import platform.UserNotifications.UNAuthorizationStatusNotDetermined
-import platform.UserNotifications.UNAuthorizationStatusProvisional
 import platform.UserNotifications.UNAuthorizationOptionAlert
 import platform.UserNotifications.UNAuthorizationOptionBadge
 import platform.UserNotifications.UNAuthorizationOptionSound
+import platform.UserNotifications.UNAuthorizationStatusAuthorized
+import platform.UserNotifications.UNUserNotificationCenter
 import platform.darwin.dispatch_async
 import platform.darwin.dispatch_get_main_queue
 import kotlin.coroutines.suspendCoroutine
@@ -27,26 +22,28 @@ import kotlin.coroutines.suspendCoroutine
  * iOS реализация проверки разрешений
  */
 actual class PermissionChecker {
-    
     private val locationManager = CLLocationManager()
-    
+
     actual suspend fun hasLocationPermissions(): Boolean {
         return suspendCoroutine { continuation ->
             dispatch_async(dispatch_get_main_queue()) {
                 val status = locationManager.authorizationStatus
-                val hasPermission = when (status) {
-                    kCLAuthorizationStatusAuthorizedWhenInUse,
-                    kCLAuthorizationStatusAuthorizedAlways -> true
-                    kCLAuthorizationStatusNotDetermined,
-                    kCLAuthorizationStatusDenied,
-                    kCLAuthorizationStatusRestricted -> false
-                    else -> false
-                }
+                val hasPermission =
+                    when (status) {
+                        kCLAuthorizationStatusAuthorizedWhenInUse,
+                        kCLAuthorizationStatusAuthorizedAlways,
+                        -> true
+                        kCLAuthorizationStatusNotDetermined,
+                        kCLAuthorizationStatusDenied,
+                        kCLAuthorizationStatusRestricted,
+                        -> false
+                        else -> false
+                    }
                 continuation.resumeWith(Result.success(hasPermission))
             }
         }
     }
-    
+
     actual suspend fun hasBackgroundLocationPermission(): Boolean {
         return suspendCoroutine { continuation ->
             dispatch_async(dispatch_get_main_queue()) {
@@ -56,7 +53,7 @@ actual class PermissionChecker {
             }
         }
     }
-    
+
     actual suspend fun hasNotificationPermission(): Boolean {
         return suspendCoroutine { continuation ->
             dispatch_async(dispatch_get_main_queue()) {
@@ -68,21 +65,21 @@ actual class PermissionChecker {
             }
         }
     }
-    
+
     actual suspend fun hasAllRequiredPermissions(): Boolean {
         val location = hasLocationPermissions()
         val background = hasBackgroundLocationPermission()
         val notifications = hasNotificationPermission()
         return location && background && notifications
     }
-    
+
     actual suspend fun getPermissionStatusMessage(): String {
         val location = hasLocationPermissions()
         val background = hasBackgroundLocationPermission()
         val notifications = hasNotificationPermission()
-        
+
         val missingPermissions = mutableListOf<String>()
-        
+
         if (!location) {
             missingPermissions.add("Location access")
         }
@@ -92,14 +89,14 @@ actual class PermissionChecker {
         if (!notifications) {
             missingPermissions.add("Notifications")
         }
-        
+
         return if (missingPermissions.isEmpty()) {
             "All permissions granted"
         } else {
             "Missing: ${missingPermissions.joinToString(", ")}"
         }
     }
-    
+
     actual suspend fun openAppSettings(): Result<Unit> {
         return try {
             UIApplication.sharedApplication.openURL(NSURL(string = UIApplicationOpenSettingsURLString))
@@ -108,15 +105,15 @@ actual class PermissionChecker {
             Result.failure(e)
         }
     }
-    
+
     actual fun requestAllPermissions() {
         // Запрашиваем разрешения на местоположение
         requestLocationPermissions()
-        
+
         // Запрашиваем разрешения на уведомления
         requestNotificationPermissions()
     }
-    
+
     private fun requestLocationPermissions() {
         dispatch_async(dispatch_get_main_queue()) {
             when (locationManager.authorizationStatus) {
@@ -134,7 +131,7 @@ actual class PermissionChecker {
             }
         }
     }
-    
+
     private fun requestNotificationPermissions() {
         dispatch_async(dispatch_get_main_queue()) {
             val center = UNUserNotificationCenter.currentNotificationCenter()
@@ -146,7 +143,7 @@ actual class PermissionChecker {
                     } else {
                         println("iOS: Notification permission denied: ${error?.localizedDescription}")
                     }
-                }
+                },
             )
         }
     }

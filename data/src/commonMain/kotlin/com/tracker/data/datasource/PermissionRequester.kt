@@ -6,9 +6,14 @@ package com.tracker.data.datasource
  */
 interface PermissionRequester {
     suspend fun hasLocationPermissions(): Boolean
+
     suspend fun hasBackgroundLocationPermission(): Boolean
+
     suspend fun hasNotificationPermission(): Boolean
+
     suspend fun isBatteryOptimizationDisabled(): Boolean
+
     suspend fun requestAllPermissions(): Result<Unit>
+
     suspend fun openAppSettings(): Result<Unit>
 }

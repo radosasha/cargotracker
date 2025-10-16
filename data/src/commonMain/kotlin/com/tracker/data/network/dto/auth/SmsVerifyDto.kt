@@ -10,9 +10,5 @@ import kotlinx.serialization.Serializable
 data class SmsVerifyDto(
     val phone: String,
     val code: String,
-    val deviceInfo: String? = null
+    val deviceInfo: String? = null,
 )
-
-
-
-

@@ -7,7 +7,6 @@ import com.tracker.domain.model.PermissionStatus
  * Маппер для преобразования между Data и Domain моделями Permission
  */
 object PermissionMapper {
-    
     /**
      * Преобразует Data модель в Domain модель
      */
@@ -16,10 +15,10 @@ object PermissionMapper {
             hasLocationPermission = dataModel.hasLocationPermission,
             hasBackgroundLocationPermission = dataModel.hasBackgroundLocationPermission,
             hasNotificationPermission = dataModel.hasNotificationPermission,
-            isBatteryOptimizationDisabled = dataModel.isBatteryOptimizationDisabled
+            isBatteryOptimizationDisabled = dataModel.isBatteryOptimizationDisabled,
         )
     }
-    
+
     /**
      * Преобразует Domain модель в Data модель
      */
@@ -28,7 +27,7 @@ object PermissionMapper {
             hasLocationPermission = domainModel.hasLocationPermission,
             hasBackgroundLocationPermission = domainModel.hasBackgroundLocationPermission,
             hasNotificationPermission = domainModel.hasNotificationPermission,
-            isBatteryOptimizationDisabled = domainModel.isBatteryOptimizationDisabled
+            isBatteryOptimizationDisabled = domainModel.isBatteryOptimizationDisabled,
         )
     }
 }

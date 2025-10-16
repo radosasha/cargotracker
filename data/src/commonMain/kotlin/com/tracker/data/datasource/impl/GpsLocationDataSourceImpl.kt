@@ -10,16 +10,14 @@ import kotlinx.coroutines.flow.Flow
  * Делегирует все операции в GpsManager
  */
 class GpsLocationDataSourceImpl(
-    private val gpsManager: GpsManager
+    private val gpsManager: GpsManager,
 ) : GpsLocationDataSource {
-    
     override fun startGpsTracking(): Flow<GpsLocation> {
         // Возвращаем поток координат (GPS трекинг запускается автоматически при подписке)
         return gpsManager.observeGpsLocations()
     }
-    
+
     override suspend fun stopGpsTracking(): Result<Unit> {
         return gpsManager.stopGpsTracking()
     }
 }
-

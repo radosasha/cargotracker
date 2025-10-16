@@ -8,9 +8,5 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 data class SmsRequestDto(
-    val phone: String
+    val phone: String,
 )
-
-
-
-

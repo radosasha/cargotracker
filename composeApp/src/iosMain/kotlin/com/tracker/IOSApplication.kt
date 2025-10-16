@@ -7,11 +7,10 @@ import com.tracker.di.IOSKoinApp
  * Вызывается при запуске iOS приложения
  */
 object IOSApplication {
-    
     fun init() {
         // Инициализируем Koin с Application-scoped зависимостями
         IOSKoinApp.initApplicationScope()
-        
+
         println("IOSApplication: Application initialized")
     }
 }

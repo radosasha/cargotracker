@@ -12,18 +12,13 @@ import com.tracker.domain.repository.AuthRepository
  * Delegates to AuthRemoteDataSource for API calls
  */
 class AuthRepositoryImpl(
-    private val remoteDataSource: AuthRemoteDataSource
+    private val remoteDataSource: AuthRemoteDataSource,
 ) : AuthRepository {
-    
     override suspend fun requestSmsCode(request: SmsCodeRequest): Result<SmsCodeResponse> {
         return remoteDataSource.requestSmsCode(request)
     }
-    
+
     override suspend fun verifySmsCode(verify: SmsCodeVerify): Result<AuthToken> {
         return remoteDataSource.verifySmsCode(verify)
     }
 }
-
-
-
-

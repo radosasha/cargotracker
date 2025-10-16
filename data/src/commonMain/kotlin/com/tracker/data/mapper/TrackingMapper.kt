@@ -7,7 +7,6 @@ import com.tracker.domain.model.TrackingStatus
  * Маппер для преобразования между Data и Domain моделями Tracking
  */
 object TrackingMapper {
-    
     /**
      * Преобразует Data модель в Domain модель
      */
@@ -20,7 +19,7 @@ object TrackingMapper {
             TrackingDataStatus.ERROR -> TrackingStatus.ERROR
         }
     }
-    
+
     /**
      * Преобразует Domain модель в Data модель
      */

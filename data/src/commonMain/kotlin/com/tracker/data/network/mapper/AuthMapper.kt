@@ -21,73 +21,85 @@ import kotlinx.datetime.Clock
 // Domain -> DTO
 fun SmsCodeRequest.toDto() = SmsRequestDto(phone = phone)
 
-fun SmsCodeVerify.toDto() = SmsVerifyDto(
-    phone = phone,
-    code = code,
-    deviceInfo = deviceInfo
-)
+fun SmsCodeVerify.toDto() =
+    SmsVerifyDto(
+        phone = phone,
+        code = code,
+        deviceInfo = deviceInfo,
+    )
 
 // DTO -> Domain
-fun SmsRequestResponseDto.toDomain() = SmsCodeResponse(
-    status = status,
-    message = message
-)
+fun SmsRequestResponseDto.toDomain() =
+    SmsCodeResponse(
+        status = status,
+        message = message,
+    )
 
-fun AuthResponseDto.toDomain() = AuthToken(
-    token = token,
-    user = user.toDomain()
-)
+fun AuthResponseDto.toDomain() =
+    AuthToken(
+        token = token,
+        user = user.toDomain(),
+    )
 
-fun MobileUserDto.toDomain() = AuthUser(
-    id = id,
-    phone = phone,
-    name = name
-)
+fun MobileUserDto.toDomain() =
+    AuthUser(
+        id = id,
+        phone = phone,
+        name = name,
+    )
 
 // Error mapping
 fun ErrorResponseDto.toAuthError(): AuthError {
     val now = Clock.System.now().toEpochMilliseconds()
     return when (error) {
-        "VALIDATION_ERROR" -> AuthError.ValidationError(
-            message = message,
-            timestamp = timestamp ?: now
-        )
-        "RATE_LIMIT_EXCEEDED" -> AuthError.RateLimitError(
-            message = message,
-            retryAfterSeconds = retryAfterSeconds ?: 0,
-            nextRetryAt = nextRetryAt,
-            timestamp = timestamp ?: now
-        )
-        "CODE_INVALID" -> AuthError.CodeInvalid(
-            message = message,
-            remainingAttempts = remainingAttempts,
-            timestamp = timestamp ?: now
-        )
-        "CODE_EXPIRED" -> AuthError.CodeExpired(
-            message = message,
-            timestamp = timestamp ?: now
-        )
-        "CODE_NOT_FOUND" -> AuthError.CodeNotFound(
-            message = message,
-            timestamp = timestamp ?: now
-        )
-        "TOO_MANY_ATTEMPTS" -> AuthError.TooManyAttempts(
-            message = message,
-            timestamp = timestamp ?: now
-        )
-        "CODE_ALREADY_USED" -> AuthError.CodeAlreadyUsed(
-            message = message,
-            timestamp = timestamp ?: now
-        )
-        "USER_BLOCKED" -> AuthError.UserBlocked(
-            message = message,
-            timestamp = timestamp ?: now
-        )
-        else -> AuthError.UnknownError(
-            code = error,
-            message = message,
-            timestamp = timestamp ?: now
-        )
+        "VALIDATION_ERROR" ->
+            AuthError.ValidationError(
+                message = message,
+                timestamp = timestamp ?: now,
+            )
+        "RATE_LIMIT_EXCEEDED" ->
+            AuthError.RateLimitError(
+                message = message,
+                retryAfterSeconds = retryAfterSeconds ?: 0,
+                nextRetryAt = nextRetryAt,
+                timestamp = timestamp ?: now,
+            )
+        "CODE_INVALID" ->
+            AuthError.CodeInvalid(
+                message = message,
+                remainingAttempts = remainingAttempts,
+                timestamp = timestamp ?: now,
+            )
+        "CODE_EXPIRED" ->
+            AuthError.CodeExpired(
+                message = message,
+                timestamp = timestamp ?: now,
+            )
+        "CODE_NOT_FOUND" ->
+            AuthError.CodeNotFound(
+                message = message,
+                timestamp = timestamp ?: now,
+            )
+        "TOO_MANY_ATTEMPTS" ->
+            AuthError.TooManyAttempts(
+                message = message,
+                timestamp = timestamp ?: now,
+            )
+        "CODE_ALREADY_USED" ->
+            AuthError.CodeAlreadyUsed(
+                message = message,
+                timestamp = timestamp ?: now,
+            )
+        "USER_BLOCKED" ->
+            AuthError.UserBlocked(
+                message = message,
+                timestamp = timestamp ?: now,
+            )
+        else ->
+            AuthError.UnknownError(
+                code = error,
+                message = message,
+                timestamp = timestamp ?: now,
+            )
     }
 }
-

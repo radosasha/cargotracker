@@ -13,21 +13,21 @@ import io.ktor.http.contentType
 
 interface AuthApi {
     suspend fun requestSmsCode(request: SmsRequestDto): SmsRequestResponseDto
+
     suspend fun verifySmsCode(verify: SmsVerifyDto): AuthResponseDto
 }
 
 class AuthApiImpl(
     private val httpClient: HttpClient,
-    private val baseUrl: String
+    private val baseUrl: String,
 ) : AuthApi {
-    
     override suspend fun requestSmsCode(request: SmsRequestDto): SmsRequestResponseDto {
         return httpClient.post("$baseUrl/api/mobile/auth/request") {
             contentType(ContentType.Application.Json)
             setBody(request)
         }.bodyOrThrow()
     }
-    
+
     override suspend fun verifySmsCode(verify: SmsVerifyDto): AuthResponseDto {
         return httpClient.post("$baseUrl/api/mobile/auth/verify") {
             contentType(ContentType.Application.Json)

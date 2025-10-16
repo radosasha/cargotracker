@@ -1,7 +1,7 @@
 package com.tracker.data.model
 
-import kotlinx.serialization.Serializable
 import kotlinx.datetime.Instant
+import kotlinx.serialization.Serializable
 
 /**
  * Data модель для GPS координат
@@ -18,6 +18,5 @@ data class LocationDataModel(
     val speed: Float? = null,
     val course: Float? = null, // bearing переименован в course для совместимости
     val batteryLevel: Int? = null,
-    val deviceId: String? = null
+    val deviceId: String? = null,
 )
-

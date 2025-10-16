@@ -14,7 +14,6 @@ import io.ktor.client.call.body
 import io.ktor.client.plugins.ClientRequestException
 import io.ktor.client.plugins.ServerResponseException
 import io.ktor.http.HttpStatusCode
-import kotlinx.datetime.Clock
 import kotlinx.serialization.json.Json
 
 /**
@@ -22,9 +21,8 @@ import kotlinx.serialization.json.Json
  */
 class AuthRemoteDataSource(
     private val authApi: AuthApi,
-    private val json: Json
+    private val json: Json,
 ) {
-    
     /**
      * Request SMS verification code
      */
@@ -39,26 +37,29 @@ class AuthRemoteDataSource(
             Result.failure(parseClientError(e))
         } catch (e: ServerResponseException) {
             println("🌐 AuthRemoteDataSource: ❌ Server error: ${e.response.status}")
-            val error = when (e.response.status) {
-                HttpStatusCode.ServiceUnavailable -> AuthError.ServiceUnavailable(
-                    message = "Service temporarily unavailable. Please try again later."
-                )
-                else -> AuthError.UnknownError(
-                    code = "SERVER_ERROR",
-                    message = "Server error: ${e.response.status}"
-                )
-            }
+            val error =
+                when (e.response.status) {
+                    HttpStatusCode.ServiceUnavailable ->
+                        AuthError.ServiceUnavailable(
+                            message = "Service temporarily unavailable. Please try again later.",
+                        )
+                    else ->
+                        AuthError.UnknownError(
+                            code = "SERVER_ERROR",
+                            message = "Server error: ${e.response.status}",
+                        )
+                }
             Result.failure(error)
         } catch (e: Exception) {
             println("🌐 AuthRemoteDataSource: ❌ Network error: ${e.message}")
             Result.failure(
                 AuthError.NetworkError(
-                    message = e.message ?: "Network error occurred"
-                )
+                    message = e.message ?: "Network error occurred",
+                ),
             )
         }
     }
-    
+
     /**
      * Verify SMS code and authenticate
      */
@@ -73,26 +74,29 @@ class AuthRemoteDataSource(
             Result.failure(parseClientError(e))
         } catch (e: ServerResponseException) {
             println("🌐 AuthRemoteDataSource: ❌ Server error: ${e.response.status}")
-            val error = when (e.response.status) {
-                HttpStatusCode.ServiceUnavailable -> AuthError.ServiceUnavailable(
-                    message = "Service temporarily unavailable. Please try again later."
-                )
-                else -> AuthError.UnknownError(
-                    code = "SERVER_ERROR",
-                    message = "Server error: ${e.response.status}"
-                )
-            }
+            val error =
+                when (e.response.status) {
+                    HttpStatusCode.ServiceUnavailable ->
+                        AuthError.ServiceUnavailable(
+                            message = "Service temporarily unavailable. Please try again later.",
+                        )
+                    else ->
+                        AuthError.UnknownError(
+                            code = "SERVER_ERROR",
+                            message = "Server error: ${e.response.status}",
+                        )
+                }
             Result.failure(error)
         } catch (e: Exception) {
             println("🌐 AuthRemoteDataSource: ❌ Network error: ${e.message}")
             Result.failure(
                 AuthError.NetworkError(
-                    message = e.message ?: "Network error occurred"
-                )
+                    message = e.message ?: "Network error occurred",
+                ),
             )
         }
     }
-    
+
     /**
      * Parse client error (4xx) from API response
      */
@@ -104,31 +108,37 @@ class AuthRemoteDataSource(
         } catch (parseError: Exception) {
             // Fallback if we can't parse the error response
             when (e.response.status) {
-                HttpStatusCode.BadRequest -> AuthError.ValidationError(
-                    message = "Invalid request data"
-                )
-                HttpStatusCode.Unauthorized -> AuthError.CodeInvalid(
-                    message = "Invalid verification code"
-                )
-                HttpStatusCode.NotFound -> AuthError.CodeNotFound(
-                    message = "Verification code not found or expired"
-                )
-                HttpStatusCode.Forbidden -> AuthError.UserBlocked(
-                    message = "Account is blocked"
-                )
-                HttpStatusCode.TooManyRequests -> AuthError.RateLimitError(
-                    message = "Too many requests. Please try again later.",
-                    retryAfterSeconds = 60
-                )
-                HttpStatusCode.ServiceUnavailable -> AuthError.ServiceUnavailable(
-                    message = "Service temporarily unavailable. Please try again later."
-                )
-                else -> AuthError.UnknownError(
-                    code = "CLIENT_ERROR",
-                    message = "Request failed: ${e.response.status}"
-                )
+                HttpStatusCode.BadRequest ->
+                    AuthError.ValidationError(
+                        message = "Invalid request data",
+                    )
+                HttpStatusCode.Unauthorized ->
+                    AuthError.CodeInvalid(
+                        message = "Invalid verification code",
+                    )
+                HttpStatusCode.NotFound ->
+                    AuthError.CodeNotFound(
+                        message = "Verification code not found or expired",
+                    )
+                HttpStatusCode.Forbidden ->
+                    AuthError.UserBlocked(
+                        message = "Account is blocked",
+                    )
+                HttpStatusCode.TooManyRequests ->
+                    AuthError.RateLimitError(
+                        message = "Too many requests. Please try again later.",
+                        retryAfterSeconds = 60,
+                    )
+                HttpStatusCode.ServiceUnavailable ->
+                    AuthError.ServiceUnavailable(
+                        message = "Service temporarily unavailable. Please try again later.",
+                    )
+                else ->
+                    AuthError.UnknownError(
+                        code = "CLIENT_ERROR",
+                        message = "Request failed: ${e.response.status}",
+                    )
             }
         }
     }
 }
-

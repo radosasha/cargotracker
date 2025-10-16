@@ -8,13 +8,12 @@ import org.koin.core.component.KoinComponent
  * Использует IOSLocationTrackingService singleton
  */
 class IOSTrackingRequesterImpl : TrackingRequester, KoinComponent {
-    
     override suspend fun startTracking(): Result<Unit> {
         return try {
             // Используем singleton IOSLocationTrackingService
             IOSLocationTrackingService.startTracking()
             val serviceActive = IOSLocationTrackingService.isTrackingActive()
-            
+
             if (serviceActive) {
                 println("IOSTrackingRequesterImpl: Tracking started successfully")
                 Result.success(Unit)
@@ -27,13 +26,13 @@ class IOSTrackingRequesterImpl : TrackingRequester, KoinComponent {
             Result.failure(e)
         }
     }
-    
+
     override suspend fun stopTracking(): Result<Unit> {
         return try {
             // Используем singleton IOSLocationTrackingService
             IOSLocationTrackingService.stopTracking()
             val serviceActive = IOSLocationTrackingService.isTrackingActive()
-            
+
             if (!serviceActive) {
                 println("IOSTrackingRequesterImpl: Tracking stopped successfully")
                 Result.success(Unit)
@@ -46,7 +45,7 @@ class IOSTrackingRequesterImpl : TrackingRequester, KoinComponent {
             Result.failure(e)
         }
     }
-    
+
     override suspend fun isTrackingActive(): Boolean {
         // Проверяем статус только через singleton (убрали дублирование состояния)
         val serviceActive = IOSLocationTrackingService.isTrackingActive()

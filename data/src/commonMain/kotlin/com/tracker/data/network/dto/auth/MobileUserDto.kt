@@ -9,9 +9,5 @@ import kotlinx.serialization.Serializable
 data class MobileUserDto(
     val id: Long,
     val phone: String,
-    val name: String
+    val name: String,
 )
-
-
-
-

@@ -8,5 +8,5 @@ enum class TrackingDataStatus {
     STARTING,
     ACTIVE,
     STOPPING,
-    ERROR
+    ERROR,
 }

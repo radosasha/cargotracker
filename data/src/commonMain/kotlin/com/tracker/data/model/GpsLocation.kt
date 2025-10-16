@@ -14,6 +14,5 @@ data class GpsLocation(
     val speed: Float?,
     val bearing: Float?,
     val timestamp: Instant,
-    val provider: String
+    val provider: String,
 )
-

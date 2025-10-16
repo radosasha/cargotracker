@@ -1,17 +1,16 @@
 package com.tracker.data.datasource.impl
 
 import com.tracker.data.datasource.TrackingDataSource
-import com.tracker.data.model.TrackingDataStatus
 import com.tracker.data.datasource.TrackingRequester
+import com.tracker.data.model.TrackingDataStatus
 
 /**
  * Общая реализация TrackingDataSource для всех платформ
  * Stateless - только делегирует вызовы в TrackingRequester
  */
 class TrackingDataSourceImpl(
-    private val trackingRequester: TrackingRequester
+    private val trackingRequester: TrackingRequester,
 ) : TrackingDataSource {
-
     override suspend fun startTracking(): Result<Unit> {
         return trackingRequester.startTracking()
     }

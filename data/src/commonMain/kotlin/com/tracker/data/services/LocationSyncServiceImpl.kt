@@ -23,7 +23,6 @@ class LocationSyncServiceImpl(
     private val loadRepository: LoadRepository,
     private val coroutineScope: CoroutineScope,
 ) : LocationSyncService {
-
     private var syncJob: Job? = null
 
     companion object {
@@ -42,30 +41,31 @@ class LocationSyncServiceImpl(
 
         println("LocationSyncManager: Starting periodic sync")
 
-        syncJob = coroutineScope.launch {
-            val loadId =
-                loadRepository.getConnectedLoad()?.loadId ?: throw IllegalStateException("Connected load not found")
-            while (isActive) {
-                try {
-                    // Пытаемся отправить неотправленные координаты
-                    val result = uploadPendingLocations(loadId)
+        syncJob =
+            coroutineScope.launch {
+                val loadId =
+                    loadRepository.getConnectedLoad()?.loadId ?: throw IllegalStateException("Connected load not found")
+                while (isActive) {
+                    try {
+                        // Пытаемся отправить неотправленные координаты
+                        val result = uploadPendingLocations(loadId)
 
-                    if (result.isSuccess) {
-                        val count = result.getOrNull() ?: 0
-                        if (count > 0) {
-                            println("LocationSyncManager: Successfully uploaded $count locations")
+                        if (result.isSuccess) {
+                            val count = result.getOrNull() ?: 0
+                            if (count > 0) {
+                                println("LocationSyncManager: Successfully uploaded $count locations")
+                            }
+                        } else {
+                            println("LocationSyncManager: Failed to upload locations: ${result.exceptionOrNull()?.message}")
                         }
-                    } else {
-                        println("LocationSyncManager: Failed to upload locations: ${result.exceptionOrNull()?.message}")
+                    } catch (e: Exception) {
+                        println("LocationSyncManager: Error during sync: ${e.message}")
                     }
-                } catch (e: Exception) {
-                    println("LocationSyncManager: Error during sync: ${e.message}")
-                }
 
-                // Ждем перед следующей попыткой
-                delay(SYNC_INTERVAL_MS)
+                    // Ждем перед следующей попыткой
+                    delay(SYNC_INTERVAL_MS)
+                }
             }
-        }
     }
 
     /**
@@ -120,7 +120,9 @@ class LocationSyncServiceImpl(
                 }
             } else {
                 // Большой список - обрабатываем пакетами
-                println("LocationSyncManager: Large dataset detected (${unsentLocations.size} locations), processing in batches of $maxBatchSize")
+                println(
+                    "LocationSyncManager: Large dataset detected (${unsentLocations.size} locations), processing in batches of $maxBatchSize",
+                )
 
                 val batches = unsentLocations.chunked(maxBatchSize)
                 val allSuccessfulIds = mutableListOf<Long>()

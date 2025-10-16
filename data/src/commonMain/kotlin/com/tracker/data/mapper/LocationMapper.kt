@@ -7,7 +7,6 @@ import com.tracker.domain.model.Location
  * Маппер для преобразования между Data и Domain моделями Location
  */
 object LocationMapper {
-    
     /**
      * Преобразует Data модель в Domain модель
      */
@@ -20,10 +19,10 @@ object LocationMapper {
             speed = dataModel.speed,
             bearing = dataModel.course, // course -> bearing
             timestamp = dataModel.timestamp,
-            deviceId = dataModel.deviceId
+            deviceId = dataModel.deviceId,
         )
     }
-    
+
     /**
      * Преобразует Domain модель в Data модель
      */
@@ -38,17 +37,17 @@ object LocationMapper {
             speed = domainModel.speed,
             course = domainModel.bearing, // bearing -> course
             batteryLevel = null,
-            deviceId = domainModel.deviceId
+            deviceId = domainModel.deviceId,
         )
     }
-    
+
     /**
      * Преобразует список Data моделей в список Domain моделей
      */
     fun toDomainList(dataModels: List<LocationDataModel>): List<Location> {
         return dataModels.map { toDomain(it) }
     }
-    
+
     /**
      * Преобразует список Domain моделей в список Data моделей
      */

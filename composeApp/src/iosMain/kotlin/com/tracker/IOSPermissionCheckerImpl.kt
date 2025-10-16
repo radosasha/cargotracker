@@ -8,64 +8,61 @@ import platform.CoreLocation.kCLAuthorizationStatusAuthorizedWhenInUse
 import platform.CoreLocation.kCLAuthorizationStatusDenied
 import platform.CoreLocation.kCLAuthorizationStatusNotDetermined
 import platform.CoreLocation.kCLAuthorizationStatusRestricted
-import platform.Foundation.NSBundle
+import platform.Foundation.NSURL
 import platform.UIKit.UIApplication
 import platform.UIKit.UIApplicationOpenSettingsURLString
-import platform.Foundation.NSURL
-import platform.UserNotifications.UNUserNotificationCenter
-import platform.UserNotifications.UNAuthorizationStatus
-import platform.UserNotifications.UNAuthorizationStatusAuthorized
-import platform.UserNotifications.UNAuthorizationStatusDenied
-import platform.UserNotifications.UNAuthorizationStatusNotDetermined
-import platform.UserNotifications.UNAuthorizationStatusProvisional
 import platform.UserNotifications.UNAuthorizationOptionAlert
 import platform.UserNotifications.UNAuthorizationOptionBadge
 import platform.UserNotifications.UNAuthorizationOptionSound
+import platform.UserNotifications.UNAuthorizationStatusAuthorized
+import platform.UserNotifications.UNUserNotificationCenter
+import platform.darwin.NSObject
 import platform.darwin.dispatch_async
 import platform.darwin.dispatch_get_main_queue
-import platform.darwin.NSObject
 import kotlin.coroutines.suspendCoroutine
 
 /**
  * iOS реализация PermissionChecker
  */
 class IOSPermissionCheckerImpl : PermissionChecker {
-    
     private val locationManager = CLLocationManager()
     private val locationDelegate = LocationManagerDelegate()
-    
+
     init {
         locationManager.delegate = locationDelegate
     }
-    
+
     // Делегат для отслеживания изменений статуса разрешений
     private class LocationManagerDelegate : NSObject(), CLLocationManagerDelegateProtocol {
         var onAuthorizationChange: ((Int) -> Unit)? = null
-        
+
         override fun locationManagerDidChangeAuthorization(manager: CLLocationManager) {
             val status = manager.authorizationStatus
             println("iOS: Location authorization changed to: $status")
             onAuthorizationChange?.invoke(status.toInt())
         }
     }
-    
+
     override suspend fun hasLocationPermissions(): Boolean {
         return suspendCoroutine { continuation ->
             dispatch_async(dispatch_get_main_queue()) {
                 val status = locationManager.authorizationStatus
-                val hasPermission = when (status) {
-                    kCLAuthorizationStatusAuthorizedWhenInUse,
-                    kCLAuthorizationStatusAuthorizedAlways -> true
-                    kCLAuthorizationStatusNotDetermined,
-                    kCLAuthorizationStatusDenied,
-                    kCLAuthorizationStatusRestricted -> false
-                    else -> false
-                }
+                val hasPermission =
+                    when (status) {
+                        kCLAuthorizationStatusAuthorizedWhenInUse,
+                        kCLAuthorizationStatusAuthorizedAlways,
+                        -> true
+                        kCLAuthorizationStatusNotDetermined,
+                        kCLAuthorizationStatusDenied,
+                        kCLAuthorizationStatusRestricted,
+                        -> false
+                        else -> false
+                    }
                 continuation.resumeWith(Result.success(hasPermission))
             }
         }
     }
-    
+
     override suspend fun hasBackgroundLocationPermission(): Boolean {
         return suspendCoroutine { continuation ->
             dispatch_async(dispatch_get_main_queue()) {
@@ -75,7 +72,7 @@ class IOSPermissionCheckerImpl : PermissionChecker {
             }
         }
     }
-    
+
     override suspend fun hasNotificationPermission(): Boolean {
         return suspendCoroutine { continuation ->
             dispatch_async(dispatch_get_main_queue()) {
@@ -87,21 +84,21 @@ class IOSPermissionCheckerImpl : PermissionChecker {
             }
         }
     }
-    
+
     override suspend fun hasAllRequiredPermissions(): Boolean {
         val location = hasLocationPermissions()
         val background = hasBackgroundLocationPermission()
         val notifications = hasNotificationPermission()
         return location && background && notifications
     }
-    
+
     override suspend fun getPermissionStatusMessage(): String {
         val location = hasLocationPermissions()
         val background = hasBackgroundLocationPermission()
         val notifications = hasNotificationPermission()
-        
+
         val missingPermissions = mutableListOf<String>()
-        
+
         if (!location) {
             missingPermissions.add("Location access")
         }
@@ -111,14 +108,14 @@ class IOSPermissionCheckerImpl : PermissionChecker {
         if (!notifications) {
             missingPermissions.add("Notifications")
         }
-        
+
         return if (missingPermissions.isEmpty()) {
             "All permissions granted"
         } else {
             "Missing: ${missingPermissions.joinToString(", ")}"
         }
     }
-    
+
     override suspend fun openAppSettings(): Result<Unit> {
         return try {
             UIApplication.sharedApplication.openURL(NSURL(string = UIApplicationOpenSettingsURLString))
@@ -127,13 +124,13 @@ class IOSPermissionCheckerImpl : PermissionChecker {
             Result.failure(e)
         }
     }
-    
+
     override fun requestAllPermissions() {
         // Запрашиваем разрешения последовательно, используя callbacks
         dispatch_async(dispatch_get_main_queue()) {
             val status = locationManager.authorizationStatus
             println("iOS: Current authorization status: $status")
-            
+
             when (status) {
                 kCLAuthorizationStatusNotDetermined -> {
                     println("iOS: Requesting location permission...")
@@ -167,11 +164,11 @@ class IOSPermissionCheckerImpl : PermissionChecker {
             }
         }
     }
-    
+
     private fun handleLocationAuthorizationChange(newStatus: Int) {
         dispatch_async(dispatch_get_main_queue()) {
             println("iOS: Handling authorization change: $newStatus")
-            
+
             when (newStatus) {
                 kCLAuthorizationStatusAuthorizedWhenInUse.toInt() -> {
                     println("iOS: Location permission granted, requesting background permission...")
@@ -195,7 +192,7 @@ class IOSPermissionCheckerImpl : PermissionChecker {
             }
         }
     }
-    
+
     private fun requestNotificationPermissions() {
         dispatch_async(dispatch_get_main_queue()) {
             println("iOS: Requesting notification permission...")
@@ -208,7 +205,7 @@ class IOSPermissionCheckerImpl : PermissionChecker {
                     } else {
                         println("iOS: Notification permission denied: ${error?.localizedDescription}")
                     }
-                }
+                },
             )
         }
     }

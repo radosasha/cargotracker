@@ -17,9 +17,8 @@ import kotlinx.serialization.Serializable
  */
 class FlespiLocationApi(
     private val httpClient: HttpClient,
-    private val serverUrl: String
+    private val serverUrl: String,
 ) {
-    
     /**
      * Data класс для Flespi протокола
      */
@@ -35,48 +34,53 @@ class FlespiLocationApi(
         @SerialName("position.satellites") val satellites: Int = 0,
         @SerialName("battery.level") val batteryLevel: Int = 0,
         @SerialName("position.valid") val valid: Boolean = true,
-        @SerialName("position.accuracy") val accuracy: Double = 0.0
+        @SerialName("position.accuracy") val accuracy: Double = 0.0,
     )
-    
+
     /**
      * Отправляет массив координат на сервер через Flespi протокол
      * @param locations список координат для отправки
      * @return результат отправки
      */
-    suspend fun sendLocations(deviceId: String, locations: List<LocationDataModel>): Result<Unit> {
+    suspend fun sendLocations(
+        deviceId: String,
+        locations: List<LocationDataModel>,
+    ): Result<Unit> {
         return try {
             if (locations.isEmpty()) {
                 println("FlespiLocationApi: No locations to send")
                 return Result.success(Unit)
             }
-            
-            val flespiPositions = locations.map { location ->
-                FlespiPosition(
-                    ident = deviceId,
-                    timestamp = location.timestamp.toEpochMilliseconds() / 1000, // Flespi использует Unix timestamp в секундах
-                    latitude = location.latitude,
-                    longitude = location.longitude,
-                    speed = location.speed?.toDouble() ?: 0.0,
-                    direction = location.course?.toDouble() ?: 0.0,
-                    altitude = location.altitude ?: 0.0,
-                    satellites = 0, // Можно добавить если есть данные о спутниках
-                    batteryLevel = location.batteryLevel ?: 0,
-                    valid = location.isValid,
-                    accuracy = location.accuracy?.toDouble() ?: 0.0
-                )
-            }
-            
+
+            val flespiPositions =
+                locations.map { location ->
+                    FlespiPosition(
+                        ident = deviceId,
+                        timestamp = location.timestamp.toEpochMilliseconds() / 1000, // Flespi использует Unix timestamp в секундах
+                        latitude = location.latitude,
+                        longitude = location.longitude,
+                        speed = location.speed?.toDouble() ?: 0.0,
+                        direction = location.course?.toDouble() ?: 0.0,
+                        altitude = location.altitude ?: 0.0,
+                        satellites = 0, // Можно добавить если есть данные о спутниках
+                        batteryLevel = location.batteryLevel ?: 0,
+                        valid = location.isValid,
+                        accuracy = location.accuracy?.toDouble() ?: 0.0,
+                    )
+                }
+
             println("FlespiLocationApi: Sending ${locations.size} locations to $serverUrl")
             println("FlespiLocationApi: Device ID: $deviceId")
-            
-            val response = httpClient.post {
-                url(serverUrl)
-                contentType(ContentType.Application.Json)
-                setBody(flespiPositions)
-            }
-            
+
+            val response =
+                httpClient.post {
+                    url(serverUrl)
+                    contentType(ContentType.Application.Json)
+                    setBody(flespiPositions)
+                }
+
             println("FlespiLocationApi: Response status: ${response.status}")
-            
+
             when (response.status) {
                 HttpStatusCode.OK -> {
                     println("FlespiLocationApi: ✅ Successfully sent ${locations.size} locations")
@@ -93,13 +97,16 @@ class FlespiLocationApi(
             Result.failure(e)
         }
     }
-    
+
     /**
      * Отправляет одну координату на сервер (для совместимости)
      * @param location координата для отправки
      * @return результат отправки
      */
-    suspend fun sendLocation(deviceId: String, location: LocationDataModel): Result<Unit> {
+    suspend fun sendLocation(
+        deviceId: String,
+        location: LocationDataModel,
+    ): Result<Unit> {
         return sendLocations(deviceId, listOf(location))
     }
 }

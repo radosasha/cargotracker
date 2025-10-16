@@ -16,19 +16,21 @@ import kotlinx.coroutines.flow.map
  * Реализация PrefsDataSource с использованием DataStore
  */
 class PrefsDataSourceImpl(
-    private val dataStore: DataStore<Preferences>
+    private val dataStore: DataStore<Preferences>,
 ) : PrefsDataSource {
-    
-    override suspend fun saveString(key: String, value: String) {
+    override suspend fun saveString(
+        key: String,
+        value: String,
+    ) {
         dataStore.edit { preferences ->
             preferences[stringPreferencesKey(key)] = value
         }
     }
-    
+
     override suspend fun getString(key: String): String? {
         return dataStore.data.first()[stringPreferencesKey(key)]
     }
-    
+
     override fun getStringFlow(key: String): Flow<String?> {
         return dataStore.data
             .catch { exception ->
@@ -39,17 +41,20 @@ class PrefsDataSourceImpl(
                 preferences[stringPreferencesKey(key)]
             }
     }
-    
-    override suspend fun saveBoolean(key: String, value: Boolean) {
+
+    override suspend fun saveBoolean(
+        key: String,
+        value: Boolean,
+    ) {
         dataStore.edit { preferences ->
             preferences[booleanPreferencesKey(key)] = value
         }
     }
-    
+
     override suspend fun getBoolean(key: String): Boolean? {
         return dataStore.data.first()[booleanPreferencesKey(key)]
     }
-    
+
     override fun getBooleanFlow(key: String): Flow<Boolean?> {
         return dataStore.data
             .catch { exception ->
@@ -59,17 +64,20 @@ class PrefsDataSourceImpl(
                 preferences[booleanPreferencesKey(key)]
             }
     }
-    
-    override suspend fun saveInt(key: String, value: Int) {
+
+    override suspend fun saveInt(
+        key: String,
+        value: Int,
+    ) {
         dataStore.edit { preferences ->
             preferences[intPreferencesKey(key)] = value
         }
     }
-    
+
     override suspend fun getInt(key: String): Int? {
         return dataStore.data.first()[intPreferencesKey(key)]
     }
-    
+
     override fun getIntFlow(key: String): Flow<Int?> {
         return dataStore.data
             .catch { exception ->
@@ -79,7 +87,7 @@ class PrefsDataSourceImpl(
                 preferences[intPreferencesKey(key)]
             }
     }
-    
+
     override suspend fun remove(key: String) {
         dataStore.edit { preferences ->
             preferences.remove(stringPreferencesKey(key))
@@ -87,7 +95,7 @@ class PrefsDataSourceImpl(
             preferences.remove(intPreferencesKey(key))
         }
     }
-    
+
     override suspend fun clear() {
         dataStore.edit { preferences ->
             preferences.clear()

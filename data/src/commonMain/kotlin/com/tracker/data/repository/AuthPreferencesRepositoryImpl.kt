@@ -15,9 +15,8 @@ import kotlinx.coroutines.flow.map
  * Implementation of AuthPreferencesRepository using DataStore
  */
 class AuthPreferencesRepositoryImpl(
-    private val dataStore: DataStore<Preferences>
+    private val dataStore: DataStore<Preferences>,
 ) : AuthPreferencesRepository {
-
     companion object {
         private val KEY_TOKEN = stringPreferencesKey("auth_token")
         private val KEY_USER_ID = longPreferencesKey("auth_user_id")
@@ -38,32 +37,34 @@ class AuthPreferencesRepositoryImpl(
 
     override suspend fun getSession(): AuthSession? {
         println("🔍 AuthPreferencesRepository: Getting session...")
-        val session = dataStore.data.map { preferences ->
-            val token = preferences[KEY_TOKEN]
-            val userId = preferences[KEY_USER_ID]
-            val userPhone = preferences[KEY_USER_PHONE]
-            val userName = preferences[KEY_USER_NAME]
+        val session =
+            dataStore.data.map { preferences ->
+                val token = preferences[KEY_TOKEN]
+                val userId = preferences[KEY_USER_ID]
+                val userPhone = preferences[KEY_USER_PHONE]
+                val userName = preferences[KEY_USER_NAME]
 
-            if (token != null && userId != null && userPhone != null && userName != null) {
-                AuthSession(
-                    token = token,
-                    user = AuthUser(
-                        id = userId,
-                        phone = userPhone,
-                        name = userName
+                if (token != null && userId != null && userPhone != null && userName != null) {
+                    AuthSession(
+                        token = token,
+                        user =
+                            AuthUser(
+                                id = userId,
+                                phone = userPhone,
+                                name = userName,
+                            ),
                     )
-                )
-            } else {
-                null
-            }
-        }.first()
-        
+                } else {
+                    null
+                }
+            }.first()
+
         if (session != null) {
             println("🔍 AuthPreferencesRepository: ✅ Session found: ${session.user.name}")
         } else {
             println("🔍 AuthPreferencesRepository: ⚠️ No session found")
         }
-        
+
         return session
     }
 
@@ -77,11 +78,11 @@ class AuthPreferencesRepositoryImpl(
     }
 
     override suspend fun hasSession(): Boolean {
-        val has = dataStore.data.map { preferences ->
-            preferences[KEY_TOKEN] != null
-        }.first()
+        val has =
+            dataStore.data.map { preferences ->
+                preferences[KEY_TOKEN] != null
+            }.first()
         println("🔍 AuthPreferencesRepository: Has session = $has")
         return has
     }
 }
-

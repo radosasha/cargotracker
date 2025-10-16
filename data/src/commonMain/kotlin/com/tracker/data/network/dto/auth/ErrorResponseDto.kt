@@ -18,7 +18,5 @@ data class ErrorResponseDto(
     val retryAfterSeconds: Long? = null,
     val nextRetryAt: String? = null,
     // VerificationErrorResponse fields
-    val remainingAttempts: Int? = null
+    val remainingAttempts: Int? = null,
 )
-
-
