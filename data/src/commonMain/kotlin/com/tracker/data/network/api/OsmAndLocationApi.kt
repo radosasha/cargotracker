@@ -19,8 +19,7 @@ import kotlinx.serialization.json.putJsonObject
  */
 class OsmAndLocationApi(
     private val httpClient: HttpClient,
-    private val serverUrl: String,
-    private val deviceId: String
+    private val serverUrl: String
 ) {
     
     /**
@@ -28,18 +27,18 @@ class OsmAndLocationApi(
      * @param location данные о местоположении
      * @return результат отправки
      */
-    suspend fun sendLocation(location: LocationDataModel): Result<Unit> {
+    suspend fun sendLocation(loadId: String, location: LocationDataModel): Result<Unit> {
         return try {
             val url = "$serverUrl/api/osmand"
             println("LocationApi.sendLocation() - URL: $url")
-            println("LocationApi.sendLocation() - Device ID: $deviceId")
+            println("LocationApi.sendLocation() - Load ID: $loadId")
             println("LocationApi.sendLocation() - Location: lat=${location.latitude}, lon=${location.longitude}")
             println("LocationApi.sendLocation() - Timestamp: ${location.timestamp}")
             
             val response = httpClient.submitForm(
                 url = url,
                 formParameters = Parameters.build {
-                    append("id", deviceId)
+                    append("id", loadId)
                     append("lat", location.latitude.toString())
                     append("lon", location.longitude.toString())
                     append("timestamp", location.timestamp.toEpochMilliseconds().toString())
@@ -77,12 +76,12 @@ class OsmAndLocationApi(
     /**
      * Отправляет координаты в JSON формате (альтернативный способ)
      */
-    suspend fun sendLocationJson(location: LocationDataModel): Result<Unit> {
+    suspend fun sendLocationJson(loadId: String, location: LocationDataModel): Result<Unit> {
         return try {
             println("LocationApi.sendLocationJson() - sending JSON location")
             
             val jsonData = buildJsonObject {
-                put("device_id", deviceId)
+                put("device_id", loadId)
                 putJsonObject("location") {
                     put("timestamp", location.timestamp.toString())
                     putJsonObject("coords") {

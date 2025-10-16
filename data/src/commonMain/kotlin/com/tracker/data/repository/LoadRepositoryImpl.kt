@@ -59,6 +59,10 @@ class LoadRepositoryImpl(
         println("💾 LoadRepositoryImpl: Getting cached loads only")
         return localDataSource.getCachedLoads().map { it.toDomain() }
     }
+
+    override suspend fun getConnectedLoad(): Load? {
+        return getCachedLoads().find { it.loadStatus == 1 }
+    }
     
     override suspend fun clearCache() {
         println("🗑️ LoadRepositoryImpl: Clearing cache")

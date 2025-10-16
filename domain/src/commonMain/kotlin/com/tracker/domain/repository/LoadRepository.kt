@@ -19,7 +19,8 @@ interface LoadRepository {
      * @return List of cached loads
      */
     suspend fun getCachedLoads(): List<Load>
-    
+    suspend fun getConnectedLoad(): Load?
+
     /**
      * Clear all cached loads
      */

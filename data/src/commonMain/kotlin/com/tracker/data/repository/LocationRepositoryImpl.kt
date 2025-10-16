@@ -18,22 +18,21 @@ class LocationRepositoryImpl(
     private val remoteLocationDataSource: LocationRemoteDataSource,
     private val localLocationDataSource: LocationLocalDataSource,
     private val gpsLocationDataSource: GpsLocationDataSource,
-    private val deviceId: String
 ) : LocationRepository {
     
-    override suspend fun sendLocation(location: Location): Result<Unit> {
+    override suspend fun sendLocation(loadId: String, location: Location): Result<Unit> {
         return try {
             val locationDataModel = LocationMapper.toData(location)
-            remoteLocationDataSource.sendLocation(locationDataModel)
+            remoteLocationDataSource.sendLocation(loadId, locationDataModel)
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
     
-    override suspend fun sendLocations(locations: List<Location>): Result<Unit> {
+    override suspend fun sendLocations(loadId: String, locations: List<Location>): Result<Unit> {
         return try {
             val locationDataModels = locations.map { LocationMapper.toData(it) }
-            remoteLocationDataSource.sendLocations(locationDataModels)
+            remoteLocationDataSource.sendLocations(loadId, locationDataModels)
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -45,10 +44,10 @@ class LocationRepositoryImpl(
         return localLocationDataSource.saveLocation(entity)
     }
     
-    override suspend fun getUnsentLocations(): List<Pair<Long, Location>> {
+    override suspend fun getUnsentLocations(loadId: String): List<Pair<Long, Location>> {
         val entities = localLocationDataSource.getUnsentLocations()
         return entities.map { entity ->
-            Pair(entity.id, LocationEntityMapper.toDomain(entity, deviceId))
+            Pair(entity.id, LocationEntityMapper.toDomain(entity, loadId))
         }
     }
     
@@ -60,18 +59,18 @@ class LocationRepositoryImpl(
         localLocationDataSource.markAsSentAndDelete(ids)
     }
     
-    override suspend fun getLastSavedLocation(): Location? {
+    override suspend fun getLastSavedLocation(loadId: String): Location? {
         val entity = localLocationDataSource.getLastLocation()
-        return entity?.let { LocationEntityMapper.toDomain(it, deviceId) }
+        return entity?.let { LocationEntityMapper.toDomain(it, loadId) }
     }
     
     override suspend fun getUnsentCount(): Int {
         return localLocationDataSource.getUnsentCount()
     }
 
-    override fun startGpsTracking(): Flow<Location> {
+    override fun startGpsTracking(loadId: String): Flow<Location> {
         return gpsLocationDataSource.startGpsTracking().map { gpsLocation ->
-            GpsLocationMapper.toDomain(gpsLocation, deviceId)
+            GpsLocationMapper.toDomain(gpsLocation, loadId)
         }
     }
     

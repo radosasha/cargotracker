@@ -61,14 +61,14 @@ class IOSLocationTrackingService private constructor() : KoinComponent {
         /**
          * Запускает GPS трекинг через singleton
          */
-        fun startTracking() {
+        suspend fun startTracking() {
             getInstance().startLocationTracking()
         }
         
         /**
          * Останавливает GPS трекинг через singleton
          */
-        fun stopTracking() {
+        suspend fun stopTracking() {
             getInstance().stopLocationTracking()
         }
         
@@ -98,7 +98,7 @@ class IOSLocationTrackingService private constructor() : KoinComponent {
      * Запускает GPS трекинг
      * Аналог onStartCommand в Android Service
      */
-    fun startLocationTracking() {
+    suspend fun startLocationTracking() {
         if (isTracking) {
             println("$TAG: Already tracking, ignoring start request")
             return

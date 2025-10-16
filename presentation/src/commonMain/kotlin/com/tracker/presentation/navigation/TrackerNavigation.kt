@@ -108,13 +108,9 @@ fun TrackerNavigation() {
             arguments = listOf(
                 navArgument("loadId") { type = NavType.StringType }
             )
-        ) { backStackEntry ->
-            val loadId = backStackEntry.getStringArgument("loadId") ?: ""
+        ) {
             val viewModel = koinHomeViewModel()
-            HomeScreen(
-                viewModel = viewModel,
-                loadId = loadId
-            )
+            HomeScreen(viewModel = viewModel)
         }
     }
 }

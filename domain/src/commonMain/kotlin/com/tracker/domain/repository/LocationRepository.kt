@@ -11,12 +11,12 @@ interface LocationRepository {
     /**
      * Сохраняет GPS координату (отправляет на сервер)
      */
-    suspend fun sendLocation(location: Location): Result<Unit>
+    suspend fun sendLocation(loadId: String, location: Location): Result<Unit>
     
     /**
      * Отправляет несколько GPS координат на сервер
      */
-    suspend fun sendLocations(locations: List<Location>): Result<Unit>
+    suspend fun sendLocations(loadId: String, locations: List<Location>): Result<Unit>
     
     /**
      * Сохраняет координату в локальную БД
@@ -28,7 +28,7 @@ interface LocationRepository {
      * Получает все неотправленные координаты из БД
      * @return Список пар (ID в БД, Location)
      */
-    suspend fun getUnsentLocations(): List<Pair<Long, Location>>
+    suspend fun getUnsentLocations(loadId: String): List<Pair<Long, Location>>
     
     /**
      * Удаляет координату из БД по ID
@@ -43,7 +43,7 @@ interface LocationRepository {
     /**
      * Получает последнюю сохраненную координату из БД
      */
-    suspend fun getLastSavedLocation(): Location?
+    suspend fun getLastSavedLocation(loadId: String): Location?
     
     /**
      * Получает количество неотправленных координат
@@ -56,7 +56,7 @@ interface LocationRepository {
      * Запускает GPS трекинг и возвращает поток координат
      * @return Flow<Location> - поток GPS координат в Domain модели
      */
-    fun startGpsTracking(): Flow<Location>
+    fun startGpsTracking(loadId: String): Flow<Location>
     
     /**
      * Останавливает GPS трекинг

@@ -19,6 +19,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -98,39 +99,42 @@ class AndroidTrackingService : LifecycleService(), KoinComponent {
     }
 
     private fun startLocationTracking() {
+
         if (isTracking) {
             println("LocationTrackingService: Already tracking, ignoring start request")
             return
         }
 
-        try {
-            println("LocationTrackingService: Starting GPS tracking through StartProcessLocationsUseCase")
+        lifecycle.coroutineScope.launch {
+            try {
+                println("LocationTrackingService: Starting GPS tracking through StartProcessLocationsUseCase")
 
-            // Запускаем обработку GPS координат и подписываемся на Flow результатов
-            startProcessLocationsUseCase()
-                .flowOn(Dispatchers.IO)
-                .onEach { result ->
-                    // Обновляем уведомление с актуаьной статистикой
-                    updateNotificationWithStats(result.trackingStats)
+                // Запускаем обработку GPS координат и подписываемся на Flow результатов
+                startProcessLocationsUseCase()
+                    .flowOn(Dispatchers.IO)
+                    .onEach { result ->
+                        // Обновляем уведомление с актуаьной статистикой
+                        updateNotificationWithStats(result.trackingStats)
 
-                    // Логируем результат обработки
-                    if (result.shouldSend) {
-                        println("AndroidTrackingService: ✅ Location processed successfully: ${result.reason}")
-                    } else {
-                        println("AndroidTrackingService: ⏭️ Location filtered: ${result.reason}")
+                        // Логируем результат обработки
+                        if (result.shouldSend) {
+                            println("AndroidTrackingService: ✅ Location processed successfully: ${result.reason}")
+                        } else {
+                            println("AndroidTrackingService: ⏭️ Location filtered: ${result.reason}")
+                        }
                     }
-                }
-                .launchIn(lifecycle.coroutineScope)
-            isTracking = true
+                    .launchIn(lifecycle.coroutineScope)
+                isTracking = true
 
-            println("LocationTrackingService: ✅ GPS tracking started successfully")
-            updateNotificationWithStats(com.tracker.domain.model.TrackingStats(isTracking = true)) // Initial empty stats
+                println("LocationTrackingService: ✅ GPS tracking started successfully")
+                updateNotificationWithStats(com.tracker.domain.model.TrackingStats(isTracking = true)) // Initial empty stats
 
-        } catch (e: Exception) {
-            println("LocationTrackingService: ❌ Error starting GPS tracking: ${e.message}")
-            e.printStackTrace()
-            updateNotificationWithStats(com.tracker.domain.model.TrackingStats(isTracking = false)) // Error state
-            stopSelf()
+            } catch (e: Exception) {
+                println("LocationTrackingService: ❌ Error starting GPS tracking: ${e.message}")
+                e.printStackTrace()
+                updateNotificationWithStats(com.tracker.domain.model.TrackingStats(isTracking = false)) // Error state
+                stopSelf()
+            }
         }
     }
 

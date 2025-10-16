@@ -15,16 +15,9 @@ import com.tracker.presentation.component.MessageCard
  */
 @Composable
 fun HomeScreen(
-    viewModel: HomeViewModel,
-    loadId: String
+    viewModel: HomeViewModel
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    
-    // Initialize with loadId
-    LaunchedEffect(loadId) {
-        println("🏠 HomeScreen: Received loadId: $loadId")
-        // TODO: Use loadId to fetch load details or configure tracking
-    }
     
     Column(
         modifier = Modifier
@@ -33,21 +26,23 @@ fun HomeScreen(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Заголовок
+      /*  // Заголовок
         Text(
             text = "GPS Tracker",
             style = MaterialTheme.typography.headlineLarge,
             fontWeight = FontWeight.Bold
         )
         
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(8.dp))*/
         
         // Load ID
-        Text(
-            text = "Load: $loadId",
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.primary
-        )
+        uiState.loadId?.let { loadId ->
+            Text(
+                text = "Load: $loadId",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.primary
+            )
+        }
         
         Spacer(modifier = Modifier.height(32.dp))
         
@@ -113,7 +108,7 @@ fun HomeScreen(
         
         Spacer(modifier = Modifier.height(16.dp))
         
-        // Кнопка тестирования сервера
+/*        // Кнопка тестирования сервера
         OutlinedButton(
             onClick = { viewModel.onTestServer() },
             enabled = !uiState.isLoading,
@@ -122,7 +117,7 @@ fun HomeScreen(
             Text("Test Server Connection")
         }
         
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(16.dp))*/
         
         // Сообщения
         uiState.message?.let { message ->

@@ -1,7 +1,6 @@
 package com.tracker.di
 
 import com.tracker.ActivityProvider
-import com.tracker.data.di.androidDataModule
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
@@ -26,7 +25,7 @@ object AndroidKoinApp {
         startKoin {
             androidContext(application)
             modules(
-                appModule + androidDataModule + activityModule
+                appModule + activityModule
             )
         }
 

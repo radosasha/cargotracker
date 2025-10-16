@@ -1,5 +1,6 @@
 package com.tracker.presentation.feature.home
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tracker.domain.usecase.GetPermissionStatusUseCase
@@ -8,35 +9,47 @@ import com.tracker.domain.usecase.RequestAllPermissionsUseCase
 import com.tracker.domain.usecase.StartTrackingUseCase
 import com.tracker.domain.usecase.StopTrackingUseCase
 import com.tracker.domain.usecase.TestServerUseCase
+import com.tracker.domain.usecase.load.ConnectToLoadUseCase
+import com.tracker.domain.usecase.load.DisconnectFromLoadUseCase
 import com.tracker.presentation.model.HomeUiState
 import com.tracker.presentation.model.MessageType
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * ViewModel для главного экрана
  */
 class HomeViewModel(
+    private val savedStateHandle: SavedStateHandle,
     private val getPermissionStatusUseCase: GetPermissionStatusUseCase,
     private val getTrackingStatusUseCase: GetTrackingStatusUseCase,
     private val requestAllPermissionsUseCase: RequestAllPermissionsUseCase,
     private val startTrackingUseCase: StartTrackingUseCase,
     private val stopTrackingUseCase: StopTrackingUseCase,
-    private val testServerUseCase: TestServerUseCase
+    private val testServerUseCase: TestServerUseCase,
+    private val connectToLoadUseCase: ConnectToLoadUseCase,
+    private val disconnectFromLoadUseCase: DisconnectFromLoadUseCase
 ) : ViewModel() {
+    
+    private val loadId: String = savedStateHandle.get<String>("loadId") ?: throw IllegalStateException("Load id is null")
     
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
     
     init {
-        observeStatus()
-        // Проверяем, был ли запущен трекинг при предыдущем запуске
-        checkAndRestoreTrackingState()
+        println("🏠 HomeViewModel: Initialized with loadId = $loadId")
+        
+        // Set loadId in uiState
+        _uiState.value = _uiState.value.copy(loadId = loadId)
+        
+        observePermissionsAndTrackingStatus()
     }
     
-    private fun observeStatus() {
+    private fun observePermissionsAndTrackingStatus() {
         viewModelScope.launch {
             try {
                 val permissionStatus = getPermissionStatusUseCase()
@@ -104,6 +117,27 @@ class HomeViewModel(
             _uiState.value = _uiState.value.copy(isLoading = true)
             
             try {
+                // Step 1: Connect to load
+                val currentLoadId = loadId
+                
+                println("🔌 HomeViewModel: Connecting to load $currentLoadId before starting tracking")
+                
+                val connectResult = withContext(Dispatchers.Default) {
+                    connectToLoadUseCase(currentLoadId)
+                }
+                if (connectResult.isFailure) {
+                    println("❌ HomeViewModel: Failed to connect to load: ${connectResult.exceptionOrNull()?.message}")
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        message = "Failed to connect to load: ${connectResult.exceptionOrNull()?.message}",
+                        messageType = MessageType.ERROR
+                    )
+                    return@launch
+                }
+                
+                println("✅ HomeViewModel: Successfully connected to load $currentLoadId")
+                
+                // Step 2: Start tracking
                 val result = startTrackingUseCase()
                 if (result.isSuccess) {
                     // Обновляем статус трекинга
@@ -120,6 +154,7 @@ class HomeViewModel(
                     )
                 }
             } catch (e: Exception) {
+                println("❌ HomeViewModel: Exception during start tracking: ${e.message}")
                 _uiState.value = _uiState.value.copy(
                     message = "Ошибка при запуске трекинга: ${e.message}",
                     messageType = MessageType.ERROR
@@ -135,22 +170,49 @@ class HomeViewModel(
             _uiState.value = _uiState.value.copy(isLoading = true)
             
             try {
-                val result = stopTrackingUseCase()
-                if (result.isSuccess) {
-                    // Обновляем статус трекинга
-                    val trackingStatus = getTrackingStatusUseCase()
+                // Step 1: Disconnect from load
+                val currentLoadId = loadId
+                
+                println("🔌 HomeViewModel: Disconnecting from load $currentLoadId before stopping tracking")
+
+                val disconnectResult = withContext(Dispatchers.Default) {
+                    disconnectFromLoadUseCase(currentLoadId)
+                }
+                if (disconnectResult.isFailure) {
+                    println("❌ HomeViewModel: Failed to disconnect from load: ${disconnectResult.exceptionOrNull()?.message}")
                     _uiState.value = _uiState.value.copy(
-                        trackingStatus = trackingStatus,
-                        message = "GPS трекинг остановлен",
-                        messageType = MessageType.SUCCESS
+                        isLoading = false,
+                        message = "Failed to disconnect from load: ${disconnectResult.exceptionOrNull()?.message}",
+                        messageType = MessageType.ERROR
                     )
-                } else {
+                    return@launch
+                }
+                
+                println("✅ HomeViewModel: Successfully disconnected from load $currentLoadId")
+                
+                // Step 2: Stop tracking
+                val result = stopTrackingUseCase()
+                if (result.isFailure) {
+                    println("❌ HomeViewModel: Failed to stop tracking: ${result.exceptionOrNull()?.message}")
                     _uiState.value = _uiState.value.copy(
+                        isLoading = false,
                         message = "Не удалось остановить трекинг: ${result.exceptionOrNull()?.message}",
                         messageType = MessageType.ERROR
                     )
+                    return@launch
                 }
+                
+                println("✅ HomeViewModel: Successfully stopped tracking")
+                
+                // Обновляем статус трекинга
+                val trackingStatus = getTrackingStatusUseCase()
+                _uiState.value = _uiState.value.copy(
+                    trackingStatus = trackingStatus,
+                    message = "GPS трекинг остановлен",
+                    messageType = MessageType.SUCCESS
+                )
             } catch (e: Exception) {
+                println("❌ HomeViewModel: Exception during stop tracking: ${e.message}")
                 _uiState.value = _uiState.value.copy(
                     message = "Ошибка при остановке трекинга: ${e.message}",
                     messageType = MessageType.ERROR
@@ -197,50 +259,5 @@ class HomeViewModel(
             message = null,
             messageType = null
         )
-    }
-    
-    /**
-     * Проверяет, был ли запущен трекинг при предыдущем запуске
-     * Если в DataStore сохранено true, автоматически запускает трекинг
-     */
-    private fun checkAndRestoreTrackingState() {
-        viewModelScope.launch {
-            try {
-                println("HomeViewModel: Checking if tracking was active before...")
-                
-                // Проверяем состояние из DataStore
-                val currentStatus = getTrackingStatusUseCase()
-                val isTrackingActive = currentStatus == com.tracker.domain.model.TrackingStatus.ACTIVE
-                
-                if (isTrackingActive) {
-                    println("HomeViewModel: Tracking was active before, restoring...")
-                    
-                    // Автоматически запускаем трекинг
-                    val result = startTrackingUseCase()
-                    if (result.isSuccess) {
-                        println("HomeViewModel: ✅ Tracking restored successfully")
-                        _uiState.value = _uiState.value.copy(
-                            trackingStatus = currentStatus,
-                            message = "Трекинг восстановлен",
-                            messageType = MessageType.SUCCESS
-                        )
-                    } else {
-                        println("HomeViewModel: ❌ Failed to restore tracking: ${result.exceptionOrNull()?.message}")
-                        _uiState.value = _uiState.value.copy(
-                            message = "Не удалось восстановить трекинг: ${result.exceptionOrNull()?.message}",
-                            messageType = MessageType.ERROR
-                        )
-                    }
-                } else {
-                    println("HomeViewModel: Tracking was not active, no restoration needed")
-                }
-            } catch (e: Exception) {
-                println("HomeViewModel: ❌ Error checking tracking state: ${e.message}")
-                _uiState.value = _uiState.value.copy(
-                    message = "Ошибка при проверке состояния трекинга: ${e.message}",
-                    messageType = MessageType.ERROR
-                )
-            }
-        }
     }
 }

@@ -9,12 +9,13 @@ import com.tracker.data.datasource.PermissionDataSource
 import com.tracker.data.datasource.impl.AndroidDeviceDataSource
 import com.tracker.data.datasource.impl.AndroidGpsManager
 import com.tracker.data.datasource.impl.AndroidPermissionDataSource
+import org.koin.core.module.Module
 import org.koin.dsl.module
 
 /**
  * Android-специфичный модуль для data слоя
  */
-val androidDataModule = module {
+actual val platformDataModule: Module = module {
 
     // DataStore Provider для Android (требует Context)
     single<DataStoreProvider> { DataStoreProvider(get<Context>()) }

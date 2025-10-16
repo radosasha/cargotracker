@@ -22,7 +22,7 @@ actual class DataStoreProvider(private val context: Context) {
             },
             corruptionHandler = null,
             migrations = emptyList(),
-            scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
+            scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
         )
     }
 }

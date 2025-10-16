@@ -14,13 +14,13 @@ class LocationRemoteDataSourceImpl(
     private val flespiLocationApi: FlespiLocationApi
 ) : LocationRemoteDataSource {
     
-    override suspend fun sendLocation(location: LocationDataModel): Result<Unit> {
+    override suspend fun sendLocation(loadId: String, location: LocationDataModel): Result<Unit> {
         println("RemoteLocationDataSource: Sending single location to server")
         println("RemoteLocationDataSource: Lat: ${location.latitude}, Lon: ${location.longitude}")
-        return osmAndLocationApi.sendLocation(location)
+        return osmAndLocationApi.sendLocation(loadId, location)
     }
     
-    override suspend fun sendLocations(locations: List<LocationDataModel>): Result<Unit> {
+    override suspend fun sendLocations(loadId: String,locations: List<LocationDataModel>): Result<Unit> {
         println("RemoteLocationDataSource: Sending ${locations.size} locations to server")
         return try {
             if (locations.isEmpty()) {
@@ -30,7 +30,7 @@ class LocationRemoteDataSourceImpl(
             
             // Используем Flespi протокол для пакетной отправки
             println("RemoteLocationDataSource: Using Flespi protocol for batch sending")
-            val result = flespiLocationApi.sendLocations(locations)
+            val result = flespiLocationApi.sendLocations(loadId, locations)
             
             if (result.isSuccess) {
                 println("RemoteLocationDataSource: ✅ Successfully sent ${locations.size} locations via Flespi protocol")

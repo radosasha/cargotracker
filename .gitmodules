@@ -1,0 +1,3 @@
+[submodule "traccarserver"]
+	path = traccarserver
+	url = git@github.com:radosasha/shiplocate.git

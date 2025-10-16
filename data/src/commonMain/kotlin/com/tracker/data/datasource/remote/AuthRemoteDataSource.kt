@@ -39,12 +39,16 @@ class AuthRemoteDataSource(
             Result.failure(parseClientError(e))
         } catch (e: ServerResponseException) {
             println("🌐 AuthRemoteDataSource: ❌ Server error: ${e.response.status}")
-            Result.failure(
-                AuthError.UnknownError(
+            val error = when (e.response.status) {
+                HttpStatusCode.ServiceUnavailable -> AuthError.ServiceUnavailable(
+                    message = "Service temporarily unavailable. Please try again later."
+                )
+                else -> AuthError.UnknownError(
                     code = "SERVER_ERROR",
                     message = "Server error: ${e.response.status}"
                 )
-            )
+            }
+            Result.failure(error)
         } catch (e: Exception) {
             println("🌐 AuthRemoteDataSource: ❌ Network error: ${e.message}")
             Result.failure(
@@ -69,12 +73,16 @@ class AuthRemoteDataSource(
             Result.failure(parseClientError(e))
         } catch (e: ServerResponseException) {
             println("🌐 AuthRemoteDataSource: ❌ Server error: ${e.response.status}")
-            Result.failure(
-                AuthError.UnknownError(
+            val error = when (e.response.status) {
+                HttpStatusCode.ServiceUnavailable -> AuthError.ServiceUnavailable(
+                    message = "Service temporarily unavailable. Please try again later."
+                )
+                else -> AuthError.UnknownError(
                     code = "SERVER_ERROR",
                     message = "Server error: ${e.response.status}"
                 )
-            )
+            }
+            Result.failure(error)
         } catch (e: Exception) {
             println("🌐 AuthRemoteDataSource: ❌ Network error: ${e.message}")
             Result.failure(
@@ -111,6 +119,9 @@ class AuthRemoteDataSource(
                 HttpStatusCode.TooManyRequests -> AuthError.RateLimitError(
                     message = "Too many requests. Please try again later.",
                     retryAfterSeconds = 60
+                )
+                HttpStatusCode.ServiceUnavailable -> AuthError.ServiceUnavailable(
+                    message = "Service temporarily unavailable. Please try again later."
                 )
                 else -> AuthError.UnknownError(
                     code = "CLIENT_ERROR",

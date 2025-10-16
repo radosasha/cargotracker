@@ -17,8 +17,7 @@ import kotlinx.serialization.Serializable
  */
 class FlespiLocationApi(
     private val httpClient: HttpClient,
-    private val serverUrl: String,
-    private val deviceId: String
+    private val serverUrl: String
 ) {
     
     /**
@@ -44,7 +43,7 @@ class FlespiLocationApi(
      * @param locations список координат для отправки
      * @return результат отправки
      */
-    suspend fun sendLocations(locations: List<LocationDataModel>): Result<Unit> {
+    suspend fun sendLocations(deviceId: String, locations: List<LocationDataModel>): Result<Unit> {
         return try {
             if (locations.isEmpty()) {
                 println("FlespiLocationApi: No locations to send")
@@ -100,7 +99,7 @@ class FlespiLocationApi(
      * @param location координата для отправки
      * @return результат отправки
      */
-    suspend fun sendLocation(location: LocationDataModel): Result<Unit> {
-        return sendLocations(listOf(location))
+    suspend fun sendLocation(deviceId: String, location: LocationDataModel): Result<Unit> {
+        return sendLocations(deviceId, listOf(location))
     }
 }

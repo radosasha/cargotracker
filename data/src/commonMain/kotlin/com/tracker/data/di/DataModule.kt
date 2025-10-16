@@ -4,7 +4,6 @@ import com.tracker.core.database.DatabaseProvider
 import com.tracker.core.database.TrackerDatabase
 import com.tracker.core.datastore.DataStoreProvider
 import com.tracker.core.network.HttpClientProvider
-import com.tracker.data.config.DeviceConfig
 import com.tracker.data.config.ServerConfig
 import com.tracker.data.datasource.GpsLocationDataSource
 import com.tracker.data.datasource.LocationLocalDataSource
@@ -56,7 +55,7 @@ import org.koin.dsl.module
  * Data модуль с реализациями репозиториев и data sources
  * Содержит только общие зависимости, не зависящие от платформы
  */
-val dataModule = module {
+val dataModule = platformDataModule + module {
 
     // HTTP Client
     single<HttpClient> { HttpClientProvider().createHttpClient() }
@@ -64,7 +63,7 @@ val dataModule = module {
     // DataStore - создается через DataStoreProvider (определен в платформо-специфичных модулях)
     single { get<DataStoreProvider>().createDataStore(fileName = "tracker.preferences_pb") }
 
-    // Database - создается через DatabaseProvider
+    // Database - создается через DatabaseProvider (определен в платформо-специфичных модулях)
     single<TrackerDatabase> {
         get<DatabaseProvider>().createDatabase(databaseName = TrackerDatabase.DATABASE_NAME)
     }
@@ -82,8 +81,8 @@ val dataModule = module {
     }
 
     // Network API
-    single { OsmAndLocationApi(get(), ServerConfig.OSMAND_SERVER_URL, DeviceConfig.DEVICE_ID) }
-    single { FlespiLocationApi(get(), ServerConfig.FLESPI_SERVER_URL, DeviceConfig.DEVICE_ID) }
+    single { OsmAndLocationApi(get(), ServerConfig.OSMAND_SERVER_URL) }
+    single { FlespiLocationApi(get(), ServerConfig.FLESPI_SERVER_URL) }
     
     // Auth API
     single<AuthApi> {
@@ -110,12 +109,9 @@ val dataModule = module {
     single { LoadRemoteDataSource(get()) }
     single { LoadLocalDataSource(get()) }
 
-    // Device ID
-    single { DeviceConfig.DEVICE_ID }
-
     // Repositories
     single<DeviceRepository> { DeviceRepositoryImpl(get()) }
-    single<LocationRepository> { LocationRepositoryImpl(get(), get(), get(), get()) }
+    single<LocationRepository> { LocationRepositoryImpl(get(), get(), get()) }
     single<PermissionRepository> { PermissionRepositoryImpl(get()) }
     single<PrefsRepository> { PrefsRepositoryImpl(get()) }
     single<TrackingRepository> { TrackingRepositoryImpl(get()) }
@@ -125,10 +121,10 @@ val dataModule = module {
     
     // Domain Services - реализации в data слое
     single<LocationProcessor> { LocationProcessorImpl() }
-    single<LocationSyncService> { LocationSyncServiceImpl(get(), get()) }
+    single<LocationSyncService> { LocationSyncServiceImpl(get(), get(), get()) }
     
     // CoroutineScope для LocationSyncService
-    single<CoroutineScope> { CoroutineScope(SupervisorJob() + Dispatchers.Default) }
+    single<CoroutineScope> { CoroutineScope(SupervisorJob() + Dispatchers.Main) }
 
 }
 

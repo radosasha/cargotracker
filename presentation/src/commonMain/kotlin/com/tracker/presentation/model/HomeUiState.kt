@@ -7,6 +7,7 @@ import com.tracker.domain.model.TrackingStatus
  * Presentation модель для состояния главного экрана
  */
 data class HomeUiState(
+    val loadId: String? = null,
     val permissionStatus: PermissionStatus? = null,
     val trackingStatus: TrackingStatus = TrackingStatus.STOPPED,
     val isLoading: Boolean = true,

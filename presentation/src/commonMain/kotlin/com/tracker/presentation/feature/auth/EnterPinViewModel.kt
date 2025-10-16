@@ -162,6 +162,19 @@ class EnterPinViewModel(
                                 ) 
                             }
                         }
+                        is AuthError.ServiceUnavailable -> {
+                            // Ошибка недоступности сервиса - показываем диалог
+                            println("🔑 EnterPinViewModel: ❌ Service unavailable")
+                            _uiState.update { 
+                                it.copy(
+                                    isVerifying = false,
+                                    showErrorDialog = true,
+                                    errorDialogTitle = "Service Temporarily Unavailable",
+                                    errorDialogMessage = "Our servers are currently undergoing maintenance. Please try again in a few minutes.",
+                                    pinDigits = List(6) { "" }
+                                ) 
+                            }
+                        }
                         is AuthError.NetworkError -> {
                             // Сетевая ошибка - показываем диалог
                             println("🔑 EnterPinViewModel: ❌ Network error")

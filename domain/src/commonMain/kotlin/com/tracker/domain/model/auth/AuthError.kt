@@ -67,6 +67,12 @@ sealed class AuthError(
         override val timestamp: Long = Clock.System.now().toEpochMilliseconds()
     ) : AuthError(code, message, timestamp)
 
+    data class ServiceUnavailable(
+        override val code: String = "SERVICE_UNAVAILABLE",
+        override val message: String,
+        override val timestamp: Long = Clock.System.now().toEpochMilliseconds()
+    ) : AuthError(code, message, timestamp)
+
     data class UnknownError(
         override val code: String = "UNKNOWN_ERROR",
         override val message: String,

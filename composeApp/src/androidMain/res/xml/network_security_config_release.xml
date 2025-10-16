@@ -10,8 +10,13 @@
         <domain includeSubdomains="false">demo.traccar.org</domain>
     </domain-config>
     
+    <!-- Разрешить HTTP для production сервера -->
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">44.216.176.38</domain>
+    </domain-config>
+    
     <!-- 
-        Если у вас есть свой production сервер, добавьте его здесь:
+        Если у вас есть другие production серверы, добавьте их здесь:
         <domain-config cleartextTrafficPermitted="true">
             <domain includeSubdomains="false">your-production-server.com</domain>
         </domain-config>
@@ -24,6 +29,9 @@
         </trust-anchors>
     </base-config>
 </network-security-config>
+
+
+
 
 
 
