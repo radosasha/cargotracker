@@ -1,5 +1,6 @@
 plugins {
     id("tracker.android.library")
+    alias(libs.plugins.ktlint)
 }
 
 android {

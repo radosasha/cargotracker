@@ -1,5 +1,6 @@
 plugins {
     id("tracker.android.library.core")
+    alias(libs.plugins.ktlint)
 }
 
 kotlin {

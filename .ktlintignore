@@ -1,0 +1,14 @@
+# Generated files
+**/build/**
+**/generated/**
+
+# Compose generated resources
+**/Res.kt
+**/Drawable*.kt
+**/ExpectResourceCollectors.kt
+
+# KSP generated files
+**/ksp/**
+
+# Note: XML files like AndroidManifest.xml will be processed by ktlint
+# to remove extra blank lines at the end

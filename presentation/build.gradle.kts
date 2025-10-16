@@ -2,6 +2,7 @@ plugins {
     id("tracker.android.library")
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
+    alias(libs.plugins.ktlint)
 }
 
 android {

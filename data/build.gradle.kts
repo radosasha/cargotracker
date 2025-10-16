@@ -1,6 +1,7 @@
 plugins {
     id("tracker.android.library")
     alias(libs.plugins.kotlinx.serialization)
+    alias(libs.plugins.ktlint)
 }
 
 android {

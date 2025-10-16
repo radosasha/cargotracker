@@ -2,6 +2,7 @@ plugins {
     id("tracker.android.library.core")
     alias(libs.plugins.room)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.ktlint)
 }
 
 kotlin {
