@@ -22,8 +22,8 @@ insert_final_newline = true
 max_line_length = 140
 ktlint_code_style = ktlint_official
 
-# Разрешить @Composable функциям начинаться с заглавной буквы
-ktlint_function_naming_ignore_annotated = "Composable"
+# Разрешить @Composable и @Preview функциям начинаться с заглавной буквы
+ktlint_function_naming_ignore_annotated = "Composable,Preview"
 
 # Разрешить приватным переменным начинаться с "_"
 ktlint_allow_underscore_in_private_variable_name = true

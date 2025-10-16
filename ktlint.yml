@@ -19,8 +19,8 @@ experimental:
 
 # Custom rules
 additional_editorconfig:
-  # Разрешить @Composable функциям начинаться с заглавной буквы
-  ktlint_function_naming_ignore_annotated: "Composable"
+  # Разрешить @Composable и @Preview функциям начинаться с заглавной буквы
+  ktlint_function_naming_ignore_annotated: "Composable,Preview"
   # Разрешить приватным переменным начинаться с "_"
   ktlint_allow_underscore_in_private_variable_name: true
   # Удалять лишние пустые строки в конце файлов
