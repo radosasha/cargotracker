@@ -7,6 +7,7 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
 @Preview
+@Suppress("ktlint:standard:function-naming")
 fun App() {
     MaterialTheme {
         TrackerApp()
@@ -14,6 +15,7 @@ fun App() {
 }
 
 @Composable
+@Suppress("ktlint:standard:function-naming")
 fun TrackerApp() {
     // Используем MainScreen с навигацией
     MainScreen()

@@ -5,7 +5,7 @@ import com.tracker.presentation.di.presentationModule
 
 /**
  * Главный модуль приложения, объединяющий все слои
- * 
+ *
  * Структура:
  * - dataModule: Data слой (Repositories, DataSources, Services)
  * - presentationModule: Presentation слой (Use Cases + ViewModels)

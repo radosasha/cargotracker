@@ -37,10 +37,5 @@ subprojects {
             "multiline-expression-wrapping"
         ))
         
-        // Дополнительные настройки для отключения правил
-        additionalEditorconfig.set(mapOf(
-            "ktlint_function_naming_ignore_annotated" to "Composable,Preview",
-            "ktlint_allow_underscore_in_private_variable_name" to "true"
-        ))
     }
 }
