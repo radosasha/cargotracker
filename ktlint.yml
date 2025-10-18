@@ -1,19 +1,30 @@
-# Ktlint configuration - минимальная настройка
+# Ktlint configuration - правильная настройка для ktlint 0.48+
 editorConfigOverride:
   max_line_length: 140
 
-# Отключить ВСЕ проблемные правила
-disabled_rules:
-  - function-naming
-  - class-naming
-  - discouraged-comment-location
-  - no-empty-first-line-in-class-body
-  - blank-line-before-declaration
-  - wrapping
-  - parameter-list-wrapping
-  - multiline-expression-wrapping
-  - final-newline
+rules:
+  standard:
+    assignment-wrapping: # ❌ отключаем перенос после "="
+      active: false
+    argument-list-wrapping: # ❌ отключаем перенос аргументов в функцию
+      active: false
+    function-naming:
+      active: false
+    class-naming:
+      active: false
+    discouraged-comment-location:
+      active: false
+    no-empty-first-line-in-class-body:
+      active: false
+    blank-line-before-declaration:
+      active: false
+    no-wildcard-imports:
+      active: false
 
 # Отключить экспериментальные правила
 experimental:
   enabled: false
+
+files:
+  exclude:
+    - "build/**"

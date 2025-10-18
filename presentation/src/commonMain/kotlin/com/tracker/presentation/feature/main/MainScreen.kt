@@ -10,6 +10,7 @@ import com.tracker.presentation.navigation.TrackerNavigation
 /**
  * Главный экран приложения с навигацией
  */
+@Suppress("FunctionName")
 @Composable
 fun MainScreen() {
     MaterialTheme {

@@ -30,6 +30,7 @@ import kotlinx.coroutines.launch
  *
  * Проверяет наличие токена при старте
  */
+@Suppress("FunctionName")
 @Composable
 fun TrackerNavigation() {
     val navController = rememberNavController()

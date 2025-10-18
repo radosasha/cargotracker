@@ -8,7 +8,7 @@ import io.ktor.http.isSuccess
 
 /**
  * Extension функция для безопасного получения body с автоматической обработкой ошибок
- * 
+ *
  * @throws ClientRequestException для 4xx ответов
  * @throws ServerResponseException для 5xx ответов
  */
@@ -27,16 +27,7 @@ suspend inline fun <reified T> HttpResponse.bodyOrThrow(): T {
             }
         }
     }
-    
+
     println("🌐 HttpResponse: Success status ${status.value}, parsing body")
     return body()
 }
-
-
-
-
-
-
-
-
-

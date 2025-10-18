@@ -122,7 +122,9 @@ class EnterPhoneViewModel(
                                     isLoading = false,
                                     showErrorDialog = true,
                                     errorDialogTitle = "Service Temporarily Unavailable",
-                                    errorDialogMessage = "Our servers are currently undergoing maintenance. Please try again in a few minutes.",
+                                    errorDialogMessage =
+                                        "Our servers are currently undergoing maintenance. " +
+                                            "Please try again in a few minutes.",
                                 )
                             }
                         }
@@ -135,7 +137,9 @@ class EnterPhoneViewModel(
                                     isLoading = false,
                                     showErrorDialog = true,
                                     errorDialogTitle = "Network Error",
-                                    errorDialogMessage = "Could not connect to server. Please check your internet connection and try again.",
+                                    errorDialogMessage =
+                                        "Could not connect to server. " +
+                                            "Please check your internet connection and try again.",
                                 )
                             }
                         }

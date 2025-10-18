@@ -18,7 +18,6 @@ import kotlinx.datetime.Clock
  * Mappers for Auth DTOs <-> Domain models
  */
 
-// Domain -> DTO
 fun SmsCodeRequest.toDto() = SmsRequestDto(phone = phone)
 
 fun SmsCodeVerify.toDto() =
@@ -28,7 +27,6 @@ fun SmsCodeVerify.toDto() =
         deviceInfo = deviceInfo,
     )
 
-// DTO -> Domain
 fun SmsRequestResponseDto.toDomain() =
     SmsCodeResponse(
         status = status,
@@ -48,7 +46,6 @@ fun MobileUserDto.toDomain() =
         name = name,
     )
 
-// Error mapping
 fun ErrorResponseDto.toAuthError(): AuthError {
     val now = Clock.System.now().toEpochMilliseconds()
     return when (error) {

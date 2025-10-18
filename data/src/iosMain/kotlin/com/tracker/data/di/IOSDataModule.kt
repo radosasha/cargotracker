@@ -14,16 +14,17 @@ import org.koin.dsl.module
 /**
  * iOS-специфичный модуль для data слоя
  */
-actual val platformDataModule: Module = module {
-    
-    // DataStore Provider для iOS (не требует Context)
-    single<DataStoreProvider> { DataStoreProvider() }
-    
-    // Database Provider для iOS (не требует Context)
-    single<DatabaseProvider> { DatabaseProvider() }
-    
-    // iOS-specific Data Sources
-    single<GpsManager> { IOSGpsManager() }
-    single<DeviceDataSource> { IOSDeviceDataSource() }
-    single<PermissionDataSource> { IOSPermissionDataSource(get()) }
-}
+actual val platformDataModule: Module =
+    module {
+
+        // DataStore Provider для iOS (не требует Context)
+        single<DataStoreProvider> { DataStoreProvider() }
+
+        // Database Provider для iOS (не требует Context)
+        single<DatabaseProvider> { DatabaseProvider() }
+
+        // iOS-specific Data Sources
+        single<GpsManager> { IOSGpsManager() }
+        single<DeviceDataSource> { IOSDeviceDataSource() }
+        single<PermissionDataSource> { IOSPermissionDataSource(get()) }
+    }

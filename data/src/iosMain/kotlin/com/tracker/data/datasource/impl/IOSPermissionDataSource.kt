@@ -1,36 +1,35 @@
 package com.tracker.data.datasource.impl
 
-import com.tracker.data.datasource.PermissionDataSource
 import com.tracker.data.datasource.PermissionChecker
+import com.tracker.data.datasource.PermissionDataSource
 import com.tracker.data.model.PermissionDataModel
+import platform.Foundation.NSURL
 import platform.UIKit.UIApplication
 import platform.UIKit.UIApplicationOpenSettingsURLString
-import platform.Foundation.NSURL
 
 /**
  * iOS реализация PermissionDataSource
  */
 class IOSPermissionDataSource(
-    private val permissionChecker: PermissionChecker
+    private val permissionChecker: PermissionChecker,
 ) : PermissionDataSource {
-    
     override suspend fun getPermissionStatus(): PermissionDataModel {
         return PermissionDataModel(
             hasLocationPermission = permissionChecker.hasLocationPermissions(),
             hasBackgroundLocationPermission = permissionChecker.hasBackgroundLocationPermission(),
             hasNotificationPermission = permissionChecker.hasNotificationPermission(),
-            isBatteryOptimizationDisabled = true // В iOS нет понятия оптимизации батареи
+            isBatteryOptimizationDisabled = true, // В iOS нет понятия оптимизации батареи
         )
     }
-    
+
     override suspend fun requestAllPermissions(): Result<PermissionDataModel> {
         return try {
             // Запрашиваем все разрешения
             permissionChecker.requestAllPermissions()
-            
+
             // Ждем немного, чтобы разрешения успели обновиться
             kotlinx.coroutines.delay(1000)
-            
+
             val status = getPermissionStatus()
             println("IOSPermissionDataSource: Permission status after request: $status")
 
@@ -43,7 +42,7 @@ class IOSPermissionDataSource(
             Result.failure(e)
         }
     }
-    
+
     override suspend fun requestLocationPermissions(): Result<Boolean> {
         return try {
             permissionChecker.requestAllPermissions()
@@ -53,7 +52,7 @@ class IOSPermissionDataSource(
             Result.failure(e)
         }
     }
-    
+
     override suspend fun requestBackgroundLocationPermission(): Result<Boolean> {
         return try {
             permissionChecker.requestAllPermissions()
@@ -63,7 +62,7 @@ class IOSPermissionDataSource(
             Result.failure(e)
         }
     }
-    
+
     override suspend fun requestNotificationPermission(): Result<Boolean> {
         return try {
             permissionChecker.requestAllPermissions()
@@ -73,14 +72,14 @@ class IOSPermissionDataSource(
             Result.failure(e)
         }
     }
-    
+
     override suspend fun openAppSettings() {
         val settingsUrl = NSURL.URLWithString(UIApplicationOpenSettingsURLString)
         settingsUrl?.let { url ->
             UIApplication.sharedApplication.openURL(url)
         }
     }
-    
+
     override suspend fun requestBatteryOptimizationDisable(): Result<Boolean> {
         // В iOS не применимо
         return Result.success(true)

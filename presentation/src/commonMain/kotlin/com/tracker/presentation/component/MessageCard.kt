@@ -12,6 +12,7 @@ import com.tracker.presentation.model.MessageType
 /**
  * Компонент для отображения сообщений
  */
+@Suppress("FunctionName")
 @Composable
 fun MessageCard(
     message: String,

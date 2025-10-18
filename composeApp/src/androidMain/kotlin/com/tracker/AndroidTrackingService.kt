@@ -24,9 +24,7 @@ import kotlinx.coroutines.runBlocking
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
-
 class AndroidTrackingService : LifecycleService(), KoinComponent {
-
     private val binder = LocationBinder()
     private var isTracking = false
 
@@ -49,7 +47,11 @@ class AndroidTrackingService : LifecycleService(), KoinComponent {
         createNotificationChannel()
     }
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+    override fun onStartCommand(
+        intent: Intent?,
+        flags: Int,
+        startId: Int,
+    ): Int {
         super.onStartCommand(intent, flags, startId)
         startForeground(NOTIFICATION_ID, createNotification())
         startLocationTracking()
@@ -63,14 +65,15 @@ class AndroidTrackingService : LifecycleService(), KoinComponent {
 
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                CHANNEL_ID,
-                CHANNEL_NAME,
-                NotificationManager.IMPORTANCE_LOW
-            ).apply {
-                description = "Уведомления о трекинге GPS"
-                setShowBadge(false)
-            }
+            val channel =
+                NotificationChannel(
+                    CHANNEL_ID,
+                    CHANNEL_NAME,
+                    NotificationManager.IMPORTANCE_LOW,
+                ).apply {
+                    description = "Уведомления о трекинге GPS"
+                    setShowBadge(false)
+                }
 
             val notificationManager = getSystemService(NotificationManager::class.java)
             notificationManager.createNotificationChannel(channel)
@@ -78,14 +81,18 @@ class AndroidTrackingService : LifecycleService(), KoinComponent {
     }
 
     private fun createNotification(): Notification {
-        val intent = Intent(this, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-        }
+        val intent =
+            Intent(this, MainActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            }
 
-        val pendingIntent = PendingIntent.getActivity(
-            this, 0, intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
+        val pendingIntent =
+            PendingIntent.getActivity(
+                this,
+                0,
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+            )
 
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("GPS Трекинг активен")
@@ -99,7 +106,6 @@ class AndroidTrackingService : LifecycleService(), KoinComponent {
     }
 
     private fun startLocationTracking() {
-
         if (isTracking) {
             println("LocationTrackingService: Already tracking, ignoring start request")
             return
@@ -128,7 +134,6 @@ class AndroidTrackingService : LifecycleService(), KoinComponent {
 
                 println("LocationTrackingService: ✅ GPS tracking started successfully")
                 updateNotificationWithStats(com.tracker.domain.model.TrackingStats(isTracking = true)) // Initial empty stats
-
             } catch (e: Exception) {
                 println("LocationTrackingService: ❌ Error starting GPS tracking: ${e.message}")
                 e.printStackTrace()
@@ -159,7 +164,6 @@ class AndroidTrackingService : LifecycleService(), KoinComponent {
             } else {
                 println("LocationTrackingService: ❌ Failed to stop GPS tracking: ${result.exceptionOrNull()?.message}")
             }
-
         } catch (e: Exception) {
             println("LocationTrackingService: ❌ Error stopping GPS tracking: ${e.message}")
             e.printStackTrace()
@@ -170,48 +174,50 @@ class AndroidTrackingService : LifecycleService(), KoinComponent {
      * Обновляет уведомление с подробной статистикой
      */
     private fun updateNotificationWithStats(stats: com.tracker.domain.model.TrackingStats) {
-        val locationText = buildString {
-            append("Saved: ${stats.totalSaved} | Sent: ${stats.totalSent} | Filtered: ${stats.totalFiltered}\n\n")
+        val locationText =
+            buildString {
+                append("Saved: ${stats.totalSaved} | Sent: ${stats.totalSent} | Filtered: ${stats.totalFiltered}\n\n")
 
-            stats.lastFilteredLocation?.let { location ->
-                append("🚫 Last Filtered: ")
-                location.accuracy?.let {
-                    append("Accuracy: ${String.format("%.1f", it)}m\n")
+                stats.lastFilteredLocation?.let { location ->
+                    append("🚫 Last Filtered: ")
+                    location.accuracy?.let {
+                        append("Accuracy: ${String.format("%.1f", it)}m\n")
+                    }
+                    append("Reason: ${location.filterReason}\n")
+                    append("Time: ${DateFormatter.formatForNotification(location.timestamp)}\n\n")
                 }
-                append("Reason: ${location.filterReason}\n")
-                append("Time: ${DateFormatter.formatForNotification(location.timestamp)}\n\n")
+
+                stats.lastSentLocation?.let { location ->
+                    append("📤 Last Sent: ")
+                    location.accuracy?.let {
+                        append("Accuracy: ${String.format("%.1f", it)}m\n")
+                    }
+                    append("Time: ${DateFormatter.formatForNotification(location.timestamp)}")
+                } ?: stats.lastSendError?.let { error ->
+                    append("❌ Last Send Error: ")
+                    error.accuracy?.let {
+                        append("Accuracy: ${String.format("%.1f", it)}m\n")
+                    }
+                    append("Error: ${error.errorMessage}\n")
+                    append("Time: ${DateFormatter.formatForNotification(error.timestamp)}")
+                } ?: run {
+                    append("📤 Last Sent: None yet")
+                }
             }
 
-            stats.lastSentLocation?.let { location ->
-                append("📤 Last Sent: ")
-                location.accuracy?.let {
-                    append("Accuracy: ${String.format("%.1f", it)}m\n")
-                }
-                append("Time: ${DateFormatter.formatForNotification(location.timestamp)}")
-            } ?: stats.lastSendError?.let { error ->
-                append("❌ Last Send Error: ")
-                error.accuracy?.let {
-                    append("Accuracy: ${String.format("%.1f", it)}m\n")
-                }
-                append("Error: ${error.errorMessage}\n")
-                append("Time: ${DateFormatter.formatForNotification(error.timestamp)}")
-            } ?: run {
-                append("📤 Last Sent: None yet")
-            }
-        }
-
-        val notification = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("GPS Трекинг активен")
-            .setContentText("Saved: ${stats.totalSaved} | Sent: ${stats.totalSent} | Filtered: ${stats.totalFiltered}")
-            .setStyle(
-                NotificationCompat.BigTextStyle()
-                    .bigText(locationText)
-            )
-            .setSmallIcon(android.R.drawable.ic_menu_mylocation)
-            .setOngoing(true)
-            .setPriority(NotificationCompat.PRIORITY_LOW)
-            .setCategory(NotificationCompat.CATEGORY_SERVICE)
-            .build()
+        val notification =
+            NotificationCompat.Builder(this, CHANNEL_ID)
+                .setContentTitle("GPS Трекинг активен")
+                .setContentText("Saved: ${stats.totalSaved} | Sent: ${stats.totalSent} | Filtered: ${stats.totalFiltered}")
+                .setStyle(
+                    NotificationCompat.BigTextStyle()
+                        .bigText(locationText),
+                )
+                .setSmallIcon(android.R.drawable.ic_menu_mylocation)
+                .setOngoing(true)
+                .setPriority(NotificationCompat.PRIORITY_LOW)
+                .setCategory(NotificationCompat.CATEGORY_SERVICE)
+                .build()
 
         val notificationManager = NotificationManagerCompat.from(this)
         if (notificationManager.areNotificationsEnabled()) {

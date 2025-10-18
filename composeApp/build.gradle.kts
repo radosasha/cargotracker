@@ -15,24 +15,26 @@ ktlint {
     outputColorName.set("RED")
     ignoreFailures.set(false)
     enableExperimentalRules.set(false)
-    
+
     filter {
         exclude("**/generated/**")
         exclude("**/build/**")
         include("**/kotlin/**")
     }
-    
+
     // Дополнительные настройки для игнорирования правил
-    disabledRules.set(setOf(
-        "function-naming",
-        "class-naming",
-        "discouraged-comment-location",
-        "no-empty-first-line-in-class-body",
-        "blank-line-before-declaration",
-        "wrapping",
-        "parameter-list-wrapping",
-        "multiline-expression-wrapping"
-    ))
+    disabledRules.set(
+        setOf(
+            "function-naming",
+            "class-naming",
+            "discouraged-comment-location",
+            "no-empty-first-line-in-class-body",
+            "blank-line-before-declaration",
+            "wrapping",
+            "parameter-list-wrapping",
+            "multiline-expression-wrapping",
+        ),
+    )
 }
 
 kotlin {
@@ -40,22 +42,22 @@ kotlin {
         androidMain.dependencies {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
-            
+
             // Koin Android
             implementation(libs.koin.android)
             implementation(libs.koin.compose)
-            
+
             // Coroutines Android
             implementation(libs.kotlinx.coroutines.android)
             implementation(libs.androidx.lifecycle.service)
         }
-        
+
         commonMain.dependencies {
             // Modules
             implementation(project(":domain"))
             implementation(project(":data"))
             implementation(project(":presentation"))
-            
+
             // Compose
             implementation(compose.runtime)
             implementation(compose.foundation)
@@ -65,17 +67,17 @@ kotlin {
             implementation(compose.components.uiToolingPreview)
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
-            
+
             // Official JetBrains Navigation
             implementation(libs.androidx.navigation.compose)
-            
+
             // Koin Core
             implementation(libs.koin.core)
-            
+
             // DateTime
             implementation(libs.kotlinx.datetime)
         }
-        
+
         commonTest.dependencies {
             implementation(libs.kotlin.test)
         }
@@ -85,4 +87,3 @@ kotlin {
 dependencies {
     debugImplementation(compose.uiTooling)
 }
-

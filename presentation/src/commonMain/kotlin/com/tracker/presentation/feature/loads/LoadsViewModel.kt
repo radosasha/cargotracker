@@ -102,9 +102,10 @@ class LoadsViewModel(
                 onFailure = { error ->
                     println("❌ LoadsViewModel: Failed to load loads: ${error.message}")
                     _isRefreshing.value = false
-                    _uiState.value = LoadsUiState.Error(
-                        error.message ?: "Failed to load loads",
-                    )
+                    _uiState.value =
+                        LoadsUiState.Error(
+                            error.message ?: "Failed to load loads",
+                        )
                 },
             )
         }
@@ -142,9 +143,10 @@ class LoadsViewModel(
                 _uiState.value = LoadsUiState.Success(cachedLoads)
             } catch (e: Exception) {
                 println("❌ LoadsViewModel: Failed to load from cache: ${e.message}")
-                _uiState.value = LoadsUiState.Error(
-                    e.message ?: "Failed to load cached data",
-                )
+                _uiState.value =
+                    LoadsUiState.Error(
+                        e.message ?: "Failed to load cached data",
+                    )
             }
         }
     }

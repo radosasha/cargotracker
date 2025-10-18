@@ -121,7 +121,8 @@ class LocationSyncServiceImpl(
             } else {
                 // Большой список - обрабатываем пакетами
                 println(
-                    "LocationSyncManager: Large dataset detected (${unsentLocations.size} locations), processing in batches of $maxBatchSize",
+                    "LocationSyncManager: Large dataset detected (${unsentLocations.size} locations), " +
+                        "processing in batches of $maxBatchSize",
                 )
 
                 val batches = unsentLocations.chunked(maxBatchSize)

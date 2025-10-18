@@ -12,6 +12,7 @@ import com.tracker.presentation.component.MessageCard
 /**
  * Главный экран приложения - только кнопка Start
  */
+@Suppress("FunctionName")
 @Composable
 fun HomeScreen(viewModel: HomeViewModel) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -62,7 +63,12 @@ fun HomeScreen(viewModel: HomeViewModel) {
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Text(
-                    text = if (uiState.trackingStatus == com.tracker.domain.model.TrackingStatus.ACTIVE) "Tracking Active" else "Tracking Stopped",
+                    text =
+                        if (uiState.trackingStatus == com.tracker.domain.model.TrackingStatus.ACTIVE) {
+                            "Tracking Active"
+                        } else {
+                            "Tracking Stopped"
+                        },
                     style = MaterialTheme.typography.titleMedium,
                     color =
                         if (uiState.trackingStatus == com.tracker.domain.model.TrackingStatus.ACTIVE) {

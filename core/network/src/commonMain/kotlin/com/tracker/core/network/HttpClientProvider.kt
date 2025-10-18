@@ -13,7 +13,7 @@ import kotlinx.serialization.json.Json
  * Провайдер HTTP клиента для сетевых запросов
  */
 expect class HttpClientProvider() {
-     fun createHttpClient(): HttpClient
+    fun createHttpClient(): HttpClient
 }
 
 /**
@@ -22,22 +22,25 @@ expect class HttpClientProvider() {
 fun createHttpClient(engine: HttpClientEngine): HttpClient {
     return HttpClient(engine) {
         install(ContentNegotiation) {
-            json(Json {
-                prettyPrint = true
-                isLenient = true
-                ignoreUnknownKeys = true
-            })
+            json(
+                Json {
+                    prettyPrint = true
+                    isLenient = true
+                    ignoreUnknownKeys = true
+                },
+            )
         }
 
         install(Logging) {
-            logger = object : Logger {
-                override fun log(message: String) {
-                    println("🌐 HTTP: $message")
+            logger =
+                object : Logger {
+                    override fun log(message: String) {
+                        println("🌐 HTTP: $message")
+                    }
                 }
-            }
             level = LogLevel.ALL
         }
-        
+
         // Don't validate 2xx responses - we handle errors manually
         expectSuccess = false
     }

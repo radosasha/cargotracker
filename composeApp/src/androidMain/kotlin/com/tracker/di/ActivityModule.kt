@@ -17,17 +17,17 @@ val activityModule = module {
     single<ActivityProvider> {
         ActivityProvider()
     }
-    
+
     // PermissionChecker как singleton в scope Activity
     single<PermissionChecker> {
         PermissionChecker()
     }
-    
+
     // PermissionRequester для domain слоя
     single<PermissionRequester> {
         AndroidPermissionRequesterImpl()
     }
-    
+
     // TrackingRequester для domain слоя
     single<TrackingRequester> {
         AndroidTrackingRequesterImpl()

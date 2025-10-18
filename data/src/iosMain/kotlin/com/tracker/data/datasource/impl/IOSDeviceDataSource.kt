@@ -10,7 +10,7 @@ class IOSDeviceDataSource : DeviceDataSource {
         // TODO: Реализовать получение уровня батареи для iOS
         return null
     }
-    
+
     override suspend fun isCharging(): Boolean {
         // TODO: Реализовать проверку статуса зарядки для iOS
         return false

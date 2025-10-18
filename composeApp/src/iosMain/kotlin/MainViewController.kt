@@ -32,5 +32,5 @@ object MainViewController {
     }
 }
 
-@Suppress("unused")
+@Suppress("FunctionName")
 fun MainViewController(): UIViewController = MainViewController.create()

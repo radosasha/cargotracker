@@ -11,19 +11,12 @@ import com.tracker.core.database.entity.LoadEntity
  */
 @Dao
 interface LoadDao {
-    
     @Query("SELECT * FROM loads ORDER BY createdAt DESC")
     suspend fun getAllLoads(): List<LoadEntity>
-    
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertLoads(loads: List<LoadEntity>)
-    
+
     @Query("DELETE FROM loads")
     suspend fun deleteAll()
 }
-
-
-
-
-
-

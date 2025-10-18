@@ -17,7 +17,6 @@ import androidx.core.content.edit
  * Android класс для запроса разрешений
  */
 class AndroidPermissionRequester(private val context: Context) {
-
     // Callback для уведомления о результатах разрешений
 
     // SharedPreferences для отслеживания запросов разрешений
@@ -26,15 +25,17 @@ class AndroidPermissionRequester(private val context: Context) {
     }
 
     fun hasLocationPermissions(): Boolean {
-        val fineLocation = ContextCompat.checkSelfPermission(
-            context,
-            Manifest.permission.ACCESS_FINE_LOCATION
-        ) == PackageManager.PERMISSION_GRANTED
+        val fineLocation =
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_FINE_LOCATION,
+            ) == PackageManager.PERMISSION_GRANTED
 
-        val coarseLocation = ContextCompat.checkSelfPermission(
-            context,
-            Manifest.permission.ACCESS_COARSE_LOCATION
-        ) == PackageManager.PERMISSION_GRANTED
+        val coarseLocation =
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_COARSE_LOCATION,
+            ) == PackageManager.PERMISSION_GRANTED
 
         return fineLocation || coarseLocation
     }
@@ -44,10 +45,10 @@ class AndroidPermissionRequester(private val context: Context) {
             // API 29+ (Android 10+): требуется отдельное разрешение ACCESS_BACKGROUND_LOCATION
             ContextCompat.checkSelfPermission(
                 context,
-                Manifest.permission.ACCESS_BACKGROUND_LOCATION
+                Manifest.permission.ACCESS_BACKGROUND_LOCATION,
             ) == PackageManager.PERMISSION_GRANTED
         } else {
-            // API 24-28 (Android 7.0-9): фоновое разрешение не требуется, 
+            // API 24-28 (Android 7.0-9): фоновое разрешение не требуется,
             // достаточно основных разрешений на геолокацию
             hasLocationPermissions()
         }
@@ -58,7 +59,7 @@ class AndroidPermissionRequester(private val context: Context) {
             // API 33+ (Android 13+): требуется разрешение POST_NOTIFICATIONS
             ContextCompat.checkSelfPermission(
                 context,
-                Manifest.permission.POST_NOTIFICATIONS
+                Manifest.permission.POST_NOTIFICATIONS,
             ) == PackageManager.PERMISSION_GRANTED
         } else {
             // API 24-32 (Android 7.0-12): уведомления работают без разрешения
@@ -109,7 +110,7 @@ class AndroidPermissionRequester(private val context: Context) {
         return if (context is androidx.activity.ComponentActivity) {
             ActivityCompat.shouldShowRequestPermissionRationale(
                 context,
-                Manifest.permission.ACCESS_FINE_LOCATION
+                Manifest.permission.ACCESS_FINE_LOCATION,
             )
         } else {
             false
@@ -120,7 +121,7 @@ class AndroidPermissionRequester(private val context: Context) {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && context is androidx.activity.ComponentActivity) {
             ActivityCompat.shouldShowRequestPermissionRationale(
                 context,
-                Manifest.permission.POST_NOTIFICATIONS
+                Manifest.permission.POST_NOTIFICATIONS,
             )
         } else {
             false
@@ -158,9 +159,9 @@ class AndroidPermissionRequester(private val context: Context) {
                     context,
                     arrayOf(
                         Manifest.permission.ACCESS_FINE_LOCATION,
-                        Manifest.permission.ACCESS_COARSE_LOCATION
+                        Manifest.permission.ACCESS_COARSE_LOCATION,
                     ),
-                    MainActivity.LOCATION_PERMISSION_REQUEST_CODE
+                    MainActivity.LOCATION_PERMISSION_REQUEST_CODE,
                 )
             } else {
                 println("Location permissions already granted")
@@ -179,7 +180,7 @@ class AndroidPermissionRequester(private val context: Context) {
                 ActivityCompat.requestPermissions(
                     context,
                     arrayOf(Manifest.permission.ACCESS_BACKGROUND_LOCATION),
-                    MainActivity.BACKGROUND_LOCATION_PERMISSION_REQUEST_CODE
+                    MainActivity.BACKGROUND_LOCATION_PERMISSION_REQUEST_CODE,
                 )
             } else {
                 println("Background location permission already granted")
@@ -205,7 +206,7 @@ class AndroidPermissionRequester(private val context: Context) {
                 ActivityCompat.requestPermissions(
                     context,
                     arrayOf(Manifest.permission.POST_NOTIFICATIONS),
-                    MainActivity.NOTIFICATION_PERMISSION_REQUEST_CODE
+                    MainActivity.NOTIFICATION_PERMISSION_REQUEST_CODE,
                 )
             } else {
                 println("Notification permission already granted")
@@ -226,16 +227,18 @@ class AndroidPermissionRequester(private val context: Context) {
         // - false если пользователь отказал и выбрал "Don't ask again" (диалог заблокирован)
 
         // Для геолокации: если нет разрешения И диалог заблокирован (rationale = false после отказа)
-        val locationDialogBlocked = !hasLocationPermissions() &&
-            context is androidx.activity.ComponentActivity &&
-            !shouldShowLocationPermissionRationale() &&
-            hasLocationBeenRequestedBefore()
+        val locationDialogBlocked =
+            !hasLocationPermissions() &&
+                context is androidx.activity.ComponentActivity &&
+                !shouldShowLocationPermissionRationale() &&
+                hasLocationBeenRequestedBefore()
 
         // Для уведомлений: если нет разрешения И диалог заблокирован
-        val notificationDialogBlocked = !hasNotificationPermission() &&
-            context is androidx.activity.ComponentActivity &&
-            !shouldShowNotificationPermissionRationale() &&
-            hasNotificationBeenRequestedBefore()
+        val notificationDialogBlocked =
+            !hasNotificationPermission() &&
+                context is androidx.activity.ComponentActivity &&
+                !shouldShowNotificationPermissionRationale() &&
+                hasNotificationBeenRequestedBefore()
 
         // Если диалоги заблокированы - перекидываем на конкретные страницы разрешений
         if (locationDialogBlocked) {
@@ -275,7 +278,10 @@ class AndroidPermissionRequester(private val context: Context) {
         }
     }
 
-    fun handlePermissionResult(requestCode: Int, grantResults: IntArray) {
+    fun handlePermissionResult(
+        requestCode: Int,
+        grantResults: IntArray,
+    ) {
         println("AndroidPermissionRequester.handlePermissionResult() called with requestCode: $requestCode")
 
         when (requestCode) {
@@ -325,9 +331,10 @@ class AndroidPermissionRequester(private val context: Context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (context is androidx.activity.ComponentActivity) {
                 try {
-                    val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
-                        data = Uri.parse("package:${context.packageName}")
-                    }
+                    val intent =
+                        Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+                            data = Uri.parse("package:${context.packageName}")
+                        }
                     context.startActivity(intent)
                     println("Battery optimization request sent")
                 } catch (e: Exception) {
@@ -348,9 +355,10 @@ class AndroidPermissionRequester(private val context: Context) {
         println("openLocationSettings() called")
         try {
             // Попробуем открыть страницу разрешений приложения
-            val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                data = Uri.fromParts("package", context.packageName, null)
-            }
+            val intent =
+                Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                    data = Uri.fromParts("package", context.packageName, null)
+                }
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             context.startActivity(intent)
             println("Location settings opened successfully")
@@ -365,9 +373,10 @@ class AndroidPermissionRequester(private val context: Context) {
         println("openNotificationSettings() called")
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
-                    putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
-                }
+                val intent =
+                    Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+                        putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+                    }
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 context.startActivity(intent)
                 println("Notification settings opened successfully")
@@ -404,9 +413,10 @@ class AndroidPermissionRequester(private val context: Context) {
     fun openAppSettings() {
         println("openAppSettings() called")
         try {
-            val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                data = Uri.fromParts("package", context.packageName, null)
-            }
+            val intent =
+                Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                    data = Uri.fromParts("package", context.packageName, null)
+                }
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             context.startActivity(intent)
             println("App settings opened successfully")

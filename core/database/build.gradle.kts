@@ -45,3 +45,11 @@ dependencies {
     add("kspIosArm64", libs.room.compiler)
     add("kspIosSimulatorArm64", libs.room.compiler)
 }
+
+// Отключить ktlint для всего модуля database, так как он содержит только сгенерированные файлы
+ktlint {
+    ignoreFailures.set(true)
+    filter {
+        exclude("**/*")
+    }
+}

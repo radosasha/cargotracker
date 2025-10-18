@@ -7,13 +7,13 @@ import android.content.Context
  */
 object ApplicationContextProvider {
     private var applicationContext: Context? = null
-    
+
     fun init(context: Context) {
         println("ApplicationContextProvider.init() called with context: ${context.javaClass}")
         applicationContext = context.applicationContext
         println("ApplicationContextProvider initialized successfully")
     }
-    
+
     fun getContext(): Context {
         val context = applicationContext
         if (context == null) {
@@ -30,12 +30,12 @@ object ApplicationContextProvider {
  */
 class ActivityProvider {
     private var activityContext: Context? = null
-    
+
     fun setActivity(context: Context) {
         println("ActivityContextProvider.setContext() called with context: ${context.javaClass}")
         activityContext = context
     }
-    
+
     fun getActivity(): Context {
         val context = activityContext
         if (context == null) {
@@ -45,7 +45,7 @@ class ActivityProvider {
         println("ActivityContextProvider.getContext() returning: ${context.javaClass}")
         return context
     }
-    
+
     fun clearActivity() {
         println("ActivityContextProvider.clearContext() called")
         activityContext = null

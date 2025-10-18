@@ -50,6 +50,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
+@Suppress("FunctionName")
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun EnterPinScreen(
@@ -216,6 +217,7 @@ fun EnterPinScreen(
     }
 }
 
+@Suppress("FunctionName")
 @Composable
 private fun PinInputFields(
     pinDigits: List<String>,
@@ -268,6 +270,7 @@ private fun PinInputFields(
     }
 }
 
+@Suppress("FunctionName")
 @Composable
 private fun PinDigitField(
     digit: String,

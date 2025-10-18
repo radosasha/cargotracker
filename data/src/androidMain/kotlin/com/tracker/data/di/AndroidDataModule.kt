@@ -15,17 +15,17 @@ import org.koin.dsl.module
 /**
  * Android-специфичный модуль для data слоя
  */
-actual val platformDataModule: Module = module {
+actual val platformDataModule: Module =
+    module {
 
-    // DataStore Provider для Android (требует Context)
-    single<DataStoreProvider> { DataStoreProvider(get<Context>()) }
-    
-    // Database Provider для Android (требует Context)
-    single<DatabaseProvider> { DatabaseProvider(get<Context>()) }
+        // DataStore Provider для Android (требует Context)
+        single<DataStoreProvider> { DataStoreProvider(get<Context>()) }
 
-    // Android-specific Data Sources
-    single<GpsManager> { AndroidGpsManager(get()) }
-    single<DeviceDataSource> { AndroidDeviceDataSource(get()) }
-    single<PermissionDataSource> { AndroidPermissionDataSource(get()) }
-    
-}
+        // Database Provider для Android (требует Context)
+        single<DatabaseProvider> { DatabaseProvider(get<Context>()) }
+
+        // Android-specific Data Sources
+        single<GpsManager> { AndroidGpsManager(get()) }
+        single<DeviceDataSource> { AndroidDeviceDataSource(get()) }
+        single<PermissionDataSource> { AndroidPermissionDataSource(get()) }
+    }

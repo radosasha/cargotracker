@@ -1,17 +1,18 @@
-# Generated files
+# Generated files - комплексный подход
 **/build/**
 **/generated/**
+**/ksp/**
+**/tmp/**
+**/intermediates/**
 
 # Compose generated resources
 **/Res.kt
 **/Drawable*.kt
 **/ExpectResourceCollectors.kt
 
-# KSP generated files
-**/ksp/**
-
 # iOS specific files
 composeApp/src/iosMain/kotlin/MainViewController.kt
+core/database/src/iosMain/kotlin/com/tracker/core/database/DatabaseProvider.ios.kt
 
 # Files with Composable functions that need uppercase names
 **/App.kt

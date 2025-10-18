@@ -9,11 +9,10 @@ import org.koin.core.component.inject
  * Android реализация TrackingRequester
  */
 class AndroidTrackingRequesterImpl : TrackingRequester, KoinComponent {
-    
     private val activityContextProvider: ActivityProvider by inject()
 
     private var isTracking = false
-    
+
     override suspend fun startTracking(): Result<Unit> {
         return try {
             val context = activityContextProvider.getActivity()
@@ -27,7 +26,7 @@ class AndroidTrackingRequesterImpl : TrackingRequester, KoinComponent {
             Result.failure(e)
         }
     }
-    
+
     override suspend fun stopTracking(): Result<Unit> {
         return try {
             val context = activityContextProvider.getActivity()
@@ -41,7 +40,7 @@ class AndroidTrackingRequesterImpl : TrackingRequester, KoinComponent {
             Result.failure(e)
         }
     }
-    
+
     override suspend fun isTrackingActive(): Boolean {
         println("AndroidTrackingRequesterImpl: isTrackingActive() = $isTracking")
         return isTracking

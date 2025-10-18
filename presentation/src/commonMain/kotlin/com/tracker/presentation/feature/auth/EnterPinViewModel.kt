@@ -174,7 +174,9 @@ class EnterPinViewModel(
                                     isVerifying = false,
                                     showErrorDialog = true,
                                     errorDialogTitle = "Service Temporarily Unavailable",
-                                    errorDialogMessage = "Our servers are currently undergoing maintenance. Please try again in a few minutes.",
+                                    errorDialogMessage =
+                                        "Our servers are currently undergoing maintenance. " +
+                                            "Please try again in a few minutes.",
                                     pinDigits = List(6) { "" },
                                 )
                             }
@@ -187,7 +189,9 @@ class EnterPinViewModel(
                                     isVerifying = false,
                                     showErrorDialog = true,
                                     errorDialogTitle = "Network Error",
-                                    errorDialogMessage = "Could not connect to server. Please check your internet connection and try again.",
+                                    errorDialogMessage =
+                                        "Could not connect to server. " +
+                                            "Please check your internet connection and try again.",
                                     pinDigits = List(6) { "" },
                                 )
                             }

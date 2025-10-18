@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tracker.domain.model.auth.Country
 
+@Suppress("FunctionName")
 @Composable
 fun EnterPhoneScreen(
     onNavigateToPin: (String) -> Unit,
@@ -151,6 +152,7 @@ fun EnterPhoneScreen(
     }
 }
 
+@Suppress("FunctionName")
 @Composable
 private fun PhoneInputField(
     selectedCountry: Country,
@@ -251,6 +253,7 @@ private fun PhoneInputField(
     }
 }
 
+@Suppress("FunctionName")
 @Composable
 private fun CountryPickerDialog(
     selectedCountry: Country,
@@ -309,6 +312,7 @@ private fun CountryPickerDialog(
     )
 }
 
+@Suppress("FunctionName")
 @Composable
 private fun RateLimitTimer(seconds: Long) {
     val hours = seconds / 3600

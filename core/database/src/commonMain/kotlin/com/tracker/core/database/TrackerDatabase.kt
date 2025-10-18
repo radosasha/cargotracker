@@ -15,11 +15,12 @@ import com.tracker.core.database.entity.LocationEntity
 @Database(
     entities = [LocationEntity::class, LoadEntity::class],
     version = 4,
-    exportSchema = true
+    exportSchema = true,
 )
 @ConstructedBy(TrackerDatabaseConstructor::class)
 abstract class TrackerDatabase : RoomDatabase() {
     abstract fun locationDao(): LocationDao
+
     abstract fun loadDao(): LoadDao
 
     companion object {

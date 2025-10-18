@@ -40,6 +40,7 @@ import com.tracker.presentation.util.DateFormatter
  * Loads screen displaying list of loads
  * Shows loading state, error state, empty state, or list of loads
  */
+@Suppress("FunctionName")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoadsScreen(
@@ -94,6 +95,7 @@ fun LoadsScreen(
     }
 }
 
+@Suppress("FunctionName")
 @Composable
 private fun LoadingContent() {
     Box(
@@ -114,22 +116,21 @@ private fun LoadingContent() {
     }
 }
 
+@Suppress("FunctionName")
 @Composable
 private fun EmptyStateItem() {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-        ),
+                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+            ),
         elevation = CardDefaults.cardElevation(
-            defaultElevation = 2.dp,
-        ),
+                defaultElevation = 2.dp,
+            ),
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(32.dp),
+            modifier = Modifier.fillMaxWidth().padding(32.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
@@ -149,6 +150,7 @@ private fun EmptyStateItem() {
     }
 }
 
+@Suppress("FunctionName")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ErrorContentWithRefresh(
@@ -203,6 +205,7 @@ private fun ErrorContentWithRefresh(
     }
 }
 
+@Suppress("FunctionName")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun LoadsListWithRefresh(
@@ -237,6 +240,7 @@ private fun LoadsListWithRefresh(
     }
 }
 
+@Suppress("FunctionName")
 @Composable
 private fun LoadItem(
     load: Load,

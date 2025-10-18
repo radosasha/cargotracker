@@ -13,8 +13,5 @@ data class LoadEntity(
     val description: String?,
     val lastUpdated: Long?,
     val createdAt: Long,
-    val loadStatus: Int
+    val loadStatus: Int,
 )
-
-
-

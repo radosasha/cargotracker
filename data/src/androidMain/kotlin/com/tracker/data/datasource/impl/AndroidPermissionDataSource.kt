@@ -1,34 +1,42 @@
 package com.tracker.data.datasource.impl
 
 import com.tracker.data.datasource.PermissionDataSource
-import com.tracker.data.model.PermissionDataModel
 import com.tracker.data.datasource.PermissionRequester
+import com.tracker.data.model.PermissionDataModel
 
 /**
  * Android реализация PermissionDataSource
  */
 class AndroidPermissionDataSource(
-    private val permissionRequester: PermissionRequester
+    private val permissionRequester: PermissionRequester,
 ) : PermissionDataSource {
-    
     override suspend fun getPermissionStatus(): PermissionDataModel {
         return PermissionDataModel(
             hasLocationPermission = permissionRequester.hasLocationPermissions(),
             hasBackgroundLocationPermission = permissionRequester.hasBackgroundLocationPermission(),
             hasNotificationPermission = permissionRequester.hasNotificationPermission(),
-            isBatteryOptimizationDisabled = permissionRequester.isBatteryOptimizationDisabled()
+            isBatteryOptimizationDisabled = permissionRequester.isBatteryOptimizationDisabled(),
         )
     }
-    
+
     override suspend fun requestAllPermissions(): Result<PermissionDataModel> {
         return try {
             println("AndroidPermissionDataSource.requestAllPermissions() called")
             permissionRequester.requestAllPermissions()
-            
+
             val status = getPermissionStatus()
-            println("AndroidPermissionDataSource.requestAllPermissions() - status: location=${status.hasLocationPermission}, background=${status.hasBackgroundLocationPermission}, notification=${status.hasNotificationPermission}, battery=${status.isBatteryOptimizationDisabled}")
-            
-            if (status.hasLocationPermission && status.hasBackgroundLocationPermission && status.hasNotificationPermission && status.isBatteryOptimizationDisabled) {
+            println(
+                "AndroidPermissionDataSource.requestAllPermissions() - status: location=${status.hasLocationPermission}, " +
+                    "background=${status.hasBackgroundLocationPermission}, notification=${status.hasNotificationPermission}, " +
+                    "battery=${status.isBatteryOptimizationDisabled}",
+            )
+
+            if (
+                status.hasLocationPermission &&
+                status.hasBackgroundLocationPermission &&
+                status.hasNotificationPermission &&
+                status.isBatteryOptimizationDisabled
+            ) {
                 println("AndroidPermissionDataSource.requestAllPermissions() - all permissions granted, returning success")
                 Result.success(status)
             } else {
@@ -40,7 +48,7 @@ class AndroidPermissionDataSource(
             Result.failure(e)
         }
     }
-    
+
     override suspend fun requestLocationPermissions(): Result<Boolean> {
         return try {
             permissionRequester.requestAllPermissions()
@@ -49,7 +57,7 @@ class AndroidPermissionDataSource(
             Result.failure(e)
         }
     }
-    
+
     override suspend fun requestBackgroundLocationPermission(): Result<Boolean> {
         return try {
             permissionRequester.requestAllPermissions()
@@ -58,7 +66,7 @@ class AndroidPermissionDataSource(
             Result.failure(e)
         }
     }
-    
+
     override suspend fun requestNotificationPermission(): Result<Boolean> {
         return try {
             permissionRequester.requestAllPermissions()
@@ -67,11 +75,11 @@ class AndroidPermissionDataSource(
             Result.failure(e)
         }
     }
-    
+
     override suspend fun openAppSettings() {
         permissionRequester.openAppSettings()
     }
-    
+
     override suspend fun requestBatteryOptimizationDisable(): Result<Boolean> {
         return try {
             permissionRequester.openAppSettings()
