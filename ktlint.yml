@@ -4,10 +4,10 @@ editorConfigOverride:
 
 rules:
   standard:
-    assignment-wrapping: # ❌ отключаем перенос после "="
-      active: false
-    argument-list-wrapping: # ❌ отключаем перенос аргументов в функцию
-      active: false
+    assignment-wrapping:
+      active: true
+    argument-list-wrapping:
+      active: true
     function-naming:
       active: false
     class-naming:
@@ -20,6 +20,9 @@ rules:
       active: false
     no-wildcard-imports:
       active: false
+      # Отключаем проверку wildcard imports для Compose
+    indent:
+      active: true  # Включаем проверку отступов
 
 # Отключить экспериментальные правила
 experimental:
