@@ -75,11 +75,6 @@ fun LoadsScreen(
         ) {
             when (val state = uiState) {
                 is LoadsUiState.Loading -> LoadingContent()
-                is LoadsUiState.Empty ->
-                    EmptyContentWithRefresh(
-                        isRefreshing = isRefreshing,
-                        onRefresh = { viewModel.refresh() },
-                    )
                 is LoadsUiState.Error ->
                     ErrorContentWithRefresh(
                         message = state.message,
@@ -119,38 +114,37 @@ private fun LoadingContent() {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun EmptyContentWithRefresh(
-    isRefreshing: Boolean,
-    onRefresh: () -> Unit,
-) {
-    PullToRefreshBox(
-        isRefreshing = isRefreshing,
-        onRefresh = onRefresh,
-        modifier = Modifier.fillMaxSize(),
+private fun EmptyStateItem() {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+        ),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 2.dp,
+        ),
     ) {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center,
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.padding(32.dp),
-            ) {
-                Text(
-                    text = "No loads found",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                )
-                Text(
-                    text = "You don't have any loads yet.\nPull down to refresh.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                    textAlign = TextAlign.Center,
-                )
-            }
+            Text(
+                text = "No loads found",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Text(
+                text = "You don't have any loads yet.\nPull down to refresh.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                textAlign = TextAlign.Center,
+            )
         }
     }
 }
@@ -227,11 +221,17 @@ private fun LoadsListWithRefresh(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            items(loads, key = { it.loadId }) { load ->
-                LoadItem(
-                    load = load,
-                    onClick = { onLoadClick(load.loadId) },
-                )
+            if (loads.isEmpty()) {
+                item {
+                    EmptyStateItem()
+                }
+            } else {
+                items(loads, key = { it.loadId }) { load ->
+                    LoadItem(
+                        load = load,
+                        onClick = { onLoadClick(load.loadId) },
+                    )
+                }
             }
         }
     }

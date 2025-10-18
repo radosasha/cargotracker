@@ -97,19 +97,14 @@ class LoadsViewModel(
                 onSuccess = { loads ->
                     println("✅ LoadsViewModel: Successfully loaded ${loads.size} loads")
                     _isRefreshing.value = false
-                    if (loads.isEmpty()) {
-                        _uiState.value = LoadsUiState.Empty
-                    } else {
-                        _uiState.value = LoadsUiState.Success(loads)
-                    }
+                    _uiState.value = LoadsUiState.Success(loads)
                 },
                 onFailure = { error ->
                     println("❌ LoadsViewModel: Failed to load loads: ${error.message}")
                     _isRefreshing.value = false
-                    _uiState.value =
-                        LoadsUiState.Error(
-                            error.message ?: "Failed to load loads",
-                        )
+                    _uiState.value = LoadsUiState.Error(
+                        error.message ?: "Failed to load loads",
+                    )
                 },
             )
         }
@@ -144,19 +139,12 @@ class LoadsViewModel(
                         getCachedLoadsUseCase()
                     }
                 println("✅ LoadsViewModel: Successfully loaded ${cachedLoads.size} loads from cache")
-
-                if (cachedLoads.isEmpty()) {
-                    _uiState.value = LoadsUiState.Empty
-                } else {
-                    _uiState.value = LoadsUiState.Success(cachedLoads)
-                }
+                _uiState.value = LoadsUiState.Success(cachedLoads)
             } catch (e: Exception) {
                 println("❌ LoadsViewModel: Failed to load from cache: ${e.message}")
-                // Keep current state or show error
-                _uiState.value =
-                    LoadsUiState.Error(
-                        e.message ?: "Failed to load cached data",
-                    )
+                _uiState.value = LoadsUiState.Error(
+                    e.message ?: "Failed to load cached data",
+                )
             }
         }
     }
@@ -167,8 +155,6 @@ class LoadsViewModel(
  */
 sealed class LoadsUiState {
     data object Loading : LoadsUiState()
-
-    data object Empty : LoadsUiState()
 
     data class Success(val loads: List<Load>) : LoadsUiState()
 
