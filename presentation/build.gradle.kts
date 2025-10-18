@@ -49,11 +49,3 @@ kotlin {
         }
     }
 }
-
-// Отключить ktlint для модуля presentation из-за wildcard imports в Compose
-ktlint {
-    ignoreFailures.set(true)
-    filter {
-        exclude("**/*")
-    }
-}
