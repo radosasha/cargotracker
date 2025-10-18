@@ -26,8 +26,8 @@
 	<!-- Дополнительные настройки для фонового режима -->
 	<key>BGTaskSchedulerPermittedIdentifiers</key>
 	<array>
-		<string>com.tracker.location-tracking</string>
-		<string>com.tracker.background-refresh</string>
+		<string>com.shiplocate.location-tracking</string>
+		<string>com.shiplocate.background-refresh</string>
 	</array>
 	
 	<!-- Настройки для точности GPS -->

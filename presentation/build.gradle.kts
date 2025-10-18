@@ -1,12 +1,12 @@
 plugins {
-    id("tracker.android.library")
+    id("shiplocate.android.library")
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.ktlint)
 }
 
 android {
-    namespace = "com.tracker.presentation"
+    namespace = "com.shiplocate.presentation"
 }
 
 kotlin {

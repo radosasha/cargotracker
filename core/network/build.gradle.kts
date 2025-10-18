@@ -1,5 +1,5 @@
 plugins {
-    id("tracker.android.library.core")
+    id("shiplocate.android.library.core")
     alias(libs.plugins.kotlinx.serialization)
     alias(libs.plugins.ktlint)
 }
@@ -35,5 +35,5 @@ kotlin {
 }
 
 android {
-    namespace = "com.tracker.core.network"
+    namespace = "com.shiplocate.core.network"
 }

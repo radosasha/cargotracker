@@ -1,5 +1,5 @@
 plugins {
-    id("tracker.android.library.core")
+    id("shiplocate.android.library.core")
     alias(libs.plugins.ktlint)
 }
 
@@ -31,5 +31,5 @@ kotlin {
 }
 
 android {
-    namespace = "com.tracker.core.datastore"
+    namespace = "com.shiplocate.core.datastore"
 }

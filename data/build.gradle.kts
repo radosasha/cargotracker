@@ -1,11 +1,11 @@
 plugins {
-    id("tracker.android.library")
+    id("shiplocate.android.library")
     alias(libs.plugins.kotlinx.serialization)
     alias(libs.plugins.ktlint)
 }
 
 android {
-    namespace = "com.tracker.data"
+    namespace = "com.shiplocate.data"
 }
 
 kotlin {

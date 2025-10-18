@@ -1,5 +1,5 @@
 plugins {
-    id("tracker.android.application")
+    id("shiplocate.android.application")
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.kotlinx.serialization)

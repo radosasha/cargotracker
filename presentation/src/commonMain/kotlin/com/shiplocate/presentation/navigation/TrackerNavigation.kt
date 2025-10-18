@@ -1,0 +1,119 @@
+package com.shiplocate.presentation.navigation
+
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.navigation.NavType
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import com.shiplocate.domain.usecase.auth.HasAuthSessionUseCase
+import com.shiplocate.presentation.di.koinEnterPhoneViewModel
+import com.shiplocate.presentation.di.koinEnterPinViewModel
+import com.shiplocate.presentation.di.koinHomeViewModel
+import com.shiplocate.presentation.di.koinInject
+import com.shiplocate.presentation.di.koinLoadsViewModel
+import com.shiplocate.presentation.feature.auth.EnterPhoneScreen
+import com.shiplocate.presentation.feature.auth.EnterPinScreen
+import com.shiplocate.presentation.feature.home.HomeScreen
+import com.shiplocate.presentation.feature.loads.LoadsScreen
+import kotlinx.coroutines.launch
+
+/**
+ * Навигация с использованием строковых маршрутов
+ * (Type-safe args не поддерживаются в KMP)
+ *
+ * Проверяет наличие токена при старте
+ */
+@Suppress("FunctionName")
+@Composable
+fun TrackerNavigation() {
+    val navController = rememberNavController()
+    val hasAuthSessionUseCase: HasAuthSessionUseCase = koinInject()
+    val scope = rememberCoroutineScope()
+
+    var isCheckingAuth by remember { mutableStateOf(true) }
+    var startDestination by remember { mutableStateOf(Screen.ENTER_PHONE) }
+
+    // Check auth session on start
+    LaunchedEffect(Unit) {
+        scope.launch {
+            val hasSession = hasAuthSessionUseCase()
+            startDestination = if (hasSession) Screen.LOADS else Screen.ENTER_PHONE
+            isCheckingAuth = false
+        }
+    }
+
+    if (isCheckingAuth) {
+        // Show loading or splash screen
+        return
+    }
+
+    NavHost(
+        navController = navController,
+        startDestination = startDestination,
+    ) {
+        // Auth screens
+        composable(Screen.ENTER_PHONE) {
+            val viewModel = koinEnterPhoneViewModel()
+            EnterPhoneScreen(
+                onNavigateToPin = { phone ->
+                    navController.navigate(Screen.enterPin(phone))
+                },
+                viewModel = viewModel,
+            )
+        }
+
+        composable(
+            route = Screen.ENTER_PIN,
+            arguments =
+                listOf(
+                    navArgument("phone") { type = NavType.StringType },
+                ),
+        ) { backStackEntry ->
+            val phone = backStackEntry.getStringArgument("phone") ?: ""
+            val viewModel = koinEnterPinViewModel()
+
+            EnterPinScreen(
+                phone = phone,
+                onNavigateToHome = {
+                    // Clear back stack and navigate to loads
+                    navController.navigate(Screen.LOADS) {
+                        popUpTo(Screen.ENTER_PHONE) { inclusive = true }
+                    }
+                },
+                onNavigateBack = { errorMessage ->
+                    navController.popBackStack()
+                },
+                viewModel = viewModel,
+            )
+        }
+
+        // Main app screens
+        composable(Screen.LOADS) {
+            val viewModel = koinLoadsViewModel()
+            LoadsScreen(
+                viewModel = viewModel,
+                onLoadClick = { loadId ->
+                    navController.navigate(Screen.home(loadId))
+                },
+            )
+        }
+
+        composable(
+            route = Screen.HOME,
+            arguments =
+                listOf(
+                    navArgument("loadId") { type = NavType.StringType },
+                ),
+        ) {
+            val viewModel = koinHomeViewModel()
+            HomeScreen(viewModel = viewModel)
+        }
+    }
+}

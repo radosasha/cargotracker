@@ -17,6 +17,6 @@ object AndroidConfig {
     const val JVM_TARGET_CORE = "1.8"
     
     // Application
-    const val APPLICATION_ID = "com.tracker"
-    const val NAMESPACE = "com.tracker"
+    const val APPLICATION_ID = "com.shiplocate"
+    const val NAMESPACE = "com.shiplocate"
 }

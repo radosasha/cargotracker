@@ -1,7 +1,7 @@
-package com.tracker
+package com.shiplocate
 
 import androidx.compose.ui.window.ComposeUIViewController
-import com.tracker.di.IOSKoinApp
+import com.shiplocate.di.IOSKoinApp
 import platform.UIKit.UIViewController
 
 object MainViewController {

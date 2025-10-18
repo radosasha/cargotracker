@@ -1,0 +1,19 @@
+package com.shiplocate.data.datasource
+
+/**
+ * Интерфейс для запроса разрешений
+ * Находится в data слое, так как это деталь реализации (DataSource)
+ */
+interface PermissionRequester {
+    suspend fun hasLocationPermissions(): Boolean
+
+    suspend fun hasBackgroundLocationPermission(): Boolean
+
+    suspend fun hasNotificationPermission(): Boolean
+
+    suspend fun isBatteryOptimizationDisabled(): Boolean
+
+    suspend fun requestAllPermissions(): Result<Unit>
+
+    suspend fun openAppSettings(): Result<Unit>
+}

@@ -1,10 +1,10 @@
 plugins {
-    id("tracker.android.library")
+    id("shiplocate.android.library")
     alias(libs.plugins.ktlint)
 }
 
 android {
-    namespace = "com.tracker.domain"
+    namespace = "com.shiplocate.domain"
 }
 
 kotlin {
