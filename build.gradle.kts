@@ -7,6 +7,9 @@ plugins {
     alias(libs.plugins.room) apply false
     alias(libs.plugins.ksp) apply false
     alias(libs.plugins.ktlint) apply false
+    
+    // Add the dependency for the Google services Gradle plugin
+    alias(libs.plugins.google.services) apply false
 }
 
 // Общая конфигурация ktlint для всех модулей

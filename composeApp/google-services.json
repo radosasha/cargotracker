@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "562221915963",
+    "project_id": "shiplocate-bcc58",
+    "storage_bucket": "shiplocate-bcc58.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:562221915963:android:07cb524dde99cbcebaa11e",
+        "android_client_info": {
+          "package_name": "com.shiplocate"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCpYilSQpO5i4KppZd1vuOXD-h8j7KbDGI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
