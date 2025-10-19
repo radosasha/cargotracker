@@ -22,6 +22,16 @@ class NotificationRepositoryImpl(
 
     override suspend fun sendTokenToServer(token: String) {
         println("Repository: Sending token to server")
+        
+        // Проверяем, есть ли уже такой же токен в кеше и был ли он отправлен
+        val cachedToken = firebaseTokenLocalDataSource.getCachedToken()
+        val isTokenSent = firebaseTokenLocalDataSource.isTokenSent()
+        
+        if (cachedToken == token && isTokenSent) {
+            println("Repository: Token already sent to server, skipping")
+            return
+        }
+        
         firebaseTokenRemoteDataSource.sendTokenToServer(token)
         
         // Помечаем токен как отправленный

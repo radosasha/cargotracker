@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.shiplocate.domain.model.load.Load
 import com.shiplocate.domain.usecase.GetTrackingStatusUseCase
+import com.shiplocate.domain.usecase.RequestNotificationPermissionUseCase
 import com.shiplocate.domain.usecase.StartTrackingUseCase
 import com.shiplocate.domain.usecase.load.GetCachedLoadsUseCase
 import com.shiplocate.domain.usecase.load.GetLoadsUseCase
@@ -23,6 +24,7 @@ class LoadsViewModel(
     private val getCachedLoadsUseCase: GetCachedLoadsUseCase,
     private val getTrackingStatusUseCase: GetTrackingStatusUseCase,
     private val startTrackingUseCase: StartTrackingUseCase,
+    private val requestNotificationPermissionUseCase: RequestNotificationPermissionUseCase,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow<LoadsUiState>(LoadsUiState.Loading)
     val uiState: StateFlow<LoadsUiState> = _uiState.asStateFlow()
@@ -33,6 +35,7 @@ class LoadsViewModel(
     init {
         println("🎯 LoadsViewModel: Initialized")
         checkAndRestoreTracking()
+        requestNotificationPermission()
         loadLoads()
     }
 
@@ -147,6 +150,32 @@ class LoadsViewModel(
                     LoadsUiState.Error(
                         e.message ?: "Failed to load cached data",
                     )
+            }
+        }
+    }
+    
+    /**
+     * Запрашивает разрешения на уведомления
+     * Вызывается после успешной авторизации пользователя
+     */
+    private fun requestNotificationPermission() {
+        viewModelScope.launch {
+            try {
+                println("🔔 LoadsViewModel: Requesting notification permission...")
+                val result = requestNotificationPermissionUseCase()
+                
+                if (result.isSuccess) {
+                    val granted = result.getOrNull() ?: false
+                    if (granted) {
+                        println("✅ LoadsViewModel: Notification permission granted")
+                    } else {
+                        println("❌ LoadsViewModel: Notification permission denied")
+                    }
+                } else {
+                    println("❌ LoadsViewModel: Failed to request notification permission: ${result.exceptionOrNull()?.message}")
+                }
+            } catch (e: Exception) {
+                println("❌ LoadsViewModel: Exception while requesting notification permission: ${e.message}")
             }
         }
     }
