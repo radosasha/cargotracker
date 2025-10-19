@@ -1,7 +1,7 @@
 package com.shiplocate.di
 
 import com.shiplocate.data.service.platform.IOSFirebaseMessagingDelegate
-import com.shiplocate.data.datasource.IOSFirebaseTokenServiceDataSourceImpl
+import com.shiplocate.data.datasource.FirebaseTokenServiceDataSource
 import com.shiplocate.domain.usecase.ManageFirebaseTokensUseCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -114,8 +114,8 @@ object IOSKoinApp : KoinComponent {
      */
     fun onCurrentTokenReceived(token: String?) {
         try {
-            // Получаем IOSFirebaseTokenServiceDataSourceImpl и передаем токен
-            val dataSource = get<IOSFirebaseTokenServiceDataSourceImpl>()
+            // Получаем FirebaseTokenServiceDataSource и передаем токен
+            val dataSource = get<FirebaseTokenServiceDataSource>()
             dataSource.onTokenReceived(token)
             println("IOSKoinApp: Current token passed to data source successfully")
         } catch (e: Exception) {

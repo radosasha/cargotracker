@@ -8,8 +8,7 @@ import com.shiplocate.data.config.ServerConfig
 import com.shiplocate.data.datasource.FirebaseTokenLocalDataSourceImpl
 import com.shiplocate.data.datasource.FirebaseTokenRemoteDataSource
 import com.shiplocate.data.datasource.FirebaseTokenRemoteDataSourceImpl
-import com.shiplocate.data.datasource.FirebaseTokenServiceDataSource
-import com.shiplocate.data.datasource.FirebaseTokenServiceDataSourceImpl
+import com.shiplocate.data.datasource.FirebaseTokenService
 import com.shiplocate.data.datasource.GpsLocationDataSource
 import com.shiplocate.data.datasource.LocationLocalDataSource
 import com.shiplocate.data.datasource.LocationRemoteDataSource
@@ -131,8 +130,8 @@ val dataModule =
 
             // Firebase Token Data Sources
             single<FirebaseTokenLocalDataSource> { FirebaseTokenLocalDataSourceImpl(get()) }
-            single<FirebaseTokenServiceDataSource> { FirebaseTokenServiceDataSourceImpl() }
             single<FirebaseTokenRemoteDataSource> { FirebaseTokenRemoteDataSourceImpl(get(), get()) }
+            // FirebaseTokenService регистрируется в платформо-специфичных модулях composeApp
 
             // Repositories
             single<DeviceRepository> { DeviceRepositoryImpl(get()) }

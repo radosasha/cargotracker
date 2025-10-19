@@ -1,0 +1,30 @@
+package com.shiplocate.data.datasource
+
+import kotlinx.coroutines.flow.Flow
+
+/**
+ * Expect класс для работы с Firebase токенами
+ * Платформо-специфичные реализации в androidMain и iosMain
+ */
+expect class FirebaseTokenServiceDataSource {
+    
+    /**
+     * Получить текущий Firebase токен
+     */
+    suspend fun getCurrentToken(): String?
+    
+    /**
+     * Flow для получения новых токенов
+     */
+    fun getNewTokenFlow(): Flow<String>
+    
+    /**
+     * Обработка нового токена (вызывается системой)
+     */
+    fun onNewTokenReceived(token: String)
+    
+    /**
+     * Обработка пуш-уведомления (вызывается системой)
+     */
+    fun onPushNotificationReceived(userInfo: Map<String, Any>)
+}

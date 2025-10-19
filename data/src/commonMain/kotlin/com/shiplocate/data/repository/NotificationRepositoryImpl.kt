@@ -1,7 +1,7 @@
 package com.shiplocate.data.repository
 
 import com.shiplocate.data.datasource.FirebaseTokenRemoteDataSource
-import com.shiplocate.data.datasource.FirebaseTokenServiceDataSource
+import com.shiplocate.data.datasource.FirebaseTokenService
 import com.shiplocate.domain.datasource.FirebaseTokenLocalDataSource
 import com.shiplocate.domain.repository.NotificationRepository
 import kotlinx.coroutines.MainScope
@@ -15,7 +15,7 @@ import kotlinx.coroutines.flow.onEach
  */
 class NotificationRepositoryImpl(
     private val firebaseTokenLocalDataSource: FirebaseTokenLocalDataSource,
-    private val firebaseTokenServiceDataSource: FirebaseTokenServiceDataSource,
+    private val firebaseTokenService: FirebaseTokenService,
     private val firebaseTokenRemoteDataSource: FirebaseTokenRemoteDataSource,
 ) : NotificationRepository {
     private val coroutineScope = MainScope()
@@ -52,7 +52,7 @@ class NotificationRepositoryImpl(
         println("Repository: Starting Firebase token updates")
 
         // Слушаем новые токены из ServiceDataSource и обрабатываем их
-        firebaseTokenServiceDataSource.getNewTokenFlow()
+        firebaseTokenService.getNewTokenFlow()
             .onEach { token ->
                 if (token.isNotEmpty()) {
                     println("Repository: New Firebase token received: ${token.take(20)}...")
@@ -72,6 +72,6 @@ class NotificationRepositoryImpl(
     }
 
     override suspend fun getCurrentTokenFromFirebase(): String? {
-        return firebaseTokenServiceDataSource.getCurrentToken()
+        return firebaseTokenService.getCurrentToken()
     }
 }
