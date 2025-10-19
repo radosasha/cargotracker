@@ -23,6 +23,9 @@ class NotificationRepositoryImpl(
     override suspend fun sendTokenToServer(token: String) {
         println("Repository: Sending token to server")
         firebaseTokenRemoteDataSource.sendTokenToServer(token)
+        
+        // Помечаем токен как отправленный
+        firebaseTokenLocalDataSource.markTokenAsSent()
     }
 
     override suspend fun getCachedToken(): String? {
@@ -33,10 +36,15 @@ class NotificationRepositoryImpl(
         println("Repository: Sending cached token on auth")
 
         val cachedToken = firebaseTokenLocalDataSource.getCachedToken()
-        if (cachedToken != null) {
+        val isSent = firebaseTokenLocalDataSource.isTokenSent()
+        
+        if (cachedToken != null && !isSent) {
+            println("Repository: Found unsent cached token, sending to server")
             sendTokenToServer(cachedToken)
+        } else if (cachedToken != null && isSent) {
+            println("Repository: Cached token already sent to server")
         } else {
-            println("No cached token found for auth")
+            println("Repository: No cached token found for auth")
         }
     }
 

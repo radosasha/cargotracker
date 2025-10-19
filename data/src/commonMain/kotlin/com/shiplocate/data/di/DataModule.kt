@@ -5,10 +5,9 @@ import com.shiplocate.core.database.TrackerDatabase
 import com.shiplocate.core.datastore.DataStoreProvider
 import com.shiplocate.core.network.HttpClientProvider
 import com.shiplocate.data.config.ServerConfig
-import com.shiplocate.data.datasource.FirebaseTokenLocalDataSourceImpl
+import com.shiplocate.data.datasource.impl.FirebaseTokenLocalDataSourceImpl
 import com.shiplocate.data.datasource.FirebaseTokenRemoteDataSource
-import com.shiplocate.data.datasource.FirebaseTokenRemoteDataSourceImpl
-import com.shiplocate.data.datasource.FirebaseTokenService
+import com.shiplocate.data.datasource.impl.FirebaseTokenRemoteDataSourceImpl
 import com.shiplocate.data.datasource.GpsLocationDataSource
 import com.shiplocate.data.datasource.LocationLocalDataSource
 import com.shiplocate.data.datasource.LocationRemoteDataSource

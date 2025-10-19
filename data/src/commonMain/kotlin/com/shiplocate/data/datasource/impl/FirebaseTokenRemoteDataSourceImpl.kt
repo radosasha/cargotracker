@@ -1,5 +1,6 @@
-package com.shiplocate.data.datasource
+package com.shiplocate.data.datasource.impl
 
+import com.shiplocate.data.datasource.FirebaseTokenRemoteDataSource
 import com.shiplocate.data.network.api.FirebaseTokenApi
 import com.shiplocate.data.network.dto.firebase.FirebaseTokenRequestDto
 import com.shiplocate.domain.repository.AuthPreferencesRepository
