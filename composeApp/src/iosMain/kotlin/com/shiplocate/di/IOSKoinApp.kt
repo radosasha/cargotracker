@@ -1,6 +1,6 @@
 package com.shiplocate.di
 
-import com.shiplocate.data.di.iosDataModule
+import com.shiplocate.di.iosModule
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 
@@ -20,12 +20,12 @@ object IOSKoinApp {
      */
     fun initApplicationScope() {
         println("IOSKoinApp: Starting Koin initialization...")
-        println("IOSKoinApp: Loading modules: appModule + iosModule + iosDataModule")
+        println("IOSKoinApp: Loading modules: appModule + iosModule")
 
         startKoin {
             printLogger() // Включаем логирование Koin
             modules(
-                appModule + iosModule + iosDataModule,
+                appModule + iosModule,
             )
         }
 
