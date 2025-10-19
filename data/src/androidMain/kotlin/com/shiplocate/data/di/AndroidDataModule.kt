@@ -28,4 +28,6 @@ actual val platformDataModule: Module =
         single<GpsManager> { AndroidGpsManager(get()) }
         single<DeviceDataSource> { AndroidDeviceDataSource(get()) }
         single<PermissionDataSource> { AndroidPermissionDataSource(get()) }
+
+        // Firebase Token Service DataSource будет переопределен в composeApp модуле
     }

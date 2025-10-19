@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.shiplocate.domain.model.auth.AuthError
 import com.shiplocate.domain.model.auth.AuthSession
+import com.shiplocate.domain.usecase.SendCachedTokenOnAuthUseCase
 import com.shiplocate.domain.usecase.auth.SaveAuthSessionUseCase
 import com.shiplocate.domain.usecase.auth.VerifySmsCodeUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,6 +19,7 @@ import kotlinx.coroutines.launch
 class EnterPinViewModel(
     private val verifySmsCodeUseCase: VerifySmsCodeUseCase,
     private val saveAuthSessionUseCase: SaveAuthSessionUseCase,
+    private val sendCachedTokenOnAuthUseCase: SendCachedTokenOnAuthUseCase,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(EnterPinUiState())
     val uiState: StateFlow<EnterPinUiState> = _uiState.asStateFlow()
@@ -107,6 +109,10 @@ class EnterPinViewModel(
                         )
                     saveAuthSessionUseCase(session)
                     println("🔑 EnterPinViewModel: 💾 Session saved")
+
+                    // Отправляем кешированный Firebase токен на сервер
+                    sendCachedTokenOnAuthUseCase()
+                    println("🔑 EnterPinViewModel: 📱 Cached Firebase token sent to server")
 
                     _uiState.update {
                         it.copy(

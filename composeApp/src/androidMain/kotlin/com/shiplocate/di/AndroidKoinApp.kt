@@ -23,7 +23,7 @@ object AndroidKoinApp {
         startKoin {
             androidContext(application)
             modules(
-                appModule + activityModule,
+                appModule + activityModule + androidPlatformModule,
             )
         }
 

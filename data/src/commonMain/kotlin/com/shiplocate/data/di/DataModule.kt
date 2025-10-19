@@ -5,6 +5,11 @@ import com.shiplocate.core.database.TrackerDatabase
 import com.shiplocate.core.datastore.DataStoreProvider
 import com.shiplocate.core.network.HttpClientProvider
 import com.shiplocate.data.config.ServerConfig
+import com.shiplocate.data.datasource.FirebaseTokenLocalDataSourceImpl
+import com.shiplocate.data.datasource.FirebaseTokenRemoteDataSource
+import com.shiplocate.data.datasource.FirebaseTokenRemoteDataSourceImpl
+import com.shiplocate.data.datasource.FirebaseTokenServiceDataSource
+import com.shiplocate.data.datasource.FirebaseTokenServiceDataSourceImpl
 import com.shiplocate.data.datasource.GpsLocationDataSource
 import com.shiplocate.data.datasource.LocationLocalDataSource
 import com.shiplocate.data.datasource.LocationRemoteDataSource
@@ -20,6 +25,8 @@ import com.shiplocate.data.datasource.load.LoadRemoteDataSource
 import com.shiplocate.data.datasource.remote.AuthRemoteDataSource
 import com.shiplocate.data.network.api.AuthApi
 import com.shiplocate.data.network.api.AuthApiImpl
+import com.shiplocate.data.network.api.FirebaseTokenApi
+import com.shiplocate.data.network.api.FirebaseTokenApiImpl
 import com.shiplocate.data.network.api.FlespiLocationApi
 import com.shiplocate.data.network.api.LoadApi
 import com.shiplocate.data.network.api.LoadApiImpl
@@ -29,16 +36,19 @@ import com.shiplocate.data.repository.AuthRepositoryImpl
 import com.shiplocate.data.repository.DeviceRepositoryImpl
 import com.shiplocate.data.repository.LoadRepositoryImpl
 import com.shiplocate.data.repository.LocationRepositoryImpl
+import com.shiplocate.data.repository.NotificationRepositoryImpl
 import com.shiplocate.data.repository.PermissionRepositoryImpl
 import com.shiplocate.data.repository.PrefsRepositoryImpl
 import com.shiplocate.data.repository.TrackingRepositoryImpl
 import com.shiplocate.data.services.LocationProcessorImpl
 import com.shiplocate.data.services.LocationSyncServiceImpl
+import com.shiplocate.domain.datasource.FirebaseTokenLocalDataSource
 import com.shiplocate.domain.repository.AuthPreferencesRepository
 import com.shiplocate.domain.repository.AuthRepository
 import com.shiplocate.domain.repository.DeviceRepository
 import com.shiplocate.domain.repository.LoadRepository
 import com.shiplocate.domain.repository.LocationRepository
+import com.shiplocate.domain.repository.NotificationRepository
 import com.shiplocate.domain.repository.PermissionRepository
 import com.shiplocate.domain.repository.PrefsRepository
 import com.shiplocate.domain.repository.TrackingRepository
@@ -94,6 +104,14 @@ val dataModule =
                 )
             }
 
+            // Firebase Token API
+            single<FirebaseTokenApi> {
+                FirebaseTokenApiImpl(
+                    httpClient = get(),
+                    baseUrl = "http://${ServerConfig.BASE_URL}:8082",
+                )
+            }
+
             // Load API
             single<LoadApi> {
                 LoadApiImpl(
@@ -111,6 +129,11 @@ val dataModule =
             single { LoadRemoteDataSource(get()) }
             single { LoadLocalDataSource(get()) }
 
+            // Firebase Token Data Sources
+            single<FirebaseTokenLocalDataSource> { FirebaseTokenLocalDataSourceImpl(get()) }
+            single<FirebaseTokenServiceDataSource> { FirebaseTokenServiceDataSourceImpl() }
+            single<FirebaseTokenRemoteDataSource> { FirebaseTokenRemoteDataSourceImpl(get(), get()) }
+
             // Repositories
             single<DeviceRepository> { DeviceRepositoryImpl(get()) }
             single<LocationRepository> { LocationRepositoryImpl(get(), get(), get()) }
@@ -120,10 +143,14 @@ val dataModule =
             single<AuthRepository> { AuthRepositoryImpl(get()) }
             single<AuthPreferencesRepository> { AuthPreferencesRepositoryImpl(get()) }
             single<LoadRepository> { LoadRepositoryImpl(get(), get()) }
+            single<NotificationRepository> { NotificationRepositoryImpl(get(), get(), get()) }
 
             // Domain Services - реализации в data слое
             single<LocationProcessor> { LocationProcessorImpl() }
             single<LocationSyncService> { LocationSyncServiceImpl(get(), get(), get()) }
+
+            // Firebase Token Service
+            // FirebaseTokenService удален - заменен на ManageFirebaseTokensUseCase
 
             // CoroutineScope для LocationSyncService
             single<CoroutineScope> { CoroutineScope(SupervisorJob() + Dispatchers.Main) }

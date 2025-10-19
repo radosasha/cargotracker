@@ -4,7 +4,7 @@ plugins {
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.kotlinx.serialization)
     alias(libs.plugins.ktlint)
-    
+
     // Add the Google services Gradle plugin
     alias(libs.plugins.google.services)
 }
@@ -89,14 +89,15 @@ kotlin {
 
 dependencies {
     debugImplementation(compose.uiTooling)
-    
+
     // Import the Firebase BoM
     implementation(platform(libs.firebase.bom))
-    
+
     // TODO: Add the dependencies for Firebase products you want to use
     // When using the BoM, don't specify versions in Firebase dependencies
     implementation(libs.firebase.analytics)
-    
+    implementation(libs.firebase.messaging)
+
     // Add the dependencies for any other desired Firebase products
     // https://firebase.google.com/docs/android/setup#available-libraries
 }

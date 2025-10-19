@@ -2,7 +2,10 @@ package com.shiplocate.presentation.di
 
 import com.shiplocate.domain.usecase.GetPermissionStatusUseCase
 import com.shiplocate.domain.usecase.GetTrackingStatusUseCase
+import com.shiplocate.domain.usecase.HandleFirebaseTokenUseCase
+import com.shiplocate.domain.usecase.ManageFirebaseTokensUseCase
 import com.shiplocate.domain.usecase.RequestAllPermissionsUseCase
+import com.shiplocate.domain.usecase.SendCachedTokenOnAuthUseCase
 import com.shiplocate.domain.usecase.StartProcessLocationsUseCase
 import com.shiplocate.domain.usecase.StartTrackingUseCase
 import com.shiplocate.domain.usecase.StopProcessLocationsUseCase
@@ -61,4 +64,9 @@ val useCasesModule =
         factoryOf(::GetCachedLoadsUseCase)
         factoryOf(::ConnectToLoadUseCase)
         factoryOf(::DisconnectFromLoadUseCase)
+
+        // Firebase Token Use Cases
+        factoryOf(::HandleFirebaseTokenUseCase)
+        factoryOf(::ManageFirebaseTokensUseCase)
+        factoryOf(::SendCachedTokenOnAuthUseCase)
     }

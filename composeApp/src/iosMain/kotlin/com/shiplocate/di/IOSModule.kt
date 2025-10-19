@@ -6,6 +6,7 @@ import com.shiplocate.IOSTrackingRequesterImpl
 import com.shiplocate.data.datasource.PermissionChecker
 import com.shiplocate.data.datasource.PermissionRequester
 import com.shiplocate.data.datasource.TrackingRequester
+import com.shiplocate.data.service.platform.IOSFirebaseMessagingDelegate
 import org.koin.dsl.module
 
 /**
@@ -22,4 +23,7 @@ val iosModule =
 
         // iOS Tracking Requester (Singleton - живет весь жизненный цикл приложения)
         single<TrackingRequester> { IOSTrackingRequesterImpl() }
+
+        // iOS Firebase Messaging Delegate
+        single<IOSFirebaseMessagingDelegate> { IOSFirebaseMessagingDelegate() }
     }

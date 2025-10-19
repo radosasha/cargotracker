@@ -254,14 +254,12 @@ private fun LoadItem(
             CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.surface,
             ),
-        elevation =
-            CardDefaults.cardElevation(
+        elevation = CardDefaults.cardElevation(
                 defaultElevation = 2.dp,
             ),
     ) {
         Column(
-            modifier =
-                Modifier
+            modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
