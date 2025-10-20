@@ -31,10 +31,11 @@ class NotificationRepositoryImpl(
             println("Repository: Token already sent to server, skipping")
             return
         }
-        
+
         firebaseTokenRemoteDataSource.sendTokenToServer(token)
         
         // Помечаем токен как отправленный
+        firebaseTokenLocalDataSource.saveToken(token)
         firebaseTokenLocalDataSource.markTokenAsSent()
     }
 
@@ -56,10 +57,6 @@ class NotificationRepositoryImpl(
         } else {
             println("Repository: No cached token found for auth")
         }
-    }
-
-    override suspend fun getTokenStatus(): Boolean {
-        return firebaseTokenRemoteDataSource.getTokenStatus()
     }
 
     override suspend fun clearToken() {

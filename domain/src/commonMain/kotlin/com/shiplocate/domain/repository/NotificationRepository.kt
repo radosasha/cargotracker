@@ -9,8 +9,6 @@ interface NotificationRepository {
 
     suspend fun sendCachedTokenOnAuth()
 
-    suspend fun getTokenStatus(): Boolean
-
     suspend fun clearToken()
 
     suspend fun startTokenUpdates()

@@ -38,22 +38,6 @@ class FirebaseTokenRemoteDataSourceImpl(
         }
     }
 
-    override suspend fun getTokenStatus(): Boolean {
-        return try {
-            val authSession = authPreferencesRepository.getSession()
-            if (authSession == null) {
-                println("No auth session found, cannot get token status")
-                return false
-            }
-
-            val status = firebaseTokenApi.getFirebaseToken(authSession.token)
-            status.hasToken
-        } catch (e: Exception) {
-            println("Error getting token status: ${e.message}")
-            false
-        }
-    }
-
     override suspend fun clearToken() {
         try {
             val authSession = authPreferencesRepository.getSession()
