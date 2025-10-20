@@ -5,10 +5,12 @@ import androidx.lifecycle.viewModelScope
 import com.shiplocate.domain.model.load.Load
 import com.shiplocate.domain.usecase.GetTrackingStatusUseCase
 import com.shiplocate.domain.usecase.RequestNotificationPermissionUseCase
+import com.shiplocate.domain.usecase.SendCachedTokenOnAuthUseCase
 import com.shiplocate.domain.usecase.StartTrackingUseCase
 import com.shiplocate.domain.usecase.load.GetCachedLoadsUseCase
 import com.shiplocate.domain.usecase.load.GetLoadsUseCase
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -25,6 +27,7 @@ class LoadsViewModel(
     private val getTrackingStatusUseCase: GetTrackingStatusUseCase,
     private val startTrackingUseCase: StartTrackingUseCase,
     private val requestNotificationPermissionUseCase: RequestNotificationPermissionUseCase,
+    private val sendCachedTokenOnAuthUseCase: SendCachedTokenOnAuthUseCase,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow<LoadsUiState>(LoadsUiState.Loading)
     val uiState: StateFlow<LoadsUiState> = _uiState.asStateFlow()
@@ -36,6 +39,7 @@ class LoadsViewModel(
         println("🎯 LoadsViewModel: Initialized")
         checkAndRestoreTracking()
         requestNotificationPermission()
+        sendCachedTokenOnStartup()
         loadLoads()
     }
 
@@ -185,6 +189,22 @@ class LoadsViewModel(
                 }
             } catch (e: Exception) {
                 println("❌ LoadsViewModel: Exception while requesting notification permission: ${e.message}")
+            }
+        }
+    }
+
+    /**
+     * Отправляет закешированный Firebase токен при запуске приложения
+     * Вызывается при инициализации LoadsViewModel
+     */
+    private fun sendCachedTokenOnStartup() {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                println("🚀 LoadsViewModel: Attempting to send cached Firebase token on startup...")
+                sendCachedTokenOnAuthUseCase()
+                println("✅ LoadsViewModel: Cached token send attempt completed")
+            } catch (e: Exception) {
+                println("❌ LoadsViewModel: Failed to send cached token on startup: ${e.message}")
             }
         }
     }

@@ -25,9 +25,14 @@ class ManageFirebaseTokensUseCase(
         // 2. Получаем текущий токен напрямую от Firebase (решает проблему с задержкой onNewToken)
         val currentToken = notificationRepository.getCurrentTokenFromFirebase()
         if (currentToken != null) {
-            println("ManageFirebaseTokensUseCase: Got current token from Firebase: ${currentToken.take(20)}...")
+            println("ManageFirebaseTokensUseCase: Got token from Firebase on-demand: ${currentToken.take(20)}...")
 
             // Кешируем токен
+            if (notificationRepository.getCachedToken() == null) {
+                println("ManageFirebaseTokensUseCase: Caching demanded token from Firebase: ${currentToken.take(20)}...")
+                notificationRepository.saveToken(currentToken)
+            }
+
             // Если пользователь авторизован - отправляем на сервер
             if (authPreferencesRepository.hasSession()) {
                 println("ManageFirebaseTokensUseCase: User is authenticated, sending current token to server")

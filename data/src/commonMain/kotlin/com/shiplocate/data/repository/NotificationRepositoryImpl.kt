@@ -50,12 +50,12 @@ class NotificationRepositoryImpl(
         val isSent = firebaseTokenLocalDataSource.isTokenSent()
         
         if (cachedToken != null && !isSent) {
-            println("Repository: Found unsent cached token, sending to server")
+            println("Repository: Found unsent cached firebase token, sending to server")
             sendTokenToServer(cachedToken)
         } else if (cachedToken != null && isSent) {
-            println("Repository: Cached token already sent to server")
+            println("Repository: Cached firebase token already sent to server")
         } else {
-            println("Repository: No cached token found for auth")
+            println("Repository: No cached firebase token found for auth")
         }
     }
 
@@ -73,7 +73,12 @@ class NotificationRepositoryImpl(
                     println("Repository: New Firebase token received: ${token.take(20)}...")
 
                     // Сохраняем токен в локальном кеше
-                    firebaseTokenLocalDataSource.saveToken(token)
+                    println("Repository: Save Firebase token locally: ${token.take(20)}...")
+                    val cachedToken = firebaseTokenLocalDataSource.getCachedToken()
+                    if (cachedToken != token) {
+                        firebaseTokenLocalDataSource.markTokenAsSent()
+                        firebaseTokenLocalDataSource.saveToken(token)
+                    }
 
                     // Логика отправки на сервер будет в Use Case
                     println("Repository: Token saved to local cache")
@@ -88,5 +93,9 @@ class NotificationRepositoryImpl(
 
     override suspend fun getCurrentTokenFromFirebase(): String? {
         return firebaseTokenService.getCurrentToken()
+    }
+
+    override suspend fun saveToken(token: String) {
+        firebaseTokenLocalDataSource.saveToken(token)
     }
 }

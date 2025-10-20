@@ -17,7 +17,7 @@ actual class FirebaseTokenServiceDataSource {
         return try {
             println("Android: Getting current Firebase token...")
             val token = FirebaseMessaging.getInstance().token.await()
-            println("Android: Got Firebase token: ${token.take(20)}...")
+            println("Android: Got Firebase token on-demand: ${token.take(20)}...")
             token
         } catch (e: Exception) {
             println("Android: Failed to get Firebase token: ${e.message}")

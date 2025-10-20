@@ -16,4 +16,6 @@ interface NotificationRepository {
     fun observeTokenUpdates(): Flow<String>
 
     suspend fun getCurrentTokenFromFirebase(): String?
+
+    suspend fun saveToken(token: String)
 }
