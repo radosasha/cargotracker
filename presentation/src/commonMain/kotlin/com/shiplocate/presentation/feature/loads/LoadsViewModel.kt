@@ -99,8 +99,12 @@ class LoadsViewModel(
             result.fold(
                 onSuccess = { loads ->
                     println("✅ LoadsViewModel: Successfully loaded ${loads.size} loads")
+                    
+                    // Сортируем список по дате создания (createdAt) - новые сверху
+                    val sortedLoads = loads.sortedByDescending { it.createdAt }
+                    
                     _isRefreshing.value = false
-                    _uiState.value = LoadsUiState.Success(loads)
+                    _uiState.value = LoadsUiState.Success(sortedLoads)
                 },
                 onFailure = { error ->
                     println("❌ LoadsViewModel: Failed to load loads: ${error.message}")
@@ -143,7 +147,12 @@ class LoadsViewModel(
                         getCachedLoadsUseCase()
                     }
                 println("✅ LoadsViewModel: Successfully loaded ${cachedLoads.size} loads from cache")
-                _uiState.value = LoadsUiState.Success(cachedLoads)
+                
+                // Сортируем кешированный список по дате создания (createdAt) - новые сверху
+                val sortedCachedLoads = cachedLoads.sortedByDescending { it.createdAt }
+                println("📅 LoadsViewModel: Sorted ${sortedCachedLoads.size} cached loads by createdAt (newest first)")
+                
+                _uiState.value = LoadsUiState.Success(sortedCachedLoads)
             } catch (e: Exception) {
                 println("❌ LoadsViewModel: Failed to load from cache: ${e.message}")
                 _uiState.value =
