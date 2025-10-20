@@ -38,4 +38,9 @@ interface PermissionChecker {
      * Запрашивает все необходимые разрешения
      */
     fun requestAllPermissions()
+
+    /**
+     * Запрашивает только разрешения на уведомления
+     */
+    fun requestNotificationPermission()
 }

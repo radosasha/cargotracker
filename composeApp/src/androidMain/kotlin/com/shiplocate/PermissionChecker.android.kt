@@ -53,4 +53,15 @@ actual class PermissionChecker : KoinComponent {
             throw e
         }
     }
+
+    actual fun requestNotificationPermission() {
+        println("PermissionChecker.requestNotificationPermission() called")
+        try {
+            permissionRequester.requestNotificationPermission()
+            println("PermissionRequester.requestNotificationPermission() completed")
+        } catch (e: Exception) {
+            println("Error in PermissionChecker.requestNotificationPermission(): ${e.message}")
+            throw e
+        }
+    }
 }

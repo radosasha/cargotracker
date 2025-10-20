@@ -15,5 +15,7 @@ interface PermissionRequester {
 
     suspend fun requestAllPermissions(): Result<Unit>
 
+    suspend fun requestNotificationPermission(): Result<Unit>
+
     suspend fun openAppSettings(): Result<Unit>
 }

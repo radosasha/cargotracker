@@ -65,7 +65,7 @@ class IOSPermissionDataSource(
 
     override suspend fun requestNotificationPermission(): Result<Boolean> {
         return try {
-            permissionChecker.requestAllPermissions()
+            permissionChecker.requestNotificationPermission()
             kotlinx.coroutines.delay(1000)
             Result.success(permissionChecker.hasNotificationPermission())
         } catch (e: Exception) {

@@ -209,4 +209,8 @@ class IOSPermissionCheckerImpl : PermissionChecker {
             )
         }
     }
+
+    override fun requestNotificationPermission() {
+        requestNotificationPermissions()
+    }
 }

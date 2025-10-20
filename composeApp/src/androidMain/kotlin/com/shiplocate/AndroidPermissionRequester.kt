@@ -206,7 +206,7 @@ class AndroidPermissionRequester(private val context: Context) {
                 ActivityCompat.requestPermissions(
                     context,
                     arrayOf(Manifest.permission.POST_NOTIFICATIONS),
-                    MainActivity.NOTIFICATION_PERMISSION_REQUEST_CODE,
+                    MainActivity.REQUEST_NOTIFICATIONS_PERMISSION,
                 )
             } else {
                 println("Notification permission already granted")
@@ -226,19 +226,32 @@ class AndroidPermissionRequester(private val context: Context) {
         // - true если пользователь отказал, но можно показать диалог снова
         // - false если пользователь отказал и выбрал "Don't ask again" (диалог заблокирован)
 
+        val hasLocation = hasLocationPermissions()
+        val hasNotification = hasNotificationPermission()
+        val locationRequestedBefore = hasLocationBeenRequestedBefore()
+        val notificationRequestedBefore = hasNotificationBeenRequestedBefore()
+        val locationRationale = if (context is androidx.activity.ComponentActivity) shouldShowLocationPermissionRationale() else false
+        val notificationRationale = if (context is androidx.activity.ComponentActivity) shouldShowNotificationPermissionRationale() else false
+
+        println("Permission status: hasLocation=$hasLocation, hasNotification=$hasNotification")
+        println("Requested before: location=$locationRequestedBefore, notification=$notificationRequestedBefore")
+        println("Rationale: location=$locationRationale, notification=$notificationRationale")
+
         // Для геолокации: если нет разрешения И диалог заблокирован (rationale = false после отказа)
         val locationDialogBlocked =
-            !hasLocationPermissions() &&
+            !hasLocation &&
                 context is androidx.activity.ComponentActivity &&
-                !shouldShowLocationPermissionRationale() &&
-                hasLocationBeenRequestedBefore()
+                locationRequestedBefore &&
+                !locationRationale
 
         // Для уведомлений: если нет разрешения И диалог заблокирован
         val notificationDialogBlocked =
-            !hasNotificationPermission() &&
+            !hasNotification &&
                 context is androidx.activity.ComponentActivity &&
-                !shouldShowNotificationPermissionRationale() &&
-                hasNotificationBeenRequestedBefore()
+                notificationRequestedBefore &&
+                !notificationRationale
+
+        println("Dialog blocked: location=$locationDialogBlocked, notification=$notificationDialogBlocked")
 
         // Если диалоги заблокированы - перекидываем на конкретные страницы разрешений
         if (locationDialogBlocked) {
@@ -253,6 +266,7 @@ class AndroidPermissionRequester(private val context: Context) {
             return
         }
 
+        println("No dialogs blocked, continuing with permission request")
         continuePermissionRequest()
     }
 
@@ -311,16 +325,17 @@ class AndroidPermissionRequester(private val context: Context) {
                 }
             }
 
-            MainActivity.NOTIFICATION_PERMISSION_REQUEST_CODE -> {
+            MainActivity.REQUEST_NOTIFICATIONS_PERMISSION -> {
+                // Обрабатываем результат запроса только уведомлений
                 val granted = grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED
                 println("Notification permission result: $granted")
 
                 if (granted) {
-                    // Уведомления получены, продолжаем с оптимизацией батареи
-                    continuePermissionRequest()
+                    // Уведомления получены - завершаем процесс (не продолжаем с другими разрешениями)
+                    println("Notification permission granted, permission request process completed")
                 } else {
-                    // Пользователь отказал в уведомлениях - останавливаем процесс
-                    println("Notification permission denied, stopping permission request process")
+                    // Пользователь отказал в уведомлениях - завершаем процесс
+                    println("Notification permission denied, permission request process completed")
                 }
             }
         }
@@ -354,18 +369,31 @@ class AndroidPermissionRequester(private val context: Context) {
     fun openLocationSettings() {
         println("openLocationSettings() called")
         try {
-            // Попробуем открыть страницу разрешений приложения
-            val intent =
-                Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                    data = Uri.fromParts("package", context.packageName, null)
-                }
+            // Открываем конкретную страницу разрешений на местоположение
+            val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                data = Uri.fromParts("package", context.packageName, null)
+                // Добавляем extra для перехода к разрешениям
+                putExtra("extra_show_fragment", "com.android.settings.applications.InstalledAppDetails")
+                putExtra("extra_show_fragment_args", "permissions")
+            }
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             context.startActivity(intent)
             println("Location settings opened successfully")
         } catch (e: Exception) {
             println("Error opening location settings: ${e.message}")
-            // Fallback to general app settings
-            openAppSettings()
+            // Fallback: попробуем открыть настройки разрешений напрямую
+            try {
+                val fallbackIntent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                    data = Uri.fromParts("package", context.packageName, null)
+                }
+                fallbackIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                context.startActivity(fallbackIntent)
+                println("Fallback location settings opened successfully")
+            } catch (e2: Exception) {
+                println("Error opening fallback location settings: ${e2.message}")
+                // Последний fallback - общие настройки приложения
+                openAppSettings()
+            }
         }
     }
 

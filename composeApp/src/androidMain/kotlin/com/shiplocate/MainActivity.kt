@@ -90,9 +90,10 @@ class MainActivity : ComponentActivity() {
     }
 
     companion object {
+        const val REQUEST_ALL_PERMISSIONS = 2311
+        const val REQUEST_NOTIFICATIONS_PERMISSION = 2310
         const val LOCATION_PERMISSION_REQUEST_CODE = 1001
         const val BACKGROUND_LOCATION_PERMISSION_REQUEST_CODE = 1002
-        const val NOTIFICATION_PERMISSION_REQUEST_CODE = 1003
     }
 
     override fun onDestroy() {

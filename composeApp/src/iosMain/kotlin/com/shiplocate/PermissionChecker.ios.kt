@@ -114,6 +114,11 @@ actual class PermissionChecker {
         requestNotificationPermissions()
     }
 
+    actual fun requestNotificationPermission() {
+        // Запрашиваем только разрешения на уведомления
+        requestNotificationPermissions()
+    }
+
     private fun requestLocationPermissions() {
         dispatch_async(dispatch_get_main_queue()) {
             when (locationManager.authorizationStatus) {

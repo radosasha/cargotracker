@@ -69,7 +69,7 @@ class AndroidPermissionDataSource(
 
     override suspend fun requestNotificationPermission(): Result<Boolean> {
         return try {
-            permissionRequester.requestAllPermissions()
+            permissionRequester.requestNotificationPermission()
             Result.success(permissionRequester.hasNotificationPermission())
         } catch (e: Exception) {
             Result.failure(e)

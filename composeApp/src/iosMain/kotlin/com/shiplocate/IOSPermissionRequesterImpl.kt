@@ -20,6 +20,7 @@ import platform.darwin.NSObject
 import platform.darwin.dispatch_async
 import platform.darwin.dispatch_get_main_queue
 import kotlin.coroutines.suspendCoroutine
+import kotlinx.coroutines.suspendCancellableCoroutine
 
 /**
  * iOS реализация PermissionRequester
@@ -94,6 +95,15 @@ class IOSPermissionRequesterImpl : PermissionRequester {
     override suspend fun requestAllPermissions(): Result<Unit> {
         return try {
             requestAllPermissionsSync()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun requestNotificationPermission(): Result<Unit> {
+        return try {
+            requestNotificationPermissionsSync()
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
@@ -182,6 +192,26 @@ class IOSPermissionRequesterImpl : PermissionRequester {
                     }
                 },
             )
+        }
+    }
+
+    private suspend fun requestNotificationPermissionsSync() {
+        return suspendCancellableCoroutine { continuation ->
+            dispatch_async(dispatch_get_main_queue()) {
+                println("iOS: Requesting notification permission...")
+                val center = UNUserNotificationCenter.currentNotificationCenter()
+                center.requestAuthorizationWithOptions(
+                    options = UNAuthorizationOptionAlert or UNAuthorizationOptionBadge or UNAuthorizationOptionSound,
+                    completionHandler = { granted, error ->
+                        if (granted) {
+                            println("iOS: Notification permission granted")
+                        } else {
+                            println("iOS: Notification permission denied: ${error?.localizedDescription}")
+                        }
+                        continuation.resumeWith(Result.success(Unit))
+                    },
+                )
+            }
         }
     }
 }

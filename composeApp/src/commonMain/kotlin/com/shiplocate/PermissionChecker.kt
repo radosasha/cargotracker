@@ -17,4 +17,6 @@ expect class PermissionChecker() {
     suspend fun openAppSettings(): Result<Unit>
 
     fun requestAllPermissions()
+
+    fun requestNotificationPermission()
 }
