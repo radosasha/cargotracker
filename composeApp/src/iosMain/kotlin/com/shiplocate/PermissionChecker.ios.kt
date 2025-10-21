@@ -22,7 +22,10 @@ import kotlin.coroutines.suspendCoroutine
  * iOS реализация проверки разрешений
  */
 actual class PermissionChecker {
-    private val locationManager = CLLocationManager()
+    // Lazy инициализация - создается только при первом обращении
+    private val locationManager: CLLocationManager by lazy {
+        CLLocationManager()
+    }
 
     actual suspend fun hasLocationPermissions(): Boolean {
         return suspendCoroutine { continuation ->

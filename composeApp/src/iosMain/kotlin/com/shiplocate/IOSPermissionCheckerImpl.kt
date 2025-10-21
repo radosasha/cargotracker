@@ -25,12 +25,13 @@ import kotlin.coroutines.suspendCoroutine
  * iOS реализация PermissionChecker
  */
 class IOSPermissionCheckerImpl : PermissionChecker {
-    private val locationManager = CLLocationManager()
-    private val locationDelegate = LocationManagerDelegate()
-
-    init {
-        locationManager.delegate = locationDelegate
+    // Lazy инициализация - создается только при первом обращении
+    private val locationManager: CLLocationManager by lazy {
+        val manager = CLLocationManager()
+        manager.delegate = locationDelegate
+        manager
     }
+    private val locationDelegate = LocationManagerDelegate()
 
     // Делегат для отслеживания изменений статуса разрешений
     private class LocationManagerDelegate : NSObject(), CLLocationManagerDelegateProtocol {

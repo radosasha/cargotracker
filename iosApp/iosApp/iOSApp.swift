@@ -35,19 +35,6 @@ class AppDelegate: NSObject, UIApplicationDelegate, MessagingDelegate, UNUserNot
         // Настройка уведомлений
         UNUserNotificationCenter.current().delegate = self
 
-        // Запрос разрешения на уведомления
-        let authOptions: UNAuthorizationOptions = [.alert, .badge, .sound]
-        UNUserNotificationCenter.current().requestAuthorization(
-            options: authOptions,
-            completionHandler: { granted, error in
-                if granted {
-                    print("iOS: Notification permission granted")
-                } else {
-                    print("iOS: Notification permission denied: \(error?.localizedDescription ?? "Unknown error")")
-                }
-            }
-        )
-
         // Регистрация для удаленных уведомлений
         application.registerForRemoteNotifications()
 

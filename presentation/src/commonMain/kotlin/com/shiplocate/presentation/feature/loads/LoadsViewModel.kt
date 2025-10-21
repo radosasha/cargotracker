@@ -38,9 +38,7 @@ class LoadsViewModel(
     init {
         println("🎯 LoadsViewModel: Initialized")
         fetchLoadsFromCache()
-        // Проверяем и восстанавливаем трекинг при показе экрана
         checkAndRestoreTracking()
-        // Отложенные вызовы - выполняются только при реальном показе экрана
         requestNotificationPermission()
         sendCachedTokenOnStartup()
         loadLoads()
