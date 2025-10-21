@@ -1,60 +1,89 @@
+@file:OptIn(kotlin.experimental.ExperimentalObjCName::class)
+
 package com.shiplocate.di
 
-import com.shiplocate.data.service.platform.IOSFirebaseMessagingDelegate
 import com.shiplocate.data.datasource.FirebaseTokenServiceDataSource
+import kotlin.experimental.ExperimentalObjCName
+import kotlin.native.ObjCName
 import com.shiplocate.domain.usecase.ManageFirebaseTokensUseCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
-import org.koin.core.component.KoinComponent
-import org.koin.core.component.get
-import org.koin.core.component.inject
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 
 /**
  * iOS инициализация Koin DI контейнера
- *
- * Использует флаги состояния для отслеживания инициализации,
- * вместо try-catch блоков (как в серьезных компаниях)
+ * 
+ * Следует принципам Clean Architecture и SOLID:
+ * - Не использует GlobalContext (плохая практика)
+ * - Не использует KoinComponent (нарушает инверсию зависимостей)
+ * - Внедряет зависимости через конструкторы
  */
-object IOSKoinApp : KoinComponent {
-    // Флаги состояния
-    private var hasViewControllerScope = false
-
-    private val manageFirebaseTokensUseCase: ManageFirebaseTokensUseCase by inject()
-
-    // Application-scoped CoroutineScope
-    private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+object IOSKoinApp {
+    private var isInitialized = false
+    private var applicationScope: CoroutineScope? = null
+    
+    // Зависимости внедряются через конструкторы (Clean Architecture)
+    private var manageFirebaseTokensUseCase: ManageFirebaseTokensUseCase? = null
+    private var firebaseTokenServiceDataSource: FirebaseTokenServiceDataSource? = null
 
     /**
      * Инициализация Application-scoped зависимостей
      * Вызывается при запуске приложения
      */
     fun initApplicationScope() {
+        if (isInitialized) {
+            println("IOSKoinApp: Already initialized, skipping")
+            return
+        }
+
         println("IOSKoinApp: Starting Koin initialization...")
-        println("IOSKoinApp: Loading modules: appModule + iosModule")
 
         startKoin {
-            printLogger() // Включаем логирование Koin
-            modules(
-                appModule + iosModule + iosPlatformModule,
-            )
+            printLogger()
+            modules(appModule + iosModule + iosPlatformModule)
         }
+
+        applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+        isInitialized = true
 
         println("IOSKoinApp: Application scope initialized successfully")
     }
 
     /**
-     * Запустить управление Firebase токенами для iOS
+     * Установка зависимостей (Clean Architecture подход)
+     * Вызывается после инициализации Koin
+     */
+    fun setDependencies(
+        manageFirebaseTokensUseCase: ManageFirebaseTokensUseCase,
+        firebaseTokenServiceDataSource: FirebaseTokenServiceDataSource
+    ) {
+        this.manageFirebaseTokensUseCase = manageFirebaseTokensUseCase
+        this.firebaseTokenServiceDataSource = firebaseTokenServiceDataSource
+        println("IOSKoinApp: Dependencies set successfully")
+    }
+
+    /**
+     * Запустить управление Firebase токенами
      */
     fun startFirebaseTokenService() {
+        if (!isInitialized) {
+            println("IOSKoinApp: Not initialized, skipping token service start")
+            return
+        }
+
+        val useCase = manageFirebaseTokensUseCase
+        if (useCase == null) {
+            println("IOSKoinApp: ManageFirebaseTokensUseCase not set, skipping")
+            return
+        }
+
         try {
-            // Используем Application-scoped CoroutineScope
-            applicationScope.launch {
-                manageFirebaseTokensUseCase.startManaging()
+            applicationScope?.launch {
+                useCase.startManaging()
             }
             println("IOSKoinApp: Firebase Token Management started successfully")
         } catch (e: Exception) {
@@ -63,63 +92,86 @@ object IOSKoinApp : KoinComponent {
     }
 
     /**
-     * Инициализация ViewController-scoped зависимостей
-     * Вызывается при создании ViewController
+     * Получение нового Firebase токена от iOS
      */
-    fun initViewControllerScope() {
-        if (hasViewControllerScope) {
-            println("IOSKoinApp: ViewController scope already initialized, skipping")
+    fun onNewTokenReceived(token: String) {
+        if (!isInitialized) {
+            println("IOSKoinApp: Not initialized, caching token for later")
             return
         }
 
-        hasViewControllerScope = true
-        println("IOSKoinApp: ViewController scope initialized successfully")
+        val dataSource = firebaseTokenServiceDataSource
+        if (dataSource == null) {
+            println("IOSKoinApp: FirebaseTokenServiceDataSource not set, skipping")
+            return
+        }
+
+        try {
+            dataSource.onNewTokenReceived(token)
+            println("IOSKoinApp: Token passed to data source successfully")
+        } catch (e: Exception) {
+            println("IOSKoinApp: Failed to pass token: ${e.message}")
+        }
+    }
+
+    /**
+     * Получение текущего Firebase токена от iOS
+     */
+    fun onCurrentTokenReceived(token: String?) {
+        if (!isInitialized) {
+            println("IOSKoinApp: Not initialized, skipping current token")
+            return
+        }
+
+        val dataSource = firebaseTokenServiceDataSource
+        if (dataSource == null) {
+            println("IOSKoinApp: FirebaseTokenServiceDataSource not set, skipping")
+            return
+        }
+
+        try {
+            dataSource.onTokenReceived(token)
+            println("IOSKoinApp: Current token passed to data source successfully")
+        } catch (e: Exception) {
+            println("IOSKoinApp: Failed to pass current token: ${e.message}")
+        }
     }
 
     /**
      * Остановка Koin
-     * Вызывается при завершении приложения
      */
     fun stop() {
-        // Отменяем все корутины при завершении приложения
-        applicationScope.cancel()
+        applicationScope?.cancel()
+        applicationScope = null
+        manageFirebaseTokensUseCase = null
+        firebaseTokenServiceDataSource = null
         stopKoin()
-        hasViewControllerScope = false
+        isInitialized = false
         println("IOSKoinApp: Stopped successfully")
     }
+}
 
-    /**
-     * Проверка, инициализирован ли ViewController scope
-     */
-    fun hasViewControllerScopeInitialized(): Boolean = hasViewControllerScope
+/**
+ * Top-level функции для доступа из Swift
+ * Kotlin objects не всегда корректно экспортируются в Swift,
+ * поэтому используем top-level функции как обертки
+ */
+fun initIOSKoinApp() {
+    IOSKoinApp.initApplicationScope()
+}
 
-    /**
-     * Получение нового Firebase токена от iOS
-     * Вызывается из iOSApp.swift
-     */
-    fun onNewTokenReceived(token: String) {
-        try {
-            // Получаем IOSFirebaseMessagingDelegate и передаем токен
-            val delegate = get<IOSFirebaseMessagingDelegate>()
-            delegate.onNewTokenReceived(token)
-            println("IOSKoinApp: Token passed to delegate successfully")
-        } catch (e: Exception) {
-            println("IOSKoinApp: Failed to pass token to delegate: ${e.message}")
-        }
-    }
-    
-    /**
-     * Получение текущего Firebase токена от iOS
-     * Вызывается из iOSApp.swift при запросе токена
-     */
-    fun onCurrentTokenReceived(token: String?) {
-        try {
-            // Получаем FirebaseTokenServiceDataSource и передаем токен
-            val dataSource = get<FirebaseTokenServiceDataSource>()
-            dataSource.onTokenReceived(token)
-            println("IOSKoinApp: Current token passed to data source successfully")
-        } catch (e: Exception) {
-            println("IOSKoinApp: Failed to pass current token to data source: ${e.message}")
-        }
-    }
+fun initIOSKoinAppDependencies() {
+    IOSKoinAppInitializer().initializeDependencies()
+}
+
+fun startIOSFirebaseTokenService() {
+    IOSKoinApp.startFirebaseTokenService()
+}
+
+fun handleIOSNewToken(token: String) {
+    IOSKoinApp.onNewTokenReceived(token)
+}
+
+fun handleIOSCurrentToken(token: String?) {
+    IOSKoinApp.onCurrentTokenReceived(token)
 }

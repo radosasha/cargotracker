@@ -21,6 +21,7 @@ object AndroidKoinApp {
      */
     fun initApplicationScope(application: android.app.Application) {
         startKoin {
+            printLogger()
             androidContext(application)
             modules(
                 appModule + activityModule + androidPlatformModule,

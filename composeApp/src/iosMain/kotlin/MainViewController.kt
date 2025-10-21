@@ -14,11 +14,6 @@ object MainViewController {
             IOSApplication.init()
             println("MainViewController: IOSApplication initialized successfully")
 
-            // Инициализируем ViewController scope
-            println("MainViewController: Initializing ViewController scope...")
-            IOSKoinApp.initViewControllerScope()
-            println("MainViewController: ViewController scope initialized successfully")
-
             println("MainViewController: Creating ComposeUIViewController...")
             val viewController = ComposeUIViewController { App() }
             println("MainViewController: ComposeUIViewController created successfully")

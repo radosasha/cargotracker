@@ -9,30 +9,32 @@ class AppDelegate: NSObject, UIApplicationDelegate, MessagingDelegate, UNUserNot
     func application(_ application: UIApplication,
                      didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
         FirebaseApp.configure()
-        
+
         // Инициализируем Koin
-        IOSKoinApp.initApplicationScope()
+        IOSKoinAppKt.doInitIOSKoinApp()
         
+        // Инициализируем зависимости (Clean Architecture подход)
+        IOSKoinAppKt.doInitIOSKoinAppDependencies()
+
         // Запускаем Firebase Token Service
-        IOSKoinApp.startFirebaseTokenService()
-        
+        IOSKoinAppKt.startIOSFirebaseTokenService()
+
         // Настройка Firebase Messaging
         Messaging.messaging().delegate = self
-        
+
         // Получаем текущий токен и передаем в KMP модуль
         Messaging.messaging().token { token, error in
             if let error = error {
                 print("iOS: Error fetching FCM registration token: \(error)")
-                IOSKoinApp.onCurrentTokenReceived(token: nil)
             } else if let token = token {
                 print("iOS: FCM registration token: \(token)")
-                IOSKoinApp.onCurrentTokenReceived(token: token)
+                IOSKoinAppKt.handleIOSCurrentToken(token: token)
             }
         }
-        
+
         // Настройка уведомлений
         UNUserNotificationCenter.current().delegate = self
-        
+
         // Запрос разрешения на уведомления
         let authOptions: UNAuthorizationOptions = [.alert, .badge, .sound]
         UNUserNotificationCenter.current().requestAuthorization(
@@ -45,21 +47,21 @@ class AppDelegate: NSObject, UIApplicationDelegate, MessagingDelegate, UNUserNot
                 }
             }
         )
-        
+
         // Регистрация для удаленных уведомлений
         application.registerForRemoteNotifications()
-        
+
         return true
     }
-    
+
     // MARK: - MessagingDelegate
-    
+
     func messaging(_ messaging: Messaging, didReceiveRegistrationToken fcmToken: String?) {
         if let token = fcmToken {
             print("iOS: Firebase registration token: \(token)")
-            
-            // Передаем токен в KMP модуль через IOSFirebaseMessagingDelegate
-            IOSKoinApp.onNewTokenReceived(token: token)
+
+            // Передаем токен в KMP модуль
+            IOSKoinAppKt.handleIOSNewToken(token: token)
         }
     }
     
