@@ -37,7 +37,10 @@ class LoadsViewModel(
 
     init {
         println("🎯 LoadsViewModel: Initialized")
+        fetchLoadsFromCache()
+        // Проверяем и восстанавливаем трекинг при показе экрана
         checkAndRestoreTracking()
+        // Отложенные вызовы - выполняются только при реальном показе экрана
         requestNotificationPermission()
         sendCachedTokenOnStartup()
         loadLoads()
@@ -47,7 +50,7 @@ class LoadsViewModel(
      * Проверяет, был ли запущен трекинг при предыдущем запуске
      * Если в DataStore сохранено true, автоматически запускает трекинг
      */
-    private fun checkAndRestoreTracking() {
+    fun checkAndRestoreTracking() {
         viewModelScope.launch {
             try {
                 println("LoadsViewModel: Checking if tracking was active before...")
@@ -141,7 +144,7 @@ class LoadsViewModel(
     /**
      * Load loads from cache only (called when returning from HomeScreen)
      */
-    fun loadFromCache() {
+    fun fetchLoadsFromCache() {
         println("💾 LoadsViewModel: Loading from cache")
 
         viewModelScope.launch {

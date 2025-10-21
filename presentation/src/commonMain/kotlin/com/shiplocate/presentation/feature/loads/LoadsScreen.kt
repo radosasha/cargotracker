@@ -50,12 +50,6 @@ fun LoadsScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
 
-    // Reload from cache when returning from HomeScreen
-    LaunchedEffect(Unit) {
-        println("🔄 LoadsScreen: Screen resumed, loading from cache")
-        viewModel.loadFromCache()
-    }
-
     Scaffold(
         topBar = {
             TopAppBar(
