@@ -40,7 +40,9 @@ class TrackerApplication : Application(), KoinComponent {
             manageFirebaseTokensUseCase.startManaging()
         }
 
-        enableStrictMode()
+        if (BuildConfig.DEBUG) {
+            enableStrictMode()
+        }
 
         println("TrackerApplication: Application initialized with Firebase Token Management")
     }

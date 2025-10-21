@@ -40,6 +40,12 @@ ktlint {
     )
 }
 
+android {
+    buildFeatures {
+        buildConfig = true
+    }
+}
+
 kotlin {
     sourceSets {
         androidMain.dependencies {
