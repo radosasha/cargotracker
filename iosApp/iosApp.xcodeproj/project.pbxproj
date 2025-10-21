@@ -272,6 +272,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				CODE_SIGN_ENTITLEMENTS = iosApp/iosApp.entitlements;
 				PRODUCT_BUNDLE_IDENTIFIER = com.shiplocate;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -370,6 +371,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				CODE_SIGN_ENTITLEMENTS = iosApp/iosApp.entitlements;
 				PRODUCT_BUNDLE_IDENTIFIER = com.shiplocate;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;

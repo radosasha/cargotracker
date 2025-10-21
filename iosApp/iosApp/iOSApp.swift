@@ -22,20 +22,10 @@ class AppDelegate: NSObject, UIApplicationDelegate, MessagingDelegate, UNUserNot
         // Настройка Firebase Messaging
         Messaging.messaging().delegate = self
 
-        // Получаем текущий токен и передаем в KMP модуль
-        Messaging.messaging().token { token, error in
-            if let error = error {
-                print("iOS: Error fetching FCM registration token: \(error)")
-            } else if let token = token {
-                print("iOS: FCM registration token: \(token)")
-                IOSKoinAppKt.handleIOSCurrentToken(token: token)
-            }
-        }
-
         // Настройка уведомлений
         UNUserNotificationCenter.current().delegate = self
 
-        // Регистрация для удаленных уведомлений
+        // Регистрация для удаленных уведомлений (ВАЖНО: сначала APNS, потом FCM)
         application.registerForRemoteNotifications()
 
         return true
@@ -81,6 +71,16 @@ class AppDelegate: NSObject, UIApplicationDelegate, MessagingDelegate, UNUserNot
     func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
         print("iOS: Successfully registered for remote notifications")
         Messaging.messaging().apnsToken = deviceToken
+        
+        // Теперь, когда APNS токен установлен, получаем FCM токен
+        Messaging.messaging().token { token, error in
+            if let error = error {
+                print("iOS: Error fetching FCM registration token: \(error)")
+            } else if let token = token {
+                print("iOS: FCM registration token: \(token)")
+                IOSKoinAppKt.handleIOSCurrentToken(token: token)
+            }
+        }
     }
     
     func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
