@@ -1,18 +1,21 @@
 package com.shiplocate.data.service.platform
 
 import android.Manifest
-import com.google.firebase.messaging.FirebaseMessagingService
-import com.google.firebase.messaging.RemoteMessage
-import com.shiplocate.data.datasource.FirebaseTokenServiceDataSource
-import org.koin.core.component.KoinComponent
-import org.koin.core.component.inject
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.pm.PackageManager
-import android.os.Build
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import com.google.firebase.messaging.FirebaseMessagingService
+import com.google.firebase.messaging.RemoteMessage
+import com.shiplocate.data.datasource.FirebaseTokenServiceDataSource
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 import kotlin.random.Random
 
 /**
@@ -22,12 +25,16 @@ import kotlin.random.Random
 class AndroidFirebaseMessagingService : FirebaseMessagingService(), KoinComponent {
     private val firebaseTokenServiceDataSource: FirebaseTokenServiceDataSource by inject()
 
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
     override fun onNewToken(token: String) {
         super.onNewToken(token)
         println("Android: New Firebase token received: $token")
 
-        // Передаем токен в DataSource (Data Layer)
-        firebaseTokenServiceDataSource.onNewTokenReceived(token)
+        scope.launch {
+            // Передаем токен в DataSource (Data Layer)
+            firebaseTokenServiceDataSource.onNewTokenReceived(token)
+        }
     }
 
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
@@ -74,7 +81,11 @@ class AndroidFirebaseMessagingService : FirebaseMessagingService(), KoinComponen
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)
 
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+        if (ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
             // игнорируем если нет пермишенов на показ увеомлений
             return
         }

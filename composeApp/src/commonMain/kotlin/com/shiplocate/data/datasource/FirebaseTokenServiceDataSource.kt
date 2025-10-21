@@ -21,7 +21,7 @@ expect class FirebaseTokenServiceDataSource {
     /**
      * Обработка нового токена (вызывается системой)
      */
-    fun onNewTokenReceived(token: String)
+    suspend fun onNewTokenReceived(token: String)
     
     /**
      * Обработка пуш-уведомления (вызывается системой)

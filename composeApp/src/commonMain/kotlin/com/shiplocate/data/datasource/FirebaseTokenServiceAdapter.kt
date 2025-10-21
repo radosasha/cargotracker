@@ -18,7 +18,7 @@ class FirebaseTokenServiceAdapter(
         return firebaseTokenServiceDataSource.getNewTokenFlow()
     }
     
-    override fun onNewTokenReceived(token: String) {
+    override suspend fun onNewTokenReceived(token: String) {
         firebaseTokenServiceDataSource.onNewTokenReceived(token)
     }
     

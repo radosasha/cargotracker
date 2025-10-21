@@ -1,8 +1,22 @@
 package com.shiplocate.presentation.feature.home
 
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -14,8 +28,15 @@ import com.shiplocate.presentation.component.MessageCard
  */
 @Suppress("FunctionName")
 @Composable
-fun HomeScreen(viewModel: HomeViewModel) {
+fun HomeScreen(
+    loadId: String,
+    viewModel: HomeViewModel,
+) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    LaunchedEffect(loadId) {
+        viewModel.initialize(loadId)
+    }
 
     Column(
         modifier =
@@ -25,14 +46,14 @@ fun HomeScreen(viewModel: HomeViewModel) {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-      /*  // Заголовок
-        Text(
-            text = "GPS Tracker",
-            style = MaterialTheme.typography.headlineLarge,
-            fontWeight = FontWeight.Bold
-        )
+        /*  // Заголовок
+          Text(
+              text = "GPS Tracker",
+              style = MaterialTheme.typography.headlineLarge,
+              fontWeight = FontWeight.Bold
+          )
 
-        Spacer(modifier = Modifier.height(8.dp))*/
+          Spacer(modifier = Modifier.height(8.dp))*/
 
         // Load ID
         uiState.loadId?.let { loadId ->
@@ -118,16 +139,16 @@ fun HomeScreen(viewModel: HomeViewModel) {
 
         Spacer(modifier = Modifier.height(16.dp))
 
-/*        // Кнопка тестирования сервера
-        OutlinedButton(
-            onClick = { viewModel.onTestServer() },
-            enabled = !uiState.isLoading,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Test Server Connection")
-        }
+        /*        // Кнопка тестирования сервера
+                OutlinedButton(
+                    onClick = { viewModel.onTestServer() },
+                    enabled = !uiState.isLoading,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Test Server Connection")
+                }
 
-        Spacer(modifier = Modifier.height(16.dp))*/
+                Spacer(modifier = Modifier.height(16.dp))*/
 
         // Сообщения
         uiState.message?.let { message ->

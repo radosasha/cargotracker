@@ -10,9 +10,9 @@ import kotlinx.coroutines.tasks.await
  * Android реализация FirebaseTokenServiceDataSource
  */
 actual class FirebaseTokenServiceDataSource {
-    
+
     private val _newTokenFlow = MutableSharedFlow<String>()
-    
+
     actual suspend fun getCurrentToken(): String? {
         return try {
             println("Android: Getting current Firebase token...")
@@ -26,12 +26,12 @@ actual class FirebaseTokenServiceDataSource {
     }
     
     actual fun getNewTokenFlow(): Flow<String> {
-        return _newTokenFlow.asSharedFlow()
+        return _newTokenFlow
     }
-    
-    actual fun onNewTokenReceived(token: String) {
+
+    actual suspend fun onNewTokenReceived(token: String) {
         println("Android: New Firebase token received: ${token.take(20)}...")
-        _newTokenFlow.tryEmit(token)
+        _newTokenFlow.emit(token)
     }
     
     actual fun onPushNotificationReceived(userInfo: Map<String, Any>) {

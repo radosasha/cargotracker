@@ -3,11 +3,10 @@
 package com.shiplocate.di
 
 import com.shiplocate.data.datasource.FirebaseTokenServiceDataSource
-import kotlin.experimental.ExperimentalObjCName
-import kotlin.native.ObjCName
 import com.shiplocate.domain.usecase.ManageFirebaseTokensUseCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
@@ -16,7 +15,7 @@ import org.koin.core.context.stopKoin
 
 /**
  * iOS инициализация Koin DI контейнера
- * 
+ *
  * Следует принципам Clean Architecture и SOLID:
  * - Не использует GlobalContext (плохая практика)
  * - Не использует KoinComponent (нарушает инверсию зависимостей)
@@ -25,10 +24,11 @@ import org.koin.core.context.stopKoin
 object IOSKoinApp {
     private var isInitialized = false
     private var applicationScope: CoroutineScope? = null
-    
+
     // Зависимости внедряются через конструкторы (Clean Architecture)
     private var manageFirebaseTokensUseCase: ManageFirebaseTokensUseCase? = null
     private var firebaseTokenServiceDataSource: FirebaseTokenServiceDataSource? = null
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     /**
      * Инициализация Application-scoped зависимостей
@@ -59,7 +59,7 @@ object IOSKoinApp {
      */
     fun setDependencies(
         manageFirebaseTokensUseCase: ManageFirebaseTokensUseCase,
-        firebaseTokenServiceDataSource: FirebaseTokenServiceDataSource
+        firebaseTokenServiceDataSource: FirebaseTokenServiceDataSource,
     ) {
         this.manageFirebaseTokensUseCase = manageFirebaseTokensUseCase
         this.firebaseTokenServiceDataSource = firebaseTokenServiceDataSource
@@ -69,6 +69,7 @@ object IOSKoinApp {
     /**
      * Запустить управление Firebase токенами
      */
+
     fun startFirebaseTokenService() {
         if (!isInitialized) {
             println("IOSKoinApp: Not initialized, skipping token service start")
@@ -107,7 +108,9 @@ object IOSKoinApp {
         }
 
         try {
-            dataSource.onNewTokenReceived(token)
+            scope.launch {
+                dataSource.onNewTokenReceived(token)
+            }
             println("IOSKoinApp: Token passed to data source successfully")
         } catch (e: Exception) {
             println("IOSKoinApp: Failed to pass token: ${e.message}")

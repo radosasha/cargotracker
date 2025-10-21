@@ -1,6 +1,5 @@
 package com.shiplocate.presentation.feature.home
 
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.shiplocate.domain.usecase.GetPermissionStatusUseCase
@@ -24,7 +23,6 @@ import kotlinx.coroutines.withContext
  * ViewModel для главного экрана
  */
 class HomeViewModel(
-    private val savedStateHandle: SavedStateHandle,
     private val getPermissionStatusUseCase: GetPermissionStatusUseCase,
     private val getTrackingStatusUseCase: GetTrackingStatusUseCase,
     private val requestAllPermissionsUseCase: RequestAllPermissionsUseCase,
@@ -34,18 +32,21 @@ class HomeViewModel(
     private val connectToLoadUseCase: ConnectToLoadUseCase,
     private val disconnectFromLoadUseCase: DisconnectFromLoadUseCase,
 ) : ViewModel() {
-    private val loadId: String = savedStateHandle.get<String>("loadId") ?: throw IllegalStateException("Load id is null")
 
+    private lateinit var loadId: String
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
     init {
-        println("🏠 HomeViewModel: Initialized with loadId = $loadId")
-
-        // Set loadId in uiState
-        _uiState.value = _uiState.value.copy(loadId = loadId)
-
         observePermissionsAndTrackingStatus()
+    }
+
+    fun initialize(id: String) {
+        println("🏠 HomeViewModel: Initialized with loadId = $id")
+
+        loadId = id
+        // Set loadId in uiState
+        _uiState.value = _uiState.value.copy(loadId = id)
     }
 
     private fun observePermissionsAndTrackingStatus() {

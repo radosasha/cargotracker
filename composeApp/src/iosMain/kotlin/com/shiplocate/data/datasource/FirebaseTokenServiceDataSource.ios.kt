@@ -2,7 +2,6 @@ package com.shiplocate.data.datasource
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 
@@ -33,12 +32,12 @@ actual class FirebaseTokenServiceDataSource {
     }
     
     actual fun getNewTokenFlow(): Flow<String> {
-        return _newTokenFlow.asSharedFlow()
+        return _newTokenFlow
     }
-    
-    actual fun onNewTokenReceived(token: String) {
+
+    actual suspend fun onNewTokenReceived(token: String) {
         println("iOS: New Firebase token received: ${token.take(20)}...")
-        _newTokenFlow.tryEmit(token)
+        _newTokenFlow.emit(token)
     }
     
     actual fun onPushNotificationReceived(userInfo: Map<String, Any>) {

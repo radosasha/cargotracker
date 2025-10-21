@@ -67,24 +67,28 @@ class NotificationRepositoryImpl(
         println("Repository: Starting Firebase token updates")
 
         // Слушаем новые токены из ServiceDataSource и обрабатываем их
-        firebaseTokenService.getNewTokenFlow()
-            .onEach { token ->
-                if (token.isNotEmpty()) {
-                    println("Repository: New Firebase token received: ${token.take(20)}...")
+        val flow = firebaseTokenService.getNewTokenFlow()
+        println("Repository: Flow created: $flow")
+        
+        flow.onEach { token ->
+            println("Repository: Flow received token: ${token.take(20)}...")
+            if (token.isNotEmpty()) {
+                println("Repository: New Firebase token received: ${token.take(20)}...")
 
-                    // Сохраняем токен в локальном кеше
-                    println("Repository: Save Firebase token locally: ${token.take(20)}...")
-                    val cachedToken = firebaseTokenLocalDataSource.getCachedToken()
-                    if (cachedToken != token) {
-                        firebaseTokenLocalDataSource.markTokenAsSent()
-                        firebaseTokenLocalDataSource.saveToken(token)
-                    }
-
-                    // Логика отправки на сервер будет в Use Case
-                    println("Repository: Token saved to local cache")
+                // Сохраняем токен в локальном кеше
+                println("Repository: Save Firebase token locally: ${token.take(20)}...")
+                val cachedToken = firebaseTokenLocalDataSource.getCachedToken()
+                if (cachedToken != token) {
+                    firebaseTokenLocalDataSource.saveToken(token)
                 }
+
+                // Логика отправки на сервер будет в Use Case
+                println("Repository: Token saved to local cache")
             }
-            .launchIn(coroutineScope)
+        }
+        .launchIn(coroutineScope)
+        
+        println("Repository: Flow subscription launched")
     }
 
     override fun observeTokenUpdates(): Flow<String> {
