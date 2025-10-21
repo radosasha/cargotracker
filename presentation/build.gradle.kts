@@ -33,15 +33,15 @@ kotlin {
             // Koin
             implementation(libs.koin.core)
 
+            // ViewModel lifecycle
+            api(libs.lifecycle.viewmodel)
+            api(libs.androidx.lifecycle.viewmodelCompose)
+
             // Coroutines
             implementation(libs.kotlinx.coroutines.core)
 
             // DateTime
             implementation(libs.kotlinx.datetime)
-        }
-
-        androidMain.dependencies {
-            implementation(libs.koin.compose)
         }
 
         commonTest.dependencies {

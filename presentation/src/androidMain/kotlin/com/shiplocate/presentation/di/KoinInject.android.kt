@@ -1,12 +1,19 @@
 package com.shiplocate.presentation.di
 
 import androidx.compose.runtime.Composable
-import org.koin.compose.koinInject as koinInjectAndroid
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.get as koinGet
 
 /**
  * Android реализация инъекции зависимостей через Koin
  */
 @Composable
 actual inline fun <reified T> koinInject(): T {
-    return koinInjectAndroid()
+    return KoinHelper.get()
+}
+
+object KoinHelper : KoinComponent {
+    inline fun <reified T> get(): T {
+        return koinGet()
+    }
 }

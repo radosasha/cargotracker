@@ -56,6 +56,7 @@ configure<KotlinMultiplatformExtension> {
             // Можно переопределить в конкретном модуле через:
             // kotlin.targets.withType<KotlinNativeTarget> { binaries.framework { baseName = "..." } }
             baseName = "ComposeApp"
+            export("org.jetbrains.androidx.lifecycle:lifecycle-viewmodel:2.9.4")
             isStatic = true
         }
     }

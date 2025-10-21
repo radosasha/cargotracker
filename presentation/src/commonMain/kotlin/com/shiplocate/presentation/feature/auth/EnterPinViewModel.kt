@@ -112,7 +112,6 @@ class EnterPinViewModel(
 
                     // Отправляем кешированный Firebase токен на сервер
                     sendCachedTokenOnAuthUseCase()
-                    println("🔑 EnterPinViewModel: 📱 Cached Firebase token sent to server")
 
                     _uiState.update {
                         it.copy(

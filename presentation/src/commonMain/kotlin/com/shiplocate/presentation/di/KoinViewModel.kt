@@ -9,14 +9,10 @@ import com.shiplocate.presentation.feature.loads.LoadsViewModel
 /**
  * Expect/Actual для инъекции ViewModels через Koin
  */
-@Composable
 expect fun koinHomeViewModel(): HomeViewModel
 
-@Composable
 expect fun koinEnterPhoneViewModel(): EnterPhoneViewModel
 
-@Composable
 expect fun koinEnterPinViewModel(): EnterPinViewModel
 
-@Composable
 expect fun koinLoadsViewModel(): LoadsViewModel

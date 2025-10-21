@@ -54,7 +54,6 @@ kotlin {
 
             // Koin Android
             implementation(libs.koin.android)
-            implementation(libs.koin.compose)
 
             // Coroutines Android
             implementation(libs.kotlinx.coroutines.android)
@@ -82,6 +81,10 @@ kotlin {
 
             // Koin Core
             implementation(libs.koin.core)
+
+            // ViewModel lifecycle
+            api(libs.lifecycle.viewmodel)
+            api(libs.androidx.lifecycle.viewmodelCompose)
 
             // DateTime
             implementation(libs.kotlinx.datetime)

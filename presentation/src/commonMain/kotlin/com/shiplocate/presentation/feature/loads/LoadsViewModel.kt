@@ -203,7 +203,6 @@ class LoadsViewModel(
             try {
                 println("🚀 LoadsViewModel: Attempting to send cached Firebase token on startup...")
                 sendCachedTokenOnAuthUseCase()
-                println("✅ LoadsViewModel: Cached token send attempt completed")
             } catch (e: Exception) {
                 println("❌ LoadsViewModel: Failed to send cached token on startup: ${e.message}")
             }

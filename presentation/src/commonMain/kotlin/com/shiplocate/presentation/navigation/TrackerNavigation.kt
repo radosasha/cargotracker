@@ -7,6 +7,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -19,9 +22,13 @@ import com.shiplocate.presentation.di.koinHomeViewModel
 import com.shiplocate.presentation.di.koinInject
 import com.shiplocate.presentation.di.koinLoadsViewModel
 import com.shiplocate.presentation.feature.auth.EnterPhoneScreen
+import com.shiplocate.presentation.feature.auth.EnterPhoneViewModel
 import com.shiplocate.presentation.feature.auth.EnterPinScreen
+import com.shiplocate.presentation.feature.auth.EnterPinViewModel
 import com.shiplocate.presentation.feature.home.HomeScreen
+import com.shiplocate.presentation.feature.home.HomeViewModel
 import com.shiplocate.presentation.feature.loads.LoadsScreen
+import com.shiplocate.presentation.feature.loads.LoadsViewModel
 import kotlinx.coroutines.launch
 
 /**
@@ -60,7 +67,14 @@ fun TrackerNavigation() {
     ) {
         // Auth screens
         composable(Screen.ENTER_PHONE) {
-            val viewModel = koinEnterPhoneViewModel()
+            val enterPhoneViewModelFactory = viewModelFactory {
+                initializer<EnterPhoneViewModel> {
+                    koinEnterPhoneViewModel()
+                }
+            }
+            val viewModel: EnterPhoneViewModel = viewModel(
+                factory = enterPhoneViewModelFactory,
+            )
             EnterPhoneScreen(
                 onNavigateToPin = { phone ->
                     navController.navigate(Screen.enterPin(phone))
@@ -77,7 +91,14 @@ fun TrackerNavigation() {
                 ),
         ) { backStackEntry ->
             val phone = backStackEntry.getStringArgument("phone") ?: ""
-            val viewModel = koinEnterPinViewModel()
+            val enterPinViewModelFactory = viewModelFactory {
+                initializer<EnterPinViewModel> {
+                    koinEnterPinViewModel()
+                }
+            }
+            val viewModel: EnterPinViewModel = viewModel(
+                factory = enterPinViewModelFactory,
+            )
 
             EnterPinScreen(
                 phone = phone,
@@ -96,7 +117,14 @@ fun TrackerNavigation() {
 
         // Main app screens
         composable(Screen.LOADS) {
-            val viewModel = koinLoadsViewModel()
+            val loadsViewModelFactory = viewModelFactory {
+                initializer<LoadsViewModel> {
+                    koinLoadsViewModel()
+                }
+            }
+            val viewModel: LoadsViewModel = viewModel(
+                factory = loadsViewModelFactory,
+            )
             LoadsScreen(
                 viewModel = viewModel,
                 onLoadClick = { loadId ->
@@ -112,7 +140,14 @@ fun TrackerNavigation() {
                     navArgument("loadId") { type = NavType.StringType },
                 ),
         ) {
-            val viewModel = koinHomeViewModel()
+            val homeViewModelFactory = viewModelFactory {
+                initializer<HomeViewModel> {
+                    koinHomeViewModel()
+                }
+            }
+            val viewModel: HomeViewModel = viewModel(
+                factory = homeViewModelFactory,
+            )
             HomeScreen(viewModel = viewModel)
         }
     }
