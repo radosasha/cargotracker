@@ -16,4 +16,22 @@ interface DeviceDataSource {
      * @return Boolean - true если устройство заряжается
      */
     suspend fun isCharging(): Boolean
+
+    /**
+     * Получает информацию о платформе устройства
+     * @return String - название платформы (Android/iOS)
+     */
+    suspend fun getPlatform(): String
+
+    /**
+     * Получает версию операционной системы
+     * @return String - версия ОС
+     */
+    suspend fun getOsVersion(): String
+
+    /**
+     * Получает модель устройства
+     * @return String - модель устройства
+     */
+    suspend fun getDeviceModel(): String
 }

@@ -16,4 +16,23 @@ class DeviceRepositoryImpl(
     override suspend fun isCharging(): Boolean {
         return deviceDataSource.isCharging()
     }
+
+    override suspend fun getPlatform(): String {
+        return deviceDataSource.getPlatform()
+    }
+
+    override suspend fun getOsVersion(): String {
+        return deviceDataSource.getOsVersion()
+    }
+
+    override suspend fun getDeviceModel(): String {
+        return deviceDataSource.getDeviceModel()
+    }
+
+    override suspend fun getDeviceInfo(): String {
+        val platform = getPlatform()
+        val osVersion = getOsVersion()
+        val deviceModel = getDeviceModel()
+        return "$platform/$osVersion/$deviceModel"
+    }
 }

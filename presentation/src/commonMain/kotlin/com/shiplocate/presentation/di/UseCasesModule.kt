@@ -1,5 +1,6 @@
 package com.shiplocate.presentation.di
 
+import com.shiplocate.domain.usecase.GetDeviceInfoUseCase
 import com.shiplocate.domain.usecase.GetPermissionStatusUseCase
 import com.shiplocate.domain.usecase.GetTrackingStatusUseCase
 import com.shiplocate.domain.usecase.HandleFirebaseTokenUseCase
@@ -71,4 +72,7 @@ val useCasesModule =
         factoryOf(::HandleFirebaseTokenUseCase)
         factoryOf(::ManageFirebaseTokensUseCase)
         factoryOf(::SendCachedTokenOnAuthUseCase)
+
+        // Device Use Cases
+        factoryOf(::GetDeviceInfoUseCase)
     }

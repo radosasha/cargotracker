@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.shiplocate.domain.model.auth.AuthError
 import com.shiplocate.domain.model.auth.AuthSession
+import com.shiplocate.domain.usecase.GetDeviceInfoUseCase
 import com.shiplocate.domain.usecase.SendCachedTokenOnAuthUseCase
 import com.shiplocate.domain.usecase.auth.SaveAuthSessionUseCase
 import com.shiplocate.domain.usecase.auth.VerifySmsCodeUseCase
@@ -20,6 +21,7 @@ class EnterPinViewModel(
     private val verifySmsCodeUseCase: VerifySmsCodeUseCase,
     private val saveAuthSessionUseCase: SaveAuthSessionUseCase,
     private val sendCachedTokenOnAuthUseCase: SendCachedTokenOnAuthUseCase,
+    private val getDeviceInfoUseCase: GetDeviceInfoUseCase,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(EnterPinUiState())
     val uiState: StateFlow<EnterPinUiState> = _uiState.asStateFlow()
@@ -91,10 +93,11 @@ class EnterPinViewModel(
         }
 
         viewModelScope.launch {
+            val deviceInfo = getDeviceInfo()
             verifySmsCodeUseCase(
                 phone = state.phone,
                 code = pin,
-                deviceInfo = getDeviceInfo(),
+                deviceInfo = deviceInfo,
             )
                 .onSuccess { authToken ->
                     println("🔑 EnterPinViewModel: ✅ Verification successful!")
@@ -232,9 +235,8 @@ class EnterPinViewModel(
         }
     }
 
-    private fun getDeviceInfo(): String {
-        // TODO: Get actual device info from platform
-        return "Android/14/Unknown"
+    private suspend fun getDeviceInfo(): String {
+        return getDeviceInfoUseCase()
     }
 
     fun onNavigatedToHome() {
