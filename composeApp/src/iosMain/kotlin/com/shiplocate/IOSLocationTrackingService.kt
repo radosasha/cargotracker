@@ -4,9 +4,11 @@ import com.shiplocate.domain.usecase.StartProcessLocationsUseCase
 import com.shiplocate.domain.usecase.StopProcessLocationsUseCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.runBlocking
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -26,6 +28,8 @@ class IOSLocationTrackingService private constructor() : KoinComponent {
 
     // Coroutine scope for background operations
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+
+    private var collectingJob: Job? = null
 
     companion object {
         private const val TAG = "IOSLocationTrackingService"
@@ -48,14 +52,6 @@ class IOSLocationTrackingService private constructor() : KoinComponent {
          */
         fun isInitialized(): Boolean = instance != null
 
-        /**
-         * Принудительно создает новый экземпляр (для тестов)
-         */
-        fun createNewInstance(): IOSLocationTrackingService {
-            instance?.destroy()
-            instance = IOSLocationTrackingService()
-            return instance!!
-        }
 
         /**
          * Запускает GPS трекинг через singleton
@@ -77,20 +73,6 @@ class IOSLocationTrackingService private constructor() : KoinComponent {
         fun isTrackingActive(): Boolean {
             return getInstance().isLocationTrackingActive()
         }
-
-        /**
-         * Получает статус сервиса через singleton
-         */
-        fun getStatus(): String {
-            return getInstance().getServiceStatus()
-        }
-
-        /**
-         * Уничтожает singleton (для завершения приложения)
-         */
-        fun destroyInstance() {
-            instance?.destroy()
-        }
     }
 
     /**
@@ -106,8 +88,18 @@ class IOSLocationTrackingService private constructor() : KoinComponent {
         try {
             println("$TAG: Starting GPS tracking through StartProcessLocationsUseCase")
 
-            // Запускаем обработку GPS координат через StartProcessLocationsUseCase
-            startProcessLocationsUseCase()
+            // Запускаем обработку GPS координат и подписываемся на Flow результатов
+            collectingJob = startProcessLocationsUseCase()
+                .onEach { result ->
+                    // Логируем результат обработки
+                    if (result.shouldSend) {
+                        println("$TAG: ✅ Location processed successfully: ${result.reason}")
+                    } else {
+                        println("$TAG: ⏭️ Location filtered: ${result.reason}")
+                    }
+                }
+                .launchIn(serviceScope)
+
             isTracking = true
 
             // Сохраняем состояние для восстановления
@@ -126,33 +118,34 @@ class IOSLocationTrackingService private constructor() : KoinComponent {
      * Останавливает GPS трекинг
      * Аналог stopLocationTracking в Android Service
      */
-    fun stopLocationTracking() {
+    suspend fun stopLocationTracking() {
         if (!isTracking) {
             println("$TAG: Not tracking, ignoring stop request")
             return
         }
 
-        serviceScope.launch {
-            try {
-                println("$TAG: Stopping GPS tracking through StopProcessLocationsUseCase")
+        try {
+            println("$TAG: Stopping GPS tracking through StopProcessLocationsUseCase")
 
-                // Останавливаем обработку GPS координат
-                val result = stopProcessLocationsUseCase()
-                if (result.isSuccess) {
-                    isTracking = false
-                    println("$TAG: ✅ GPS tracking stopped successfully")
-                } else {
-                    println("$TAG: ❌ Failed to stop GPS tracking: ${result.exceptionOrNull()?.message}")
-                    // Принудительно сбрасываем состояние даже при ошибке
-                    isTracking = false
-                }
-            } catch (e: Exception) {
-                println("$TAG: ❌ Error stopping GPS tracking: ${e.message}")
-                e.printStackTrace()
-                // Принудительно сбрасываем состояние при исключении
+            // Останавливаем обработку GPS координат
+            val result = stopProcessLocationsUseCase()
+            if (result.isSuccess) {
+                isTracking = false
+                println("$TAG: ✅ GPS tracking stopped successfully")
+            } else {
+                println("$TAG: ❌ Failed to stop GPS tracking: ${result.exceptionOrNull()?.message}")
+                // Принудительно сбрасываем состояние даже при ошибке
                 isTracking = false
             }
+        } catch (e: Exception) {
+            println("$TAG: ❌ Error stopping GPS tracking: ${e.message}")
+            e.printStackTrace()
+            // Принудительно сбрасываем состояние при исключении
+            isTracking = false
         }
+
+        collectingJob?.cancel()
+        collectingJob = null
     }
 
     /**
@@ -220,13 +213,5 @@ class IOSLocationTrackingService private constructor() : KoinComponent {
      */
     fun getServiceStatus(): String {
         return "IOSLocationTrackingService(status=${if (isTracking) "TRACKING" else "STOPPED"})"
-    }
-
-    /**
-     * Восстанавливает состояние трекинга после перезапуска приложения
-     */
-    fun restoreTrackingState() {
-        // TODO: Добавить восстановление состояния из UserDefaults
-        println("$TAG: TODO: Implement state restoration")
     }
 }
