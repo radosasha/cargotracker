@@ -1,5 +1,7 @@
 package com.shiplocate.data.repository
 
+import com.shiplocate.core.logging.LogCategory
+import com.shiplocate.core.logging.Logger
 import com.shiplocate.data.datasource.FirebaseTokenRemoteDataSource
 import com.shiplocate.data.datasource.FirebaseTokenService
 import com.shiplocate.domain.datasource.FirebaseTokenLocalDataSource
@@ -17,18 +19,19 @@ class NotificationRepositoryImpl(
     private val firebaseTokenLocalDataSource: FirebaseTokenLocalDataSource,
     private val firebaseTokenService: FirebaseTokenService,
     private val firebaseTokenRemoteDataSource: FirebaseTokenRemoteDataSource,
+    private val logger: Logger,
 ) : NotificationRepository {
     private val coroutineScope = MainScope()
 
     override suspend fun sendTokenToServer(token: String) {
-        println("Repository: Sending token to server")
+        logger.info(LogCategory.NETWORK, "Repository: Sending token to server")
         
         // Проверяем, есть ли уже такой же токен в кеше и был ли он отправлен
         val cachedToken = firebaseTokenLocalDataSource.getCachedToken()
         val isTokenSent = firebaseTokenLocalDataSource.isTokenSent()
         
         if (cachedToken == token && isTokenSent) {
-            println("Repository: Token already sent to server, skipping")
+            logger.info(LogCategory.NETWORK, "Repository: Token already sent to server, skipping")
             return
         }
 
@@ -44,18 +47,18 @@ class NotificationRepositoryImpl(
     }
 
     override suspend fun sendCachedTokenOnAuth() {
-        println("Repository: Sending cached token on auth")
+        logger.info(LogCategory.NETWORK, "Repository: Sending cached token on auth")
 
         val cachedToken = firebaseTokenLocalDataSource.getCachedToken()
         val isSent = firebaseTokenLocalDataSource.isTokenSent()
         
         if (cachedToken != null && !isSent) {
-            println("Repository: Found unsent cached firebase token, sending to server")
+            logger.info(LogCategory.NETWORK, "Repository: Found unsent cached firebase token, sending to server")
             sendTokenToServer(cachedToken)
         } else if (cachedToken != null && isSent) {
-            println("Repository: Cached firebase token already sent to server")
+            logger.info(LogCategory.NETWORK, "Repository: Cached firebase token already sent to server")
         } else {
-            println("Repository: No cached firebase token found for auth")
+            logger.info(LogCategory.NETWORK, "Repository: No cached firebase token found for auth")
         }
     }
 
@@ -64,31 +67,31 @@ class NotificationRepositoryImpl(
     }
 
     override suspend fun startTokenUpdates() {
-        println("Repository: Starting Firebase token updates")
+        logger.info(LogCategory.NETWORK, "Repository: Starting Firebase token updates")
 
         // Слушаем новые токены из ServiceDataSource и обрабатываем их
         val flow = firebaseTokenService.getNewTokenFlow()
-        println("Repository: Flow created: $flow")
+        logger.debug(LogCategory.NETWORK, "Repository: Flow created: $flow")
         
         flow.onEach { token ->
-            println("Repository: Flow received token: ${token.take(20)}...")
+            logger.debug(LogCategory.NETWORK, "Repository: Flow received token: ${token.take(20)}...")
             if (token.isNotEmpty()) {
-                println("Repository: New Firebase token received: ${token.take(20)}...")
+                logger.info(LogCategory.NETWORK, "Repository: New Firebase token received: ${token.take(20)}...")
 
                 // Сохраняем токен в локальном кеше
-                println("Repository: Save Firebase token locally: ${token.take(20)}...")
+                logger.debug(LogCategory.NETWORK, "Repository: Save Firebase token locally: ${token.take(20)}...")
                 val cachedToken = firebaseTokenLocalDataSource.getCachedToken()
                 if (cachedToken != token) {
                     firebaseTokenLocalDataSource.saveToken(token)
                 }
 
                 // Логика отправки на сервер будет в Use Case
-                println("Repository: Token saved to local cache")
+                logger.debug(LogCategory.NETWORK, "Repository: Token saved to local cache")
             }
         }
         .launchIn(coroutineScope)
         
-        println("Repository: Flow subscription launched")
+        logger.info(LogCategory.NETWORK, "Repository: Flow subscription launched")
     }
 
     override fun observeTokenUpdates(): Flow<String> {

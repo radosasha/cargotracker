@@ -2,6 +2,8 @@ package com.shiplocate.presentation.feature.loads
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.shiplocate.core.logging.LogCategory
+import com.shiplocate.core.logging.Logger
 import com.shiplocate.domain.model.load.Load
 import com.shiplocate.domain.usecase.GetTrackingStatusUseCase
 import com.shiplocate.domain.usecase.RequestNotificationPermissionUseCase
@@ -28,6 +30,7 @@ class LoadsViewModel(
     private val startTrackingUseCase: StartTrackingUseCase,
     private val requestNotificationPermissionUseCase: RequestNotificationPermissionUseCase,
     private val sendCachedTokenOnAuthUseCase: SendCachedTokenOnAuthUseCase,
+    private val logger: Logger,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow<LoadsUiState>(LoadsUiState.Loading)
     val uiState: StateFlow<LoadsUiState> = _uiState.asStateFlow()
@@ -36,7 +39,7 @@ class LoadsViewModel(
     val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
 
     init {
-        println("🎯 LoadsViewModel: Initialized")
+        logger.info(LogCategory.UI, "LoadsViewModel: Initialized")
         fetchLoadsFromCache()
         checkAndRestoreTracking()
         requestNotificationPermission()
@@ -51,7 +54,7 @@ class LoadsViewModel(
     fun checkAndRestoreTracking() {
         viewModelScope.launch {
             try {
-                println("LoadsViewModel: Checking if tracking was active before...")
+                logger.info(LogCategory.LOCATION, "LoadsViewModel: Checking if tracking was active before...")
 
                 // Проверяем состояние из DataStore
                 val currentStatus =
@@ -61,7 +64,7 @@ class LoadsViewModel(
                 val isTrackingActive = currentStatus == com.shiplocate.domain.model.TrackingStatus.ACTIVE
 
                 if (isTrackingActive) {
-                    println("LoadsViewModel: Tracking was active before, restoring...")
+                    logger.info(LogCategory.LOCATION, "LoadsViewModel: Tracking was active before, restoring...")
 
                     // Автоматически запускаем трекинг
                     val result =
@@ -69,15 +72,15 @@ class LoadsViewModel(
                             startTrackingUseCase()
                         }
                     if (result.isSuccess) {
-                        println("LoadsViewModel: ✅ Tracking restored successfully")
+                        logger.info(LogCategory.LOCATION, "LoadsViewModel: Tracking restored successfully")
                     } else {
-                        println("LoadsViewModel: ❌ Failed to restore tracking: ${result.exceptionOrNull()?.message}")
+                        logger.error(LogCategory.LOCATION, "LoadsViewModel: Failed to restore tracking: ${result.exceptionOrNull()?.message}")
                     }
                 } else {
-                    println("LoadsViewModel: Tracking was not active, no restoration needed")
+                    logger.info(LogCategory.LOCATION, "LoadsViewModel: Tracking was not active, no restoration needed")
                 }
             } catch (e: Exception) {
-                println("LoadsViewModel: ❌ Error checking tracking state: ${e.message}")
+                logger.error(LogCategory.LOCATION, "LoadsViewModel: Error checking tracking state: ${e.message}")
             }
         }
     }
@@ -87,7 +90,7 @@ class LoadsViewModel(
      * @param isRefresh true if triggered by pull-to-refresh
      */
     fun loadLoads(isRefresh: Boolean = false) {
-        println("🔄 LoadsViewModel: Loading loads (refresh: $isRefresh)")
+        logger.info(LogCategory.UI, "LoadsViewModel: Loading loads (refresh: $isRefresh)")
 
         if (isRefresh) {
             _isRefreshing.value = true
@@ -103,7 +106,7 @@ class LoadsViewModel(
 
             result.fold(
                 onSuccess = { loads ->
-                    println("✅ LoadsViewModel: Successfully loaded ${loads.size} loads")
+                    logger.info(LogCategory.UI, "LoadsViewModel: Successfully loaded ${loads.size} loads")
                     
                     // Сортируем список по дате создания (createdAt) - новые сверху
                     val sortedLoads = loads.sortedByDescending { it.createdAt }
@@ -112,7 +115,7 @@ class LoadsViewModel(
                     _uiState.value = LoadsUiState.Success(sortedLoads)
                 },
                 onFailure = { error ->
-                    println("❌ LoadsViewModel: Failed to load loads: ${error.message}")
+                    logger.error(LogCategory.UI, "LoadsViewModel: Failed to load loads: ${error.message}")
                     _isRefreshing.value = false
                     _uiState.value =
                         LoadsUiState.Error(
@@ -127,7 +130,7 @@ class LoadsViewModel(
      * Retry loading loads
      */
     fun retry() {
-        println("🔄 LoadsViewModel: Retrying")
+        logger.info(LogCategory.UI, "LoadsViewModel: Retrying")
         loadLoads()
     }
 
@@ -135,7 +138,7 @@ class LoadsViewModel(
      * Refresh loads (pull-to-refresh)
      */
     fun refresh() {
-        println("🔄 LoadsViewModel: Refreshing via pull-to-refresh")
+        logger.info(LogCategory.UI, "LoadsViewModel: Refreshing via pull-to-refresh")
         loadLoads(isRefresh = true)
     }
 
@@ -143,7 +146,7 @@ class LoadsViewModel(
      * Load loads from cache only (called when returning from HomeScreen)
      */
     fun fetchLoadsFromCache() {
-        println("💾 LoadsViewModel: Loading from cache")
+        logger.info(LogCategory.UI, "LoadsViewModel: Loading from cache")
 
         viewModelScope.launch {
             try {
@@ -151,15 +154,15 @@ class LoadsViewModel(
                     withContext(Dispatchers.Default) {
                         getCachedLoadsUseCase()
                     }
-                println("✅ LoadsViewModel: Successfully loaded ${cachedLoads.size} loads from cache")
+                logger.info(LogCategory.UI, "LoadsViewModel: Successfully loaded ${cachedLoads.size} loads from cache")
                 
                 // Сортируем кешированный список по дате создания (createdAt) - новые сверху
                 val sortedCachedLoads = cachedLoads.sortedByDescending { it.createdAt }
-                println("📅 LoadsViewModel: Sorted ${sortedCachedLoads.size} cached loads by createdAt (newest first)")
+                logger.debug(LogCategory.UI, "LoadsViewModel: Sorted ${sortedCachedLoads.size} cached loads by createdAt (newest first)")
                 
                 _uiState.value = LoadsUiState.Success(sortedCachedLoads)
             } catch (e: Exception) {
-                println("❌ LoadsViewModel: Failed to load from cache: ${e.message}")
+                logger.error(LogCategory.UI, "LoadsViewModel: Failed to load from cache: ${e.message}")
                 _uiState.value =
                     LoadsUiState.Error(
                         e.message ?: "Failed to load cached data",
@@ -175,21 +178,21 @@ class LoadsViewModel(
     private fun requestNotificationPermission() {
         viewModelScope.launch {
             try {
-                println("🔔 LoadsViewModel: Requesting notification permission...")
+                logger.info(LogCategory.PERMISSIONS, "LoadsViewModel: Requesting notification permission...")
                 val result = requestNotificationPermissionUseCase()
                 
                 if (result.isSuccess) {
                     val granted = result.getOrNull() ?: false
                     if (granted) {
-                        println("✅ LoadsViewModel: Notification permission granted")
+                        logger.info(LogCategory.PERMISSIONS, "LoadsViewModel: Notification permission granted")
                     } else {
-                        println("❌ LoadsViewModel: Notification permission denied")
+                        logger.warn(LogCategory.PERMISSIONS, "LoadsViewModel: Notification permission denied")
                     }
                 } else {
-                    println("❌ LoadsViewModel: Failed to request notification permission: ${result.exceptionOrNull()?.message}")
+                    logger.error(LogCategory.PERMISSIONS, "LoadsViewModel: Failed to request notification permission: ${result.exceptionOrNull()?.message}")
                 }
             } catch (e: Exception) {
-                println("❌ LoadsViewModel: Exception while requesting notification permission: ${e.message}")
+                logger.error(LogCategory.PERMISSIONS, "LoadsViewModel: Exception while requesting notification permission: ${e.message}")
             }
         }
     }
@@ -201,10 +204,10 @@ class LoadsViewModel(
     private fun sendCachedTokenOnStartup() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                println("🚀 LoadsViewModel: Attempting to send cached Firebase token on startup...")
+                logger.info(LogCategory.NETWORK, "LoadsViewModel: Attempting to send cached Firebase token on startup...")
                 sendCachedTokenOnAuthUseCase()
             } catch (e: Exception) {
-                println("❌ LoadsViewModel: Failed to send cached token on startup: ${e.message}")
+                logger.error(LogCategory.NETWORK, "LoadsViewModel: Failed to send cached token on startup: ${e.message}")
             }
         }
     }

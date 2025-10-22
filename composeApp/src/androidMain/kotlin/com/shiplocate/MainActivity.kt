@@ -7,9 +7,14 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
+import com.shiplocate.core.logging.LogCategory
+import com.shiplocate.core.logging.Logger
 import com.shiplocate.di.AndroidKoinApp
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 
-class MainActivity : ComponentActivity() {
+class MainActivity : ComponentActivity(), KoinComponent {
+    private val logger: Logger by inject()
     private val locationPermissionLauncher =
         registerForActivityResult(
             ActivityResultContracts.RequestMultiplePermissions(),
@@ -18,10 +23,10 @@ class MainActivity : ComponentActivity() {
             val allGranted = permissions.values.all { it }
             if (allGranted) {
                 // Все разрешения предоставлены, можно продолжить
-                println("All permissions granted")
+                logger.info(LogCategory.PERMISSIONS, "All permissions granted")
             } else {
                 // Некоторые разрешения отклонены
-                println("Some permissions denied: $permissions")
+                logger.warn(LogCategory.PERMISSIONS, "Some permissions denied: $permissions")
             }
         }
 
@@ -30,9 +35,9 @@ class MainActivity : ComponentActivity() {
             ActivityResultContracts.RequestPermission(),
         ) { isGranted ->
             if (isGranted) {
-                println("Background location permission granted")
+                logger.info(LogCategory.PERMISSIONS, "Background location permission granted")
             } else {
-                println("Background location permission denied")
+                logger.warn(LogCategory.PERMISSIONS, "Background location permission denied")
             }
         }
 
@@ -41,9 +46,9 @@ class MainActivity : ComponentActivity() {
             ActivityResultContracts.RequestPermission(),
         ) { isGranted ->
             if (isGranted) {
-                println("Notification permission granted")
+                logger.info(LogCategory.PERMISSIONS, "Notification permission granted")
             } else {
-                println("Notification permission denied")
+                logger.warn(LogCategory.PERMISSIONS, "Notification permission denied")
             }
         }
 
@@ -51,7 +56,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
 
-        println("MainActivity.onCreate() called")
+        logger.info(LogCategory.GENERAL, "MainActivity.onCreate() called")
 
         // Инициализируем Activity scope
         AndroidKoinApp.initActivityScope()
@@ -59,7 +64,13 @@ class MainActivity : ComponentActivity() {
         // Инициализируем Activity context
         AndroidKoinApp.initActivityContext(this)
 
-        println("MainActivity initialization completed")
+        // CrashHandler уже инициализирован через DI
+        logger.info(LogCategory.GENERAL, "MainActivity initialized")
+        logger.debug(LogCategory.GENERAL, "Testing debug logging")
+        logger.warn(LogCategory.GENERAL, "Testing warning logging")
+        logger.error(LogCategory.GENERAL, "Testing error logging")
+
+        logger.info(LogCategory.GENERAL, "MainActivity initialization completed")
 
         setContent {
             App()
@@ -85,7 +96,7 @@ class MainActivity : ComponentActivity() {
             val permissionRequester = AndroidPermissionRequester(this)
             permissionRequester.handlePermissionResult(requestCode, grantResults)
         } catch (e: Exception) {
-            println("Error handling permission result: ${e.message}")
+            logger.debug(LogCategory.PERMISSIONS, "Permission result: requestCode=$requestCode, permissions=${permissions.joinToString()}, grantResults=${grantResults.joinToString()}")
         }
     }
 
@@ -106,6 +117,6 @@ class MainActivity : ComponentActivity() {
 @Suppress("FunctionName")
 @Preview
 @Composable
-fun AppAndroidPreview() {
+fun appAndroidPreview() {
     App()
 }

@@ -18,6 +18,7 @@ kotlin {
             implementation(project(":core:database")) // Room + SQLite
             implementation(project(":core:network")) // Ktor + HttpClient
             implementation(project(":core:datastore")) // DataStore
+            implementation(project(":core:logging")) // Logging
 
             // Kotlin
             implementation(libs.kotlinx.coroutines.core)

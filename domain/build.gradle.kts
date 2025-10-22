@@ -15,6 +15,9 @@ kotlin {
 
             // Coroutines
             implementation(libs.kotlinx.coroutines.core)
+            
+            // Logging
+            implementation(project(":core:logging"))
         }
 
         commonTest.dependencies {

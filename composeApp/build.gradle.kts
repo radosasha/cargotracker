@@ -65,6 +65,7 @@ kotlin {
             implementation(project(":domain"))
             implementation(project(":data"))
             implementation(project(":presentation"))
+            implementation(project(":core:logging"))
 
             // Compose
             implementation(compose.runtime)

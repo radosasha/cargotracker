@@ -1,5 +1,7 @@
 package com.shiplocate.domain.usecase
 
+import com.shiplocate.core.logging.LogCategory
+import com.shiplocate.core.logging.Logger
 import com.shiplocate.domain.repository.PermissionRepository
 import com.shiplocate.domain.repository.PrefsRepository
 import com.shiplocate.domain.repository.TrackingRepository
@@ -14,6 +16,7 @@ class StartTrackingUseCase(
     private val trackingRepository: TrackingRepository,
     private val prefsRepository: PrefsRepository,
     private val locationSyncService: LocationSyncService,
+    private val logger: Logger,
 ) {
     suspend operator fun invoke(): Result<Unit> {
         // Проверяем разрешения перед запуском
@@ -23,7 +26,7 @@ class StartTrackingUseCase(
             // Проверяем, не активен ли уже трекинг
             val currentStatus = trackingRepository.getTrackingStatus()
             if (currentStatus == com.shiplocate.domain.model.TrackingStatus.ACTIVE) {
-                println("StartTrackingUseCase: Tracking is already active, no need to start")
+                logger.info(LogCategory.LOCATION, "StartTrackingUseCase: Tracking is already active, no need to start")
                 // Убеждаемся, что состояние в DataStore корректное
                 prefsRepository.saveTrackingState(true)
                 return Result.success(Unit)
@@ -35,7 +38,7 @@ class StartTrackingUseCase(
             if (result.isSuccess) {
                 prefsRepository.saveTrackingState(true)
                 locationSyncService.startSync()
-                println("StartTrackingUseCase: Tracking started and state saved to DataStore")
+                logger.info(LogCategory.LOCATION, "StartTrackingUseCase: Tracking started and state saved to DataStore")
             }
 
             result

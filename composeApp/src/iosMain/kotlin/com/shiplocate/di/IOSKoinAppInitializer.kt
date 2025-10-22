@@ -1,5 +1,7 @@
 package com.shiplocate.di
 
+import com.shiplocate.core.logging.LogCategory
+import com.shiplocate.core.logging.Logger
 import com.shiplocate.data.datasource.FirebaseTokenServiceDataSource
 import com.shiplocate.domain.usecase.ManageFirebaseTokensUseCase
 import org.koin.core.component.KoinComponent
@@ -17,6 +19,7 @@ class IOSKoinAppInitializer : KoinComponent {
     
     private val manageFirebaseTokensUseCase: ManageFirebaseTokensUseCase by inject()
     private val firebaseTokenServiceDataSource: FirebaseTokenServiceDataSource by inject()
+    private val logger: Logger by inject()
     
     /**
      * Инициализация зависимостей
@@ -27,12 +30,13 @@ class IOSKoinAppInitializer : KoinComponent {
             // Устанавливаем зависимости в IOSKoinApp
             IOSKoinApp.setDependencies(
                 manageFirebaseTokensUseCase = manageFirebaseTokensUseCase,
-                firebaseTokenServiceDataSource = firebaseTokenServiceDataSource
+                firebaseTokenServiceDataSource = firebaseTokenServiceDataSource,
+                logger = logger
             )
             
-            println("IOSKoinAppInitializer: Dependencies initialized successfully")
+            logger.info(LogCategory.GENERAL, "IOSKoinAppInitializer: Dependencies initialized successfully")
         } catch (e: Exception) {
-            println("IOSKoinAppInitializer: Failed to initialize dependencies: ${e.message}")
+            logger.error(LogCategory.GENERAL, "IOSKoinAppInitializer: Failed to initialize dependencies: ${e.message}")
         }
     }
 }

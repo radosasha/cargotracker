@@ -5,6 +5,8 @@ import android.os.Build
 import android.os.StrictMode
 import android.os.StrictMode.ThreadPolicy
 import android.os.StrictMode.VmPolicy
+import com.shiplocate.core.logging.LogCategory
+import com.shiplocate.core.logging.Logger
 import com.shiplocate.di.AndroidKoinApp
 import com.shiplocate.domain.usecase.ManageFirebaseTokensUseCase
 import kotlinx.coroutines.CoroutineScope
@@ -21,6 +23,7 @@ import org.koin.core.component.inject
  */
 class TrackerApplication : Application(), KoinComponent {
     private val manageFirebaseTokensUseCase: ManageFirebaseTokensUseCase by inject()
+    private val logger: Logger by inject()
 
     // Application-scoped CoroutineScope
     private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
@@ -44,7 +47,7 @@ class TrackerApplication : Application(), KoinComponent {
 //            enableStrictMode()
         }
 
-        println("TrackerApplication: Application initialized with Firebase Token Management")
+        logger.info(LogCategory.GENERAL, "TrackerApplication: Application initialized with Firebase Token Management")
     }
 
     private fun enableStrictMode() {
@@ -79,6 +82,6 @@ class TrackerApplication : Application(), KoinComponent {
         super.onTerminate()
         // Отменяем все корутины при завершении приложения
         applicationScope.cancel()
-        println("TrackerApplication: Application scope cancelled")
+        logger.info(LogCategory.GENERAL, "TrackerApplication: Application scope cancelled")
     }
 }

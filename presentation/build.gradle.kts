@@ -14,6 +14,9 @@ kotlin {
         commonMain.dependencies {
             // Domain module
             implementation(project(":domain"))
+            
+            // Logging
+            implementation(project(":core:logging"))
 
             // Compose
             implementation(compose.runtime)

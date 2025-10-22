@@ -2,6 +2,8 @@ package com.shiplocate.presentation.feature.auth
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.shiplocate.core.logging.LogCategory
+import com.shiplocate.core.logging.Logger
 import com.shiplocate.domain.model.auth.AuthError
 import com.shiplocate.domain.model.auth.Country
 import com.shiplocate.domain.usecase.auth.RequestSmsCodeUseCase
@@ -18,6 +20,7 @@ import kotlinx.coroutines.launch
  */
 class EnterPhoneViewModel(
     private val requestSmsCodeUseCase: RequestSmsCodeUseCase,
+    private val logger: Logger,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(EnterPhoneUiState())
     val uiState: StateFlow<EnterPhoneUiState> = _uiState.asStateFlow()
@@ -25,11 +28,11 @@ class EnterPhoneViewModel(
     private var timerJob: Job? = null
 
     init {
-        println("🔐 EnterPhoneViewModel: Initialized")
+        logger.info(LogCategory.AUTH, "EnterPhoneViewModel: Initialized")
     }
 
     fun onCountrySelected(country: Country) {
-        println("🔐 EnterPhoneViewModel: Country selected: ${country.name} (${country.dialCode})")
+        logger.info(LogCategory.AUTH, "EnterPhoneViewModel: Country selected: ${country.name} (${country.dialCode})")
         _uiState.update { it.copy(selectedCountry = country, phoneNumber = "") }
     }
 
@@ -41,7 +44,7 @@ class EnterPhoneViewModel(
         val maxLength = _uiState.value.selectedCountry.phoneLength
         val limited = filtered.take(maxLength)
 
-        println("🔐 EnterPhoneViewModel: Phone changed: '$limited' (${limited.length}/$maxLength)")
+        logger.debug(LogCategory.AUTH, "EnterPhoneViewModel: Phone changed: '$limited' (${limited.length}/$maxLength)")
 
         _uiState.update {
             it.copy(
@@ -54,12 +57,12 @@ class EnterPhoneViewModel(
     fun onSendCodeClicked() {
         val state = _uiState.value
 
-        println("🔐 EnterPhoneViewModel: Send code clicked")
+        logger.info(LogCategory.AUTH, "EnterPhoneViewModel: Send code clicked")
 
         // Validate phone number length
         val requiredLength = state.selectedCountry.phoneLength
         if (state.phoneNumber.length < requiredLength) {
-            println("🔐 EnterPhoneViewModel: ❌ Validation failed: ${state.phoneNumber.length}/$requiredLength digits")
+            logger.warn(LogCategory.AUTH, "EnterPhoneViewModel: Validation failed: ${state.phoneNumber.length}/$requiredLength digits")
             _uiState.update {
                 it.copy(errorMessage = "Phone number must be $requiredLength digits")
             }
@@ -69,13 +72,13 @@ class EnterPhoneViewModel(
         // Build full phone number
         val fullPhone = "${state.selectedCountry.dialCode}${state.phoneNumber}"
 
-        println("🔐 EnterPhoneViewModel: ✅ Requesting SMS for: $fullPhone")
+        logger.info(LogCategory.AUTH, "EnterPhoneViewModel: Requesting SMS for: $fullPhone")
         _uiState.update { it.copy(isLoading = true, errorMessage = null) }
 
         viewModelScope.launch {
             requestSmsCodeUseCase(fullPhone)
                 .onSuccess { response ->
-                    println("🔐 EnterPhoneViewModel: ✅ SMS sent successfully: ${response.message}")
+                    logger.info(LogCategory.AUTH, "EnterPhoneViewModel: SMS sent successfully: ${response.message}")
                     _uiState.update {
                         it.copy(
                             isLoading = false,
@@ -88,7 +91,7 @@ class EnterPhoneViewModel(
                     when (error) {
                         is AuthError.RateLimitError -> {
                             // Уже обработано: показываем таймер
-                            println("🔐 EnterPhoneViewModel: ⏱️ Rate limited: retry after ${error.retryAfterSeconds}s")
+                            logger.warn(LogCategory.AUTH, "EnterPhoneViewModel: Rate limited: retry after ${error.retryAfterSeconds}s")
                             _uiState.update {
                                 it.copy(
                                     isLoading = false,
@@ -102,7 +105,7 @@ class EnterPhoneViewModel(
 
                         is AuthError.ValidationError -> {
                             // Показываем диалог с ошибкой валидации
-                            println("🔐 EnterPhoneViewModel: ❌ Validation error: ${error.message}")
+                            logger.error(LogCategory.AUTH, "EnterPhoneViewModel: Validation error: ${error.message}")
                             _uiState.update {
                                 it.copy(
                                     isLoading = false,
@@ -116,7 +119,7 @@ class EnterPhoneViewModel(
                         is AuthError.ServiceUnavailable -> {
                             // Показываем диалог с ошибкой недоступности сервиса
 
-                            println("🔐 EnterPhoneViewModel: ❌ Service unavailable: ${error.message}")
+                            logger.error(LogCategory.AUTH, "EnterPhoneViewModel: Service unavailable: ${error.message}")
                             _uiState.update {
                                 it.copy(
                                     isLoading = false,
@@ -131,7 +134,7 @@ class EnterPhoneViewModel(
 
                         is AuthError.NetworkError -> {
                             // Показываем диалог с сетевой ошибкой
-                            println("🔐 EnterPhoneViewModel: ❌ Network error: ${error.message}")
+                            logger.error(LogCategory.AUTH, "EnterPhoneViewModel: Network error: ${error.message}")
                             _uiState.update {
                                 it.copy(
                                     isLoading = false,
@@ -146,7 +149,7 @@ class EnterPhoneViewModel(
 
                         is AuthError -> {
                             // Показываем диалог для других ошибок
-                            println("🔐 EnterPhoneViewModel: ❌ Auth error: ${error.code} - ${error.message}")
+                            logger.error(LogCategory.AUTH, "EnterPhoneViewModel: Auth error: ${error.code} - ${error.message}")
                             _uiState.update {
                                 it.copy(
                                     isLoading = false,
@@ -159,7 +162,7 @@ class EnterPhoneViewModel(
 
                         else -> {
                             // Показываем диалог для неизвестных ошибок
-                            println("🔐 EnterPhoneViewModel: ❌ Unknown error: ${error.message}")
+                            logger.error(LogCategory.AUTH, "EnterPhoneViewModel: Unknown error: ${error.message}")
                             _uiState.update {
                                 it.copy(
                                     isLoading = false,
@@ -175,7 +178,7 @@ class EnterPhoneViewModel(
     }
 
     private fun startRateLimitTimer(seconds: Long) {
-        println("🔐 EnterPhoneViewModel: ⏱️ Starting rate limit timer: ${seconds}s")
+        logger.info(LogCategory.AUTH, "EnterPhoneViewModel: Starting rate limit timer: ${seconds}s")
         timerJob?.cancel()
         timerJob =
             viewModelScope.launch {
@@ -185,7 +188,7 @@ class EnterPhoneViewModel(
                     delay(1000)
                     remaining--
                 }
-                println("🔐 EnterPhoneViewModel: ✅ Rate limit timer finished")
+                logger.info(LogCategory.AUTH, "EnterPhoneViewModel: Rate limit timer finished")
                 _uiState.update {
                     it.copy(
                         isRateLimited = false,
@@ -230,7 +233,7 @@ class EnterPhoneViewModel(
 
     override fun onCleared() {
         super.onCleared()
-        println("🔐 EnterPhoneViewModel: Cleared")
+        logger.info(LogCategory.AUTH, "EnterPhoneViewModel: Cleared")
         timerJob?.cancel()
     }
 }

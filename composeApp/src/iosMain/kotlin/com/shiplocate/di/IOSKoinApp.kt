@@ -2,6 +2,8 @@
 
 package com.shiplocate.di
 
+import com.shiplocate.core.logging.LogCategory
+import com.shiplocate.core.logging.Logger
 import com.shiplocate.data.datasource.FirebaseTokenServiceDataSource
 import com.shiplocate.domain.usecase.ManageFirebaseTokensUseCase
 import kotlinx.coroutines.CoroutineScope
@@ -18,7 +20,6 @@ import org.koin.core.context.stopKoin
  *
  * Следует принципам Clean Architecture и SOLID:
  * - Не использует GlobalContext (плохая практика)
- * - Не использует KoinComponent (нарушает инверсию зависимостей)
  * - Внедряет зависимости через конструкторы
  */
 object IOSKoinApp {
@@ -28,6 +29,7 @@ object IOSKoinApp {
     // Зависимости внедряются через конструкторы (Clean Architecture)
     private var manageFirebaseTokensUseCase: ManageFirebaseTokensUseCase? = null
     private var firebaseTokenServiceDataSource: FirebaseTokenServiceDataSource? = null
+    private var logger: Logger? = null
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     /**
@@ -36,21 +38,21 @@ object IOSKoinApp {
      */
     fun initApplicationScope() {
         if (isInitialized) {
-            println("IOSKoinApp: Already initialized, skipping")
+            logger?.info(LogCategory.GENERAL, "IOSKoinApp: Already initialized, skipping")
             return
         }
 
-        println("IOSKoinApp: Starting Koin initialization...")
+        logger?.info(LogCategory.GENERAL, "IOSKoinApp: Starting Koin initialization...")
 
         startKoin {
             printLogger()
-            modules(appModule + iosModule + iosPlatformModule)
+            modules(appModule + iosModule + iosPlatformModule + iosAppModule)
         }
 
         applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
         isInitialized = true
 
-        println("IOSKoinApp: Application scope initialized successfully")
+        logger?.info(LogCategory.GENERAL, "IOSKoinApp: Application scope initialized successfully")
     }
 
     /**
@@ -60,10 +62,12 @@ object IOSKoinApp {
     fun setDependencies(
         manageFirebaseTokensUseCase: ManageFirebaseTokensUseCase,
         firebaseTokenServiceDataSource: FirebaseTokenServiceDataSource,
+        logger: Logger,
     ) {
         this.manageFirebaseTokensUseCase = manageFirebaseTokensUseCase
         this.firebaseTokenServiceDataSource = firebaseTokenServiceDataSource
-        println("IOSKoinApp: Dependencies set successfully")
+        this.logger = logger
+        logger.info(LogCategory.GENERAL, "IOSKoinApp: Dependencies set successfully")
     }
 
     /**
@@ -72,13 +76,13 @@ object IOSKoinApp {
 
     fun startFirebaseTokenService() {
         if (!isInitialized) {
-            println("IOSKoinApp: Not initialized, skipping token service start")
+            logger?.warn(LogCategory.GENERAL, "IOSKoinApp: Not initialized, skipping token service start")
             return
         }
 
         val useCase = manageFirebaseTokensUseCase
         if (useCase == null) {
-            println("IOSKoinApp: ManageFirebaseTokensUseCase not set, skipping")
+            logger?.warn(LogCategory.GENERAL, "IOSKoinApp: ManageFirebaseTokensUseCase not set, skipping")
             return
         }
 
@@ -86,9 +90,9 @@ object IOSKoinApp {
             applicationScope?.launch {
                 useCase.startManaging()
             }
-            println("IOSKoinApp: Firebase Token Management started successfully")
+            logger?.info(LogCategory.GENERAL, "IOSKoinApp: Firebase Token Management started successfully")
         } catch (e: Exception) {
-            println("IOSKoinApp: Failed to start Firebase Token Management: ${e.message}")
+            logger?.error(LogCategory.GENERAL, "IOSKoinApp: Failed to start Firebase Token Management: ${e.message}")
         }
     }
 
@@ -97,13 +101,13 @@ object IOSKoinApp {
      */
     fun onNewTokenReceived(token: String) {
         if (!isInitialized) {
-            println("IOSKoinApp: Not initialized, caching token for later")
+            logger?.warn(LogCategory.GENERAL, "IOSKoinApp: Not initialized, caching token for later")
             return
         }
 
         val dataSource = firebaseTokenServiceDataSource
         if (dataSource == null) {
-            println("IOSKoinApp: FirebaseTokenServiceDataSource not set, skipping")
+            logger?.warn(LogCategory.GENERAL, "IOSKoinApp: FirebaseTokenServiceDataSource not set, skipping")
             return
         }
 
@@ -111,9 +115,9 @@ object IOSKoinApp {
             scope.launch {
                 dataSource.onNewTokenReceived(token)
             }
-            println("IOSKoinApp: Token passed to data source successfully")
+            logger?.info(LogCategory.GENERAL, "IOSKoinApp: Token passed to data source successfully")
         } catch (e: Exception) {
-            println("IOSKoinApp: Failed to pass token: ${e.message}")
+            logger?.error(LogCategory.GENERAL, "IOSKoinApp: Failed to pass token: ${e.message}")
         }
     }
 
@@ -122,21 +126,21 @@ object IOSKoinApp {
      */
     fun onCurrentTokenReceived(token: String?) {
         if (!isInitialized) {
-            println("IOSKoinApp: Not initialized, skipping current token")
+            logger?.warn(LogCategory.GENERAL, "IOSKoinApp: Not initialized, skipping current token")
             return
         }
 
         val dataSource = firebaseTokenServiceDataSource
         if (dataSource == null) {
-            println("IOSKoinApp: FirebaseTokenServiceDataSource not set, skipping")
+            logger?.warn(LogCategory.GENERAL, "IOSKoinApp: FirebaseTokenServiceDataSource not set, skipping")
             return
         }
 
         try {
             dataSource.onTokenReceived(token)
-            println("IOSKoinApp: Current token passed to data source successfully")
+            logger?.info(LogCategory.GENERAL, "IOSKoinApp: Current token passed to data source successfully")
         } catch (e: Exception) {
-            println("IOSKoinApp: Failed to pass current token: ${e.message}")
+            logger?.error(LogCategory.GENERAL, "IOSKoinApp: Failed to pass current token: ${e.message}")
         }
     }
 
@@ -150,7 +154,7 @@ object IOSKoinApp {
         firebaseTokenServiceDataSource = null
         stopKoin()
         isInitialized = false
-        println("IOSKoinApp: Stopped successfully")
+        logger?.info(LogCategory.GENERAL, "IOSKoinApp: Stopped successfully")
     }
 }
 

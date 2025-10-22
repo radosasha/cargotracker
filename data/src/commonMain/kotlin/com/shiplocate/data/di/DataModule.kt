@@ -141,7 +141,7 @@ val dataModule =
             single<AuthRepository> { AuthRepositoryImpl(get()) }
             single<AuthPreferencesRepository> { AuthPreferencesRepositoryImpl(get()) }
             single<LoadRepository> { LoadRepositoryImpl(get(), get()) }
-            single<NotificationRepository> { NotificationRepositoryImpl(get(), get(), get()) }
+            single<NotificationRepository> { NotificationRepositoryImpl(get(), get(), get(), get()) }
 
             // Domain Services - реализации в data слое
             single<LocationProcessor> { LocationProcessorImpl() }

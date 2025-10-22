@@ -2,6 +2,8 @@ package com.shiplocate.presentation.feature.auth
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.shiplocate.core.logging.LogCategory
+import com.shiplocate.core.logging.Logger
 import com.shiplocate.domain.model.auth.AuthError
 import com.shiplocate.domain.model.auth.AuthSession
 import com.shiplocate.domain.usecase.GetDeviceInfoUseCase
@@ -22,16 +24,17 @@ class EnterPinViewModel(
     private val saveAuthSessionUseCase: SaveAuthSessionUseCase,
     private val sendCachedTokenOnAuthUseCase: SendCachedTokenOnAuthUseCase,
     private val getDeviceInfoUseCase: GetDeviceInfoUseCase,
+    private val logger: Logger,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(EnterPinUiState())
     val uiState: StateFlow<EnterPinUiState> = _uiState.asStateFlow()
 
     init {
-        println("🔑 EnterPinViewModel: Initialized")
+        logger.info(LogCategory.AUTH, "EnterPinViewModel: Initialized")
     }
 
     fun init(phone: String) {
-        println("🔑 EnterPinViewModel: Init with phone: $phone")
+        logger.info(LogCategory.AUTH, "EnterPinViewModel: Init with phone: $phone")
         _uiState.update { it.copy(phone = phone) }
     }
 
@@ -44,7 +47,7 @@ class EnterPinViewModel(
         val newPinDigits = _uiState.value.pinDigits.toMutableList()
         newPinDigits[index] = filtered
 
-        println("🔑 EnterPinViewModel: PIN digit[$index] = '$filtered'")
+        logger.debug(LogCategory.AUTH, "EnterPinViewModel: PIN digit[$index] = '$filtered'")
 
         _uiState.update {
             it.copy(
@@ -57,7 +60,7 @@ class EnterPinViewModel(
         // Auto-submit when all 6 digits are entered
         if (newPinDigits.all { it.isNotEmpty() }) {
             val pin = newPinDigits.joinToString("")
-            println("🔑 EnterPinViewModel: ✅ PIN complete: $pin - auto-submitting")
+            logger.info(LogCategory.AUTH, "EnterPinViewModel: PIN complete: $pin - auto-submitting")
             verifyPin()
         }
     }
@@ -79,11 +82,11 @@ class EnterPinViewModel(
         val pin = state.pinDigits.joinToString("")
 
         if (pin.length != 6) {
-            println("🔑 EnterPinViewModel: ❌ PIN length invalid: ${pin.length}/6")
+            logger.warn(LogCategory.AUTH, "EnterPinViewModel: PIN length invalid: ${pin.length}/6")
             return
         }
 
-        println("🔑 EnterPinViewModel: 🔄 Verifying PIN: $pin for phone: ${state.phone}")
+        logger.info(LogCategory.AUTH, "EnterPinViewModel: Verifying PIN: $pin for phone: ${state.phone}")
 
         _uiState.update {
             it.copy(
@@ -100,9 +103,9 @@ class EnterPinViewModel(
                 deviceInfo = deviceInfo,
             )
                 .onSuccess { authToken ->
-                    println("🔑 EnterPinViewModel: ✅ Verification successful!")
-                    println("🔑 EnterPinViewModel: Token: ${authToken.token.take(20)}...")
-                    println("🔑 EnterPinViewModel: User: ${authToken.user.name} (${authToken.user.phone})")
+                    logger.info(LogCategory.AUTH, "EnterPinViewModel: Verification successful!")
+                    logger.debug(LogCategory.AUTH, "EnterPinViewModel: Token: ${authToken.token.take(20)}...")
+                    logger.info(LogCategory.AUTH, "EnterPinViewModel: User: ${authToken.user.name} (${authToken.user.phone})")
 
                     // Save session
                     val session =
@@ -111,7 +114,7 @@ class EnterPinViewModel(
                             user = authToken.user,
                         )
                     saveAuthSessionUseCase(session)
-                    println("🔑 EnterPinViewModel: 💾 Session saved")
+                    logger.info(LogCategory.AUTH, "EnterPinViewModel: Session saved")
 
                     // Отправляем кешированный Firebase токен на сервер
                     sendCachedTokenOnAuthUseCase()
@@ -128,7 +131,7 @@ class EnterPinViewModel(
                         is AuthError.CodeInvalid -> {
                             // Уже обработано: показываем inline с remainingAttempts
                             val attempts = error.remainingAttempts ?: 0
-                            println("🔑 EnterPinViewModel: ❌ Invalid code: $attempts attempts remaining")
+                            logger.warn(LogCategory.AUTH, "EnterPinViewModel: Invalid code: $attempts attempts remaining")
                             _uiState.update {
                                 it.copy(
                                     isVerifying = false,
@@ -140,7 +143,7 @@ class EnterPinViewModel(
                         }
                         is AuthError.TooManyAttempts -> {
                             // Уже обработано: возврат на EnterPhoneScreen с диалогом
-                            println("🔑 EnterPinViewModel: ❌ Too many attempts - navigating back")
+                            logger.warn(LogCategory.AUTH, "EnterPinViewModel: Too many attempts - navigating back")
                             _uiState.update {
                                 it.copy(
                                     isVerifying = false,
@@ -153,7 +156,7 @@ class EnterPinViewModel(
                         is AuthError.CodeAlreadyUsed,
                         -> {
                             // Критические ошибки - возврат на EnterPhoneScreen с диалогом
-                            println("🔑 EnterPinViewModel: ❌ Critical error: ${error.code} - navigating back")
+                            logger.error(LogCategory.AUTH, "EnterPinViewModel: Critical error: ${error.code} - navigating back")
                             _uiState.update {
                                 it.copy(
                                     isVerifying = false,
@@ -163,7 +166,7 @@ class EnterPinViewModel(
                         }
                         is AuthError.UserBlocked -> {
                             // Блокировка пользователя - показываем диалог
-                            println("🔑 EnterPinViewModel: ❌ User blocked")
+                            logger.error(LogCategory.AUTH, "EnterPinViewModel: User blocked")
                             _uiState.update {
                                 it.copy(
                                     isVerifying = false,
@@ -176,7 +179,7 @@ class EnterPinViewModel(
                         }
                         is AuthError.ServiceUnavailable -> {
                             // Ошибка недоступности сервиса - показываем диалог
-                            println("🔑 EnterPinViewModel: ❌ Service unavailable")
+                            logger.error(LogCategory.AUTH, "EnterPinViewModel: Service unavailable")
                             _uiState.update {
                                 it.copy(
                                     isVerifying = false,
@@ -191,7 +194,7 @@ class EnterPinViewModel(
                         }
                         is AuthError.NetworkError -> {
                             // Сетевая ошибка - показываем диалог
-                            println("🔑 EnterPinViewModel: ❌ Network error")
+                            logger.error(LogCategory.AUTH, "EnterPinViewModel: Network error")
                             _uiState.update {
                                 it.copy(
                                     isVerifying = false,
@@ -206,7 +209,7 @@ class EnterPinViewModel(
                         }
                         is AuthError -> {
                             // Другие ошибки - показываем диалог
-                            println("🔑 EnterPinViewModel: ❌ Auth error: ${error.code} - ${error.message}")
+                            logger.error(LogCategory.AUTH, "EnterPinViewModel: Auth error: ${error.code} - ${error.message}")
                             _uiState.update {
                                 it.copy(
                                     isVerifying = false,
@@ -219,7 +222,7 @@ class EnterPinViewModel(
                         }
                         else -> {
                             // Неизвестные ошибки - показываем диалог
-                            println("🔑 EnterPinViewModel: ❌ Unknown error: ${error.message}")
+                            logger.error(LogCategory.AUTH, "EnterPinViewModel: Unknown error: ${error.message}")
                             _uiState.update {
                                 it.copy(
                                     isVerifying = false,

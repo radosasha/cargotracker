@@ -1,5 +1,6 @@
 package com.shiplocate.di
 
+import com.shiplocate.core.logging.di.LoggingModules
 import com.shiplocate.data.di.dataModule
 import com.shiplocate.presentation.di.presentationModule
 
@@ -11,5 +12,6 @@ import com.shiplocate.presentation.di.presentationModule
  * - presentationModule: Presentation слой (Use Cases + ViewModels)
  *   - useCasesModule: Domain Use Cases
  *   - viewModelModule: Presentation ViewModels
+ * - LoggingModules.all: Модули логирования
  */
-val appModule = dataModule + presentationModule
+val appModule = dataModule + presentationModule + LoggingModules.all
