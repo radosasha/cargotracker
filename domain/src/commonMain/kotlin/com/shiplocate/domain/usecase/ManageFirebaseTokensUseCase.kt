@@ -32,7 +32,10 @@ class ManageFirebaseTokensUseCase(
 
             // Кешируем токен
             if (notificationRepository.getCachedToken() == null) {
-                logger.info(LogCategory.GENERAL, "ManageFirebaseTokensUseCase: Caching demanded token from Firebase: ${currentToken.take(20)}...")
+                logger.info(
+                    LogCategory.GENERAL,
+                    "ManageFirebaseTokensUseCase: Caching demanded token from Firebase: ${currentToken.take(20)}...",
+                )
                 notificationRepository.saveToken(currentToken)
             }
 
@@ -41,7 +44,10 @@ class ManageFirebaseTokensUseCase(
                 logger.info(LogCategory.GENERAL, "ManageFirebaseTokensUseCase: User is authenticated, sending current token to server")
                 notificationRepository.sendTokenToServer(currentToken)
             } else {
-                logger.info(LogCategory.GENERAL, "ManageFirebaseTokensUseCase: User not authenticated, current token will be cached by startTokenUpdates")
+                logger.info(
+                    LogCategory.GENERAL,
+                    "ManageFirebaseTokensUseCase: User not authenticated, current token will be cached by startTokenUpdates",
+                )
             }
         } else {
             logger.info(LogCategory.GENERAL, "ManageFirebaseTokensUseCase: No current token available from Firebase")

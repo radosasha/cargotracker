@@ -23,6 +23,8 @@ import com.shiplocate.domain.usecase.load.ConnectToLoadUseCase
 import com.shiplocate.domain.usecase.load.DisconnectFromLoadUseCase
 import com.shiplocate.domain.usecase.load.GetCachedLoadsUseCase
 import com.shiplocate.domain.usecase.load.GetLoadsUseCase
+import com.shiplocate.domain.usecase.logs.GetLogsUseCase
+import com.shiplocate.domain.usecase.logs.SendLogsUseCase
 import org.koin.core.module.dsl.factoryOf
 import org.koin.dsl.module
 
@@ -75,4 +77,8 @@ val useCasesModule =
 
         // Device Use Cases
         factoryOf(::GetDeviceInfoUseCase)
+
+        // Logs Use Cases
+        factoryOf(::GetLogsUseCase)
+        factoryOf(::SendLogsUseCase)
     }

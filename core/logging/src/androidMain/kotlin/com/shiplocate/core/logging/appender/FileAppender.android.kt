@@ -17,7 +17,7 @@ import java.io.IOException
  */
 actual class FileAppender(
     private val config: LoggingConfig,
-    private val context: Context
+    private val context: Context,
 ) : LogAppender {
     private var currentFile: String? = null
     private var currentFileSize: Long = 0
@@ -65,10 +65,12 @@ actual class FileAppender(
             val baseFileName = "${dateStr}_${hour.toString().padStart(2, '0')}.txt"
             getNextAvailableFileName(baseFileName)
         } else {
-            val timeStr = "${now.minute.toString().padStart(
-                2,
-                '0',
-            )}.${now.hour.toString().padStart(2, '0')}.${now.second.toString().padStart(2, '0')}"
+            val timeStr = "${
+                now.minute.toString().padStart(
+                    2,
+                    '0',
+                )
+            }.${now.hour.toString().padStart(2, '0')}.${now.second.toString().padStart(2, '0')}"
             "${dateStr}_$timeStr.txt"
         }
     }
@@ -100,6 +102,7 @@ actual class FileAppender(
      */
     private fun shouldCreateNewFile(fileName: String): Boolean {
         // Если это новый файл
+        if (currentFile == null) return false
         if (currentFile != fileName) {
             return true
         }

@@ -5,10 +5,12 @@ import com.shiplocate.core.database.DatabaseProvider
 import com.shiplocate.core.datastore.DataStoreProvider
 import com.shiplocate.data.datasource.DeviceDataSource
 import com.shiplocate.data.datasource.GpsManager
+import com.shiplocate.data.datasource.LogsLocalDataSource
 import com.shiplocate.data.datasource.PermissionDataSource
 import com.shiplocate.data.datasource.impl.AndroidDeviceDataSource
 import com.shiplocate.data.datasource.impl.AndroidGpsManager
 import com.shiplocate.data.datasource.impl.AndroidPermissionDataSource
+import com.shiplocate.data.datasource.impl.LogsLocalDataSourceImpl
 import org.koin.core.module.Module
 import org.koin.dsl.module
 
@@ -28,6 +30,7 @@ actual val platformDataModule: Module =
         single<GpsManager> { AndroidGpsManager(get(), get()) }
         single<DeviceDataSource> { AndroidDeviceDataSource(get(), get()) }
         single<PermissionDataSource> { AndroidPermissionDataSource(get(), get()) }
+        single<LogsLocalDataSource> { LogsLocalDataSourceImpl(get(), get()) }
 
         // Firebase Token Service DataSource будет переопределен в composeApp модуле
     }

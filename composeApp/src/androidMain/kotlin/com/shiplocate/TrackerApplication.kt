@@ -22,9 +22,6 @@ import org.koin.core.component.inject
  * Application класс для инициализации Koin и Firebase Token Service
  */
 class TrackerApplication : Application(), KoinComponent {
-    private val manageFirebaseTokensUseCase: ManageFirebaseTokensUseCase by inject()
-    private val logger: Logger by inject()
-
     // Application-scoped CoroutineScope
     private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
@@ -35,7 +32,13 @@ class TrackerApplication : Application(), KoinComponent {
         ApplicationContextProvider.init(this)
 
         // Инициализируем Koin с Application-scoped зависимостями
-        AndroidKoinApp.initApplicationScope(this, logger)
+        AndroidKoinApp.initApplicationScope(this)
+
+        val logger: Logger by inject()
+        logger.info(LogCategory.GENERAL, "AndroidKoinApp: Application scope initialized successfully")
+
+        // Теперь можем получить зависимости через Koin
+        val manageFirebaseTokensUseCase: ManageFirebaseTokensUseCase by inject()
 
         // Запускаем управление Firebase токенами
         // Используем Application-scoped CoroutineScope
@@ -82,6 +85,12 @@ class TrackerApplication : Application(), KoinComponent {
         super.onTerminate()
         // Отменяем все корутины при завершении приложения
         applicationScope.cancel()
-        logger.info(LogCategory.GENERAL, "TrackerApplication: Application scope cancelled")
+        try {
+            val logger: Logger by inject()
+            logger.info(LogCategory.GENERAL, "TrackerApplication: Application scope cancelled")
+        } catch (e: Exception) {
+            // Koin может быть уже остановлен, используем println как fallback
+            println("TrackerApplication: Application scope cancelled")
+        }
     }
 }

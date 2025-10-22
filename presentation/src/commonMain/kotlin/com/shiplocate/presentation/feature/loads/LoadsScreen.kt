@@ -1,5 +1,6 @@
 package com.shiplocate.presentation.feature.loads
 
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,11 +25,11 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -46,6 +47,7 @@ import com.shiplocate.presentation.util.DateFormatter
 fun LoadsScreen(
     viewModel: LoadsViewModel,
     onLoadClick: (String) -> Unit,
+    onNavigateToLogs: () -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
@@ -53,7 +55,19 @@ fun LoadsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Loads") },
+                modifier =
+                    Modifier.pointerInput(Unit) {
+                        detectTapGestures(
+                            onLongPress = {
+                                onNavigateToLogs()
+                            },
+                        )
+                    },
+                title = {
+                    Text(
+                        "Loads",
+                    )
+                },
                 colors =
                     TopAppBarDefaults.topAppBarColors(
                         containerColor = MaterialTheme.colorScheme.primaryContainer,

@@ -9,6 +9,7 @@ object Screen {
     const val ENTER_PIN = "enter_pin/{phone}"
     const val LOADS = "loads"
     const val HOME = "home/{loadId}"
+    const val LOGS = "logs"
 
     fun enterPin(phone: String) = "enter_pin/$phone"
 

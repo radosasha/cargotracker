@@ -3,6 +3,7 @@ package com.shiplocate.presentation.feature.auth
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -11,6 +12,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -23,6 +25,7 @@ import com.shiplocate.domain.model.auth.Country
 @Composable
 fun EnterPhoneScreen(
     onNavigateToPin: (String) -> Unit,
+    onNavigateToLogs: () -> Unit = {},
     viewModel: EnterPhoneViewModel,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -67,7 +70,14 @@ fun EnterPhoneScreen(
         modifier =
             Modifier
                 .fillMaxSize()
-                .padding(24.dp),
+                .padding(24.dp)
+                .pointerInput(Unit) {
+                    detectTapGestures(
+                        onLongPress = {
+                            onNavigateToLogs()
+                        },
+                    )
+                },
         contentAlignment = Alignment.Center,
     ) {
         Column(

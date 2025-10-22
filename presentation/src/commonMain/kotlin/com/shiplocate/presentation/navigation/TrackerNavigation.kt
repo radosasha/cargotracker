@@ -21,6 +21,7 @@ import com.shiplocate.presentation.di.koinEnterPinViewModel
 import com.shiplocate.presentation.di.koinHomeViewModel
 import com.shiplocate.presentation.di.koinInject
 import com.shiplocate.presentation.di.koinLoadsViewModel
+import com.shiplocate.presentation.di.koinLogsViewModel
 import com.shiplocate.presentation.feature.auth.EnterPhoneScreen
 import com.shiplocate.presentation.feature.auth.EnterPhoneViewModel
 import com.shiplocate.presentation.feature.auth.EnterPinScreen
@@ -29,6 +30,8 @@ import com.shiplocate.presentation.feature.home.HomeScreen
 import com.shiplocate.presentation.feature.home.HomeViewModel
 import com.shiplocate.presentation.feature.loads.LoadsScreen
 import com.shiplocate.presentation.feature.loads.LoadsViewModel
+import com.shiplocate.presentation.feature.logs.LogsScreen
+import com.shiplocate.presentation.feature.logs.LogsViewModel
 import kotlinx.coroutines.launch
 
 /**
@@ -78,6 +81,9 @@ fun TrackerNavigation() {
             EnterPhoneScreen(
                 onNavigateToPin = { phone ->
                     navController.navigate(Screen.enterPin(phone))
+                },
+                onNavigateToLogs = {
+                    navController.navigate(Screen.LOGS)
                 },
                 viewModel = viewModel,
             )
@@ -130,6 +136,9 @@ fun TrackerNavigation() {
                 onLoadClick = { loadId ->
                     navController.navigate(Screen.home(loadId))
                 },
+                onNavigateToLogs = {
+                    navController.navigate(Screen.LOGS)
+                },
             )
         }
 
@@ -141,15 +150,38 @@ fun TrackerNavigation() {
                 ),
         ) { backStackEntry ->
             val homeViewModelFactory = viewModelFactory {
-                initializer<HomeViewModel> {
-                    koinHomeViewModel()
+                    initializer<HomeViewModel> {
+                        koinHomeViewModel()
+                    }
                 }
-            }
             val loadId = backStackEntry.getStringArgument("loadId") ?: ""
             val viewModel: HomeViewModel = viewModel(
-                factory = homeViewModelFactory,
+                    factory = homeViewModelFactory,
+                )
+            HomeScreen(
+                loadId = loadId,
+                viewModel = viewModel,
+                onNavigateToLogs = {
+                    navController.navigate(Screen.LOGS)
+                },
             )
-            HomeScreen(loadId = loadId, viewModel = viewModel)
+        }
+
+        // Logs screen
+        composable(Screen.LOGS) {
+            val logsViewModelFactory =
+                viewModelFactory {
+                    initializer<LogsViewModel> {
+                        koinLogsViewModel()
+                    }
+                }
+            val viewModel: LogsViewModel =
+                viewModel(
+                    factory = logsViewModelFactory,
+                )
+            LogsScreen(
+                viewModel = viewModel,
+            )
         }
     }
 }

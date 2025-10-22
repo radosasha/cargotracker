@@ -74,7 +74,10 @@ class LoadsViewModel(
                     if (result.isSuccess) {
                         logger.info(LogCategory.LOCATION, "LoadsViewModel: Tracking restored successfully")
                     } else {
-                        logger.error(LogCategory.LOCATION, "LoadsViewModel: Failed to restore tracking: ${result.exceptionOrNull()?.message}")
+                        logger.error(
+                            LogCategory.LOCATION,
+                            "LoadsViewModel: Failed to restore tracking: ${result.exceptionOrNull()?.message}",
+                        )
                     }
                 } else {
                     logger.info(LogCategory.LOCATION, "LoadsViewModel: Tracking was not active, no restoration needed")
@@ -107,10 +110,10 @@ class LoadsViewModel(
             result.fold(
                 onSuccess = { loads ->
                     logger.info(LogCategory.UI, "LoadsViewModel: Successfully loaded ${loads.size} loads")
-                    
+
                     // Сортируем список по дате создания (createdAt) - новые сверху
                     val sortedLoads = loads.sortedByDescending { it.createdAt }
-                    
+
                     _isRefreshing.value = false
                     _uiState.value = LoadsUiState.Success(sortedLoads)
                 },
@@ -155,11 +158,11 @@ class LoadsViewModel(
                         getCachedLoadsUseCase()
                     }
                 logger.info(LogCategory.UI, "LoadsViewModel: Successfully loaded ${cachedLoads.size} loads from cache")
-                
+
                 // Сортируем кешированный список по дате создания (createdAt) - новые сверху
                 val sortedCachedLoads = cachedLoads.sortedByDescending { it.createdAt }
                 logger.debug(LogCategory.UI, "LoadsViewModel: Sorted ${sortedCachedLoads.size} cached loads by createdAt (newest first)")
-                
+
                 _uiState.value = LoadsUiState.Success(sortedCachedLoads)
             } catch (e: Exception) {
                 logger.error(LogCategory.UI, "LoadsViewModel: Failed to load from cache: ${e.message}")
@@ -170,7 +173,7 @@ class LoadsViewModel(
             }
         }
     }
-    
+
     /**
      * Запрашивает разрешения на уведомления
      * Вызывается после успешной авторизации пользователя
@@ -180,7 +183,7 @@ class LoadsViewModel(
             try {
                 logger.info(LogCategory.PERMISSIONS, "LoadsViewModel: Requesting notification permission...")
                 val result = requestNotificationPermissionUseCase()
-                
+
                 if (result.isSuccess) {
                     val granted = result.getOrNull() ?: false
                     if (granted) {
@@ -189,7 +192,10 @@ class LoadsViewModel(
                         logger.warn(LogCategory.PERMISSIONS, "LoadsViewModel: Notification permission denied")
                     }
                 } else {
-                    logger.error(LogCategory.PERMISSIONS, "LoadsViewModel: Failed to request notification permission: ${result.exceptionOrNull()?.message}")
+                    logger.error(
+                        LogCategory.PERMISSIONS,
+                        "LoadsViewModel: Failed to request notification permission: ${result.exceptionOrNull()?.message}",
+                    )
                 }
             } catch (e: Exception) {
                 logger.error(LogCategory.PERMISSIONS, "LoadsViewModel: Exception while requesting notification permission: ${e.message}")

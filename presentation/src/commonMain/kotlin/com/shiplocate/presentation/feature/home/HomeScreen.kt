@@ -13,6 +13,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -31,6 +32,7 @@ import com.shiplocate.presentation.component.MessageCard
 fun HomeScreen(
     loadId: String,
     viewModel: HomeViewModel,
+    onNavigateToLogs: () -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -135,6 +137,17 @@ fun HomeScreen(
                         else -> "Stop"
                     },
             )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Кнопка для перехода к логам
+        OutlinedButton(
+            onClick = onNavigateToLogs,
+            enabled = !uiState.isLoading,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text("View Logs")
         }
 
         Spacer(modifier = Modifier.height(16.dp))

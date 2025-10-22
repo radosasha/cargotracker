@@ -28,7 +28,10 @@ class TestServerUseCase(
                     deviceId = "40329715",
                 )
 
-            logger.info(LogCategory.NETWORK, "TestServerUseCase: Sending test location: ${testLocation.latitude}, ${testLocation.longitude}")
+            logger.info(
+                LogCategory.NETWORK,
+                "TestServerUseCase: Sending test location: ${testLocation.latitude}, ${testLocation.longitude}",
+            )
 
             // Отправляем тестовые координаты на сервер
 //            locationRepository.sendLocation(testLocation)

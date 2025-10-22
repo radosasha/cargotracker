@@ -14,7 +14,6 @@ kotlin {
         commonMain.dependencies {
             // Domain module
             implementation(project(":domain"))
-            
             // Logging
             implementation(project(":core:logging"))
 

@@ -35,7 +35,6 @@ class HomeViewModel(
     private val disconnectFromLoadUseCase: DisconnectFromLoadUseCase,
     private val logger: Logger,
 ) : ViewModel() {
-
     private lateinit var loadId: String
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
@@ -85,7 +84,10 @@ class HomeViewModel(
                 if (result.isSuccess) {
                     val permissionStatus = result.getOrNull()
                     logger.debug(LogCategory.PERMISSIONS, "HomeViewModel.onRequestPermissions() - permissionStatus: $permissionStatus")
-                    logger.debug(LogCategory.PERMISSIONS, "HomeViewModel.onRequestPermissions() - hasAllPermissions: ${permissionStatus?.hasAllPermissions}")
+                    logger.debug(
+                        LogCategory.PERMISSIONS,
+                        "HomeViewModel.onRequestPermissions() - hasAllPermissions: ${permissionStatus?.hasAllPermissions}",
+                    )
 
                     _uiState.value =
                         _uiState.value.copy(
@@ -96,10 +98,16 @@ class HomeViewModel(
 
                     // Если все разрешения получены, автоматически запускаем трекинг
                     if (permissionStatus?.hasAllPermissions == true) {
-                        logger.info(LogCategory.PERMISSIONS, "HomeViewModel.onRequestPermissions() - all permissions granted, starting tracking")
+                        logger.info(
+                            LogCategory.PERMISSIONS,
+                            "HomeViewModel.onRequestPermissions() - all permissions granted, starting tracking",
+                        )
                         startTracking()
                     } else {
-                        logger.warn(LogCategory.PERMISSIONS, "HomeViewModel.onRequestPermissions() - not all permissions granted, not starting tracking")
+                        logger.warn(
+                            LogCategory.PERMISSIONS,
+                            "HomeViewModel.onRequestPermissions() - not all permissions granted, not starting tracking",
+                        )
                     }
                 } else {
                     _uiState.value =
@@ -193,7 +201,10 @@ class HomeViewModel(
                         disconnectFromLoadUseCase(currentLoadId)
                     }
                 if (disconnectResult.isFailure) {
-                    logger.error(LogCategory.UI, "HomeViewModel: Failed to disconnect from load: ${disconnectResult.exceptionOrNull()?.message}")
+                    logger.error(
+                        LogCategory.UI,
+                        "HomeViewModel: Failed to disconnect from load: ${disconnectResult.exceptionOrNull()?.message}",
+                    )
                     _uiState.value =
                         _uiState.value.copy(
                             isLoading = false,

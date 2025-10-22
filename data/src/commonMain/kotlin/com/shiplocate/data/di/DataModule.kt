@@ -28,12 +28,17 @@ import com.shiplocate.data.network.api.FirebaseTokenApiImpl
 import com.shiplocate.data.network.api.FlespiLocationApi
 import com.shiplocate.data.network.api.LoadApi
 import com.shiplocate.data.network.api.LoadApiImpl
+import com.shiplocate.data.network.api.LogsApi
+import com.shiplocate.data.network.api.LogsApiImpl
+import com.shiplocate.data.datasource.LogsRemoteDataSource
+import com.shiplocate.data.datasource.impl.LogsRemoteDataSourceImpl
 import com.shiplocate.data.network.api.OsmAndLocationApi
 import com.shiplocate.data.repository.AuthPreferencesRepositoryImpl
 import com.shiplocate.data.repository.AuthRepositoryImpl
 import com.shiplocate.data.repository.DeviceRepositoryImpl
 import com.shiplocate.data.repository.LoadRepositoryImpl
 import com.shiplocate.data.repository.LocationRepositoryImpl
+import com.shiplocate.data.repository.LogsRepositoryImpl
 import com.shiplocate.data.repository.NotificationRepositoryImpl
 import com.shiplocate.data.repository.PermissionRepositoryImpl
 import com.shiplocate.data.repository.PrefsRepositoryImpl
@@ -46,6 +51,7 @@ import com.shiplocate.domain.repository.AuthRepository
 import com.shiplocate.domain.repository.DeviceRepository
 import com.shiplocate.domain.repository.LoadRepository
 import com.shiplocate.domain.repository.LocationRepository
+import com.shiplocate.domain.repository.LogsRepository
 import com.shiplocate.domain.repository.NotificationRepository
 import com.shiplocate.domain.repository.PermissionRepository
 import com.shiplocate.domain.repository.PrefsRepository
@@ -119,6 +125,15 @@ val dataModule =
                 )
             }
 
+            // Logs API
+            single<LogsApi> {
+                LogsApiImpl(
+                    httpClient = get(),
+                    baseUrl = "http://${ServerConfig.BASE_URL}:8082",
+                    logger = get(),
+                )
+            }
+
             // Data Sources
             single<GpsLocationDataSource> { GpsLocationDataSourceImpl(get()) }
             single<LocationRemoteDataSource> { LocationRemoteDataSourceImpl(get(), get(), get()) }
@@ -127,6 +142,7 @@ val dataModule =
             single<AuthRemoteDataSource> { AuthRemoteDataSource(get(), get()) }
             single { LoadRemoteDataSource(get()) }
             single { LoadLocalDataSource(get()) }
+            single<LogsRemoteDataSource> { LogsRemoteDataSourceImpl(get(), get()) }
 
             // Firebase Token Data Sources
             single<FirebaseTokenLocalDataSource> { FirebaseTokenLocalDataSourceImpl(get()) }
@@ -142,6 +158,7 @@ val dataModule =
             single<AuthRepository> { AuthRepositoryImpl(get()) }
             single<AuthPreferencesRepository> { AuthPreferencesRepositoryImpl(get(), get()) }
             single<LoadRepository> { LoadRepositoryImpl(get(), get(), get()) }
+            single<LogsRepository> { LogsRepositoryImpl(get(), get(), get()) }
             single<NotificationRepository> { NotificationRepositoryImpl(get(), get(), get(), get()) }
 
             // Domain Services - реализации в data слое

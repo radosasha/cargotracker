@@ -22,7 +22,7 @@ object AndroidKoinApp {
      * Инициализация Application-scoped зависимостей
      * Вызывается в Application.onCreate()
      */
-    fun initApplicationScope(application: android.app.Application, logger: Logger? = null) {
+    fun initApplicationScope(application: android.app.Application) {
         startKoin {
             printLogger()
             androidContext(application)
@@ -30,9 +30,6 @@ object AndroidKoinApp {
                 appModule + activityModule + androidPlatformModule,
             )
         }
-
-        logger?.info(LogCategory.GENERAL, "AndroidKoinApp: Application scope initialized successfully")
-            ?: println("AndroidKoinApp: Application scope initialized successfully")
     }
 
     /**

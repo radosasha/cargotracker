@@ -29,8 +29,8 @@ val loggingModule: Module =
                 .enableUserUiInteractions()
                 .crashErrorLogging()
                 .setFileHours(true)
-                .setMaxFileSize(10 * 1024 * 1024) // 10MB
-                .setMaxFiles(5)
+                .setMaxFileSize(3 * 1024 * 1024) // 3MB
+                .setMaxFiles(48)
                 .buildConfig()
         }
 

@@ -4,6 +4,7 @@ import com.shiplocate.presentation.feature.auth.EnterPhoneViewModel
 import com.shiplocate.presentation.feature.auth.EnterPinViewModel
 import com.shiplocate.presentation.feature.home.HomeViewModel
 import com.shiplocate.presentation.feature.loads.LoadsViewModel
+import com.shiplocate.presentation.feature.logs.LogsViewModel
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
@@ -31,5 +32,11 @@ actual fun koinEnterPinViewModel(): EnterPinViewModel {
 actual fun koinLoadsViewModel(): LoadsViewModel {
     return object : KoinComponent {
         val viewModel: LoadsViewModel by inject()
+    }.viewModel
+}
+
+actual fun koinLogsViewModel(): LogsViewModel {
+    return object : KoinComponent {
+        val viewModel: LogsViewModel by inject()
     }.viewModel
 }
