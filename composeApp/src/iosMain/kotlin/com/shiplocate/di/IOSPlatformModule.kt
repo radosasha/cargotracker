@@ -11,7 +11,7 @@ import org.koin.dsl.module
 val iosPlatformModule = module {
 
     // Регистрируем actual класс FirebaseTokenServiceDataSource для iOS
-    single<FirebaseTokenServiceDataSource> { FirebaseTokenServiceDataSource() }
+    single<FirebaseTokenServiceDataSource> { FirebaseTokenServiceDataSource(get()) }
     
     // Регистрируем адаптер для связи с интерфейсом из data модуля
     single<FirebaseTokenService> { FirebaseTokenServiceAdapter(get()) }

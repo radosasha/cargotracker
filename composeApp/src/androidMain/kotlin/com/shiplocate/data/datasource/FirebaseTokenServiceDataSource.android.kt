@@ -1,5 +1,7 @@
 package com.shiplocate.data.datasource
 
+import com.shiplocate.core.logging.LogCategory
+import com.shiplocate.core.logging.Logger
 import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -9,18 +11,20 @@ import kotlinx.coroutines.tasks.await
 /**
  * Android реализация FirebaseTokenServiceDataSource
  */
-actual class FirebaseTokenServiceDataSource {
+actual class FirebaseTokenServiceDataSource(
+    private val logger: Logger
+) {
 
     private val _newTokenFlow = MutableSharedFlow<String>()
 
     actual suspend fun getCurrentToken(): String? {
         return try {
-            println("Android: Getting current Firebase token...")
+            logger.debug(LogCategory.GENERAL, "Android: Getting current Firebase token...")
             val token = FirebaseMessaging.getInstance().token.await()
-            println("Android: Got Firebase token on-demand: ${token.take(20)}...")
+            logger.debug(LogCategory.GENERAL, "Android: Got Firebase token on-demand: ${token.take(20)}...")
             token
         } catch (e: Exception) {
-            println("Android: Failed to get Firebase token: ${e.message}")
+            logger.error(LogCategory.GENERAL, "Android: Failed to get Firebase token: ${e.message}", e)
             null
         }
     }
@@ -30,12 +34,12 @@ actual class FirebaseTokenServiceDataSource {
     }
 
     actual suspend fun onNewTokenReceived(token: String) {
-        println("Android: New Firebase token received: ${token.take(20)}...")
+        logger.info(LogCategory.GENERAL, "Android: New Firebase token received: ${token.take(20)}...")
         _newTokenFlow.emit(token)
     }
     
     actual fun onPushNotificationReceived(userInfo: Map<String, Any>) {
-        println("Android: Push notification received: $userInfo")
+        logger.info(LogCategory.GENERAL, "Android: Push notification received: $userInfo")
         // TODO: Implement push notification handling
     }
 }

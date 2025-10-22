@@ -59,10 +59,10 @@ class MainActivity : ComponentActivity(), KoinComponent {
         logger.info(LogCategory.GENERAL, "MainActivity.onCreate() called")
 
         // Инициализируем Activity scope
-        AndroidKoinApp.initActivityScope()
+        AndroidKoinApp.initActivityScope(logger)
 
         // Инициализируем Activity context
-        AndroidKoinApp.initActivityContext(this)
+        AndroidKoinApp.initActivityContext(this, logger)
 
         // CrashHandler уже инициализирован через DI
         logger.info(LogCategory.GENERAL, "MainActivity initialized")

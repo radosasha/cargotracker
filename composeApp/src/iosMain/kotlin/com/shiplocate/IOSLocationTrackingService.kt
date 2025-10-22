@@ -1,5 +1,7 @@
 package com.shiplocate
 
+import com.shiplocate.core.logging.LogCategory
+import com.shiplocate.core.logging.Logger
 import com.shiplocate.domain.usecase.StartProcessLocationsUseCase
 import com.shiplocate.domain.usecase.StopProcessLocationsUseCase
 import kotlinx.coroutines.CoroutineScope
@@ -22,9 +24,9 @@ import org.koin.core.component.inject
 class IOSLocationTrackingService private constructor() : KoinComponent {
     private var isTracking = false
 
-    // Koin DI - используем Use Cases
     private val startProcessLocationsUseCase: StartProcessLocationsUseCase by inject()
     private val stopProcessLocationsUseCase: StopProcessLocationsUseCase by inject()
+    private val logger: Logger by inject()
 
     // Coroutine scope for background operations
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -81,21 +83,21 @@ class IOSLocationTrackingService private constructor() : KoinComponent {
      */
     suspend fun startLocationTracking() {
         if (isTracking) {
-            println("$TAG: Already tracking, ignoring start request")
+            logger.info(LogCategory.LOCATION, "$TAG: Already tracking, ignoring start request")
             return
         }
 
         try {
-            println("$TAG: Starting GPS tracking through StartProcessLocationsUseCase")
+            logger.info(LogCategory.LOCATION, "$TAG: Starting GPS tracking through StartProcessLocationsUseCase")
 
             // Запускаем обработку GPS координат и подписываемся на Flow результатов
             collectingJob = startProcessLocationsUseCase()
                 .onEach { result ->
                     // Логируем результат обработки
                     if (result.shouldSend) {
-                        println("$TAG: ✅ Location processed successfully: ${result.reason}")
+                        logger.debug(LogCategory.LOCATION, "$TAG: ✅ Location processed successfully: ${result.reason}")
                     } else {
-                        println("$TAG: ⏭️ Location filtered: ${result.reason}")
+                        logger.debug(LogCategory.LOCATION, "$TAG: ⏭️ Location filtered: ${result.reason}")
                     }
                 }
                 .launchIn(serviceScope)
@@ -105,10 +107,9 @@ class IOSLocationTrackingService private constructor() : KoinComponent {
             // Сохраняем состояние для восстановления
             // TODO: Добавить сохранение состояния
 
-            println("$TAG: ✅ GPS tracking started successfully")
+            logger.info(LogCategory.LOCATION, "$TAG: ✅ GPS tracking started successfully")
         } catch (e: Exception) {
-            println("$TAG: ❌ Error starting GPS tracking: ${e.message}")
-            e.printStackTrace()
+            logger.error(LogCategory.LOCATION, "$TAG: ❌ Error starting GPS tracking: ${e.message}", e)
             isTracking = false // Сбрасываем состояние при ошибке
             // TODO: Добавить сохранение состояния
         }
@@ -120,26 +121,25 @@ class IOSLocationTrackingService private constructor() : KoinComponent {
      */
     suspend fun stopLocationTracking() {
         if (!isTracking) {
-            println("$TAG: Not tracking, ignoring stop request")
+            logger.info(LogCategory.LOCATION, "$TAG: Not tracking, ignoring stop request")
             return
         }
 
         try {
-            println("$TAG: Stopping GPS tracking through StopProcessLocationsUseCase")
+            logger.info(LogCategory.LOCATION, "$TAG: Stopping GPS tracking through StopProcessLocationsUseCase")
 
             // Останавливаем обработку GPS координат
             val result = stopProcessLocationsUseCase()
             if (result.isSuccess) {
                 isTracking = false
-                println("$TAG: ✅ GPS tracking stopped successfully")
+                logger.info(LogCategory.LOCATION, "$TAG: ✅ GPS tracking stopped successfully")
             } else {
-                println("$TAG: ❌ Failed to stop GPS tracking: ${result.exceptionOrNull()?.message}")
+                logger.error(LogCategory.LOCATION, "$TAG: ❌ Failed to stop GPS tracking: ${result.exceptionOrNull()?.message}")
                 // Принудительно сбрасываем состояние даже при ошибке
                 isTracking = false
             }
         } catch (e: Exception) {
-            println("$TAG: ❌ Error stopping GPS tracking: ${e.message}")
-            e.printStackTrace()
+            logger.error(LogCategory.LOCATION, "$TAG: ❌ Error stopping GPS tracking: ${e.message}", e)
             // Принудительно сбрасываем состояние при исключении
             isTracking = false
         }
@@ -154,24 +154,23 @@ class IOSLocationTrackingService private constructor() : KoinComponent {
      */
     private suspend fun stopLocationTrackingSync() {
         if (!isTracking) {
-            println("$TAG: Not tracking, ignoring stop request")
+            logger.info(LogCategory.LOCATION, "$TAG: Not tracking, ignoring stop request")
             return
         }
 
         try {
-            println("$TAG: Stopping GPS tracking synchronously")
+            logger.info(LogCategory.LOCATION, "$TAG: Stopping GPS tracking synchronously")
 
             // Останавливаем обработку GPS координат синхронно
             val result = stopProcessLocationsUseCase()
             if (result.isSuccess) {
                 isTracking = false
-                println("$TAG: ✅ GPS tracking stopped successfully")
+                logger.info(LogCategory.LOCATION, "$TAG: ✅ GPS tracking stopped successfully")
             } else {
-                println("$TAG: ❌ Failed to stop GPS tracking: ${result.exceptionOrNull()?.message}")
+                logger.error(LogCategory.LOCATION, "$TAG: ❌ Failed to stop GPS tracking: ${result.exceptionOrNull()?.message}")
             }
         } catch (e: Exception) {
-            println("$TAG: ❌ Error stopping GPS tracking: ${e.message}")
-            e.printStackTrace()
+            logger.error(LogCategory.LOCATION, "$TAG: ❌ Error stopping GPS tracking: ${e.message}", e)
         }
     }
 
@@ -180,7 +179,7 @@ class IOSLocationTrackingService private constructor() : KoinComponent {
      * Аналог onDestroy в Android Service
      */
     fun destroy() {
-        println("$TAG: Destroying service")
+        logger.info(LogCategory.LOCATION, "$TAG: Destroying service")
 
         // Синхронная остановка GPS трекинга перед отменой scope
         if (isTracking) {
@@ -190,13 +189,13 @@ class IOSLocationTrackingService private constructor() : KoinComponent {
                     stopLocationTrackingSync()
                 }
             } catch (e: Exception) {
-                println("$TAG: Error in runBlocking: ${e.message}")
+                logger.error(LogCategory.LOCATION, "$TAG: Error in runBlocking: ${e.message}", e)
             }
         }
 
         // Останавливаем serviceScope, что отменит все корутины
         serviceScope.cancel()
-        println("$TAG: Service scope cancelled")
+        logger.info(LogCategory.LOCATION, "$TAG: Service scope cancelled")
 
         // Очищаем singleton instance
         instance = null

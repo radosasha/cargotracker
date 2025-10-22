@@ -1,5 +1,7 @@
 package com.shiplocate.data.datasource
 
+import com.shiplocate.core.logging.LogCategory
+import com.shiplocate.core.logging.Logger
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -8,7 +10,9 @@ import kotlin.coroutines.resume
 /**
  * iOS реализация FirebaseTokenServiceDataSource
  */
-actual class FirebaseTokenServiceDataSource {
+actual class FirebaseTokenServiceDataSource(
+    private val logger: Logger
+) {
     
     private val _newTokenFlow = MutableSharedFlow<String>()
     
@@ -17,17 +21,17 @@ actual class FirebaseTokenServiceDataSource {
     
     actual suspend fun getCurrentToken(): String? {
         return suspendCancellableCoroutine { continuation ->
-            println("iOS: Requesting current Firebase token from Swift...")
+            logger.debug(LogCategory.GENERAL, "iOS: Requesting current Firebase token from Swift...")
             
             // Сохраняем callback для получения токена
             tokenCallback = { token ->
-                println("iOS: Received token from Swift: ${token?.take(20)}...")
+                logger.debug(LogCategory.GENERAL, "iOS: Received token from Swift: ${token?.take(20)}...")
                 continuation.resume(token)
             }
             
             // TODO: Интегрировать с Swift кодом для получения токена
             // Пока просто логируем - токен будет получен через onNewToken callback
-            println("iOS: Token request - will be received via callback")
+            logger.debug(LogCategory.GENERAL, "iOS: Token request - will be received via callback")
         }
     }
     
@@ -36,12 +40,12 @@ actual class FirebaseTokenServiceDataSource {
     }
 
     actual suspend fun onNewTokenReceived(token: String) {
-        println("iOS: New Firebase token received: ${token.take(20)}...")
+        logger.info(LogCategory.GENERAL, "iOS: New Firebase token received: ${token.take(20)}...")
         _newTokenFlow.emit(token)
     }
     
     actual fun onPushNotificationReceived(userInfo: Map<String, Any>) {
-        println("iOS: Push notification received: $userInfo")
+        logger.info(LogCategory.GENERAL, "iOS: Push notification received: $userInfo")
         // TODO: Implement push notification handling
     }
     

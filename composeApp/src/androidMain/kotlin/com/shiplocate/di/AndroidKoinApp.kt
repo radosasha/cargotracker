@@ -1,6 +1,9 @@
 package com.shiplocate.di
 
+import android.content.Context
 import com.shiplocate.ActivityProvider
+import com.shiplocate.core.logging.LogCategory
+import com.shiplocate.core.logging.Logger
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.GlobalContext
 import org.koin.core.context.startKoin
@@ -19,7 +22,7 @@ object AndroidKoinApp {
      * Инициализация Application-scoped зависимостей
      * Вызывается в Application.onCreate()
      */
-    fun initApplicationScope(application: android.app.Application) {
+    fun initApplicationScope(application: android.app.Application, logger: Logger? = null) {
         startKoin {
             printLogger()
             androidContext(application)
@@ -28,53 +31,59 @@ object AndroidKoinApp {
             )
         }
 
-        println("AndroidKoinApp: Application scope initialized successfully")
+        logger?.info(LogCategory.GENERAL, "AndroidKoinApp: Application scope initialized successfully")
+            ?: println("AndroidKoinApp: Application scope initialized successfully")
     }
 
     /**
      * Инициализация Activity-scoped зависимостей
      * Вызывается в Activity.onCreate()
      */
-    fun initActivityScope() {
+    fun initActivityScope(logger: Logger? = null) {
         if (hasActivityScope) {
-            println("AndroidKoinApp: Activity scope already initialized, skipping")
+            logger?.info(LogCategory.GENERAL, "AndroidKoinApp: Activity scope already initialized, skipping")
+                ?: println("AndroidKoinApp: Activity scope already initialized, skipping")
             return
         }
 
         hasActivityScope = true
-        println("AndroidKoinApp: Activity scope initialized successfully")
+        logger?.info(LogCategory.GENERAL, "AndroidKoinApp: Activity scope initialized successfully")
+            ?: println("AndroidKoinApp: Activity scope initialized successfully")
     }
 
     /**
      * Установка Activity контекста
      * Вызывается в Activity.onCreate()
      */
-    fun initActivityContext(context: android.content.Context) {
+    fun initActivityContext(context: Context, logger: Logger? = null) {
         val activityContextProvider = GlobalContext.get().get<ActivityProvider>()
         activityContextProvider.setActivity(context)
-        println("AndroidKoinApp: Activity context set successfully")
+        logger?.info(LogCategory.GENERAL, "AndroidKoinApp: Activity context set successfully")
+            ?: println("AndroidKoinApp: Activity context set successfully")
     }
 
     /**
      * Очистка Activity контекста
      * Вызывается в Activity.onDestroy()
      */
-    fun clearActivityContext() {
+    fun clearActivityContext(logger: Logger? = null) {
         val activityContextProvider = GlobalContext.get().get<ActivityProvider>()
         activityContextProvider.clearActivity()
         hasActivityScope = false
-        println("AndroidKoinApp: Activity context cleared successfully")
+        logger?.info(LogCategory.GENERAL, "AndroidKoinApp: Activity context cleared successfully")
+            ?: println("AndroidKoinApp: Activity context cleared successfully")
     }
 
     /**
      * Остановка Koin
      * Вызывается при завершении приложения
      */
-    fun stop() {
-        clearActivityContext()
+    fun stop(logger: Logger? = null) {
+        clearActivityContext(logger)
         stopKoin()
         hasActivityScope = false
-        println("AndroidKoinApp: Stopped successfully")
+        logger?.info(LogCategory.GENERAL, "AndroidKoinApp: Stopped successfully")
+            ?: println("AndroidKoinApp: Stopped successfully")
     }
 
     /**

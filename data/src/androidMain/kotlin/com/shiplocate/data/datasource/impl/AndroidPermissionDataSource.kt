@@ -1,5 +1,7 @@
 package com.shiplocate.data.datasource.impl
 
+import com.shiplocate.core.logging.LogCategory
+import com.shiplocate.core.logging.Logger
 import com.shiplocate.data.datasource.PermissionDataSource
 import com.shiplocate.data.datasource.PermissionRequester
 import com.shiplocate.data.model.PermissionDataModel
@@ -9,6 +11,7 @@ import com.shiplocate.data.model.PermissionDataModel
  */
 class AndroidPermissionDataSource(
     private val permissionRequester: PermissionRequester,
+    private val logger: Logger,
 ) : PermissionDataSource {
     override suspend fun getPermissionStatus(): PermissionDataModel {
         return PermissionDataModel(
@@ -21,11 +24,12 @@ class AndroidPermissionDataSource(
 
     override suspend fun requestAllPermissions(): Result<PermissionDataModel> {
         return try {
-            println("AndroidPermissionDataSource.requestAllPermissions() called")
+            logger.debug(LogCategory.PERMISSIONS, "AndroidPermissionDataSource.requestAllPermissions() called")
             permissionRequester.requestAllPermissions()
 
             val status = getPermissionStatus()
-            println(
+            logger.debug(
+                LogCategory.PERMISSIONS,
                 "AndroidPermissionDataSource.requestAllPermissions() - status: location=${status.hasLocationPermission}, " +
                     "background=${status.hasBackgroundLocationPermission}, notification=${status.hasNotificationPermission}, " +
                     "battery=${status.isBatteryOptimizationDisabled}",
@@ -37,14 +41,14 @@ class AndroidPermissionDataSource(
                 status.hasNotificationPermission &&
                 status.isBatteryOptimizationDisabled
             ) {
-                println("AndroidPermissionDataSource.requestAllPermissions() - all permissions granted, returning success")
+                logger.info(LogCategory.PERMISSIONS, "AndroidPermissionDataSource.requestAllPermissions() - all permissions granted, returning success")
                 Result.success(status)
             } else {
-                println("AndroidPermissionDataSource.requestAllPermissions() - not all permissions granted, returning failure")
+                logger.warn(LogCategory.PERMISSIONS, "AndroidPermissionDataSource.requestAllPermissions() - not all permissions granted, returning failure")
                 Result.failure(Exception("Не все разрешения получены"))
             }
         } catch (e: Exception) {
-            println("AndroidPermissionDataSource.requestAllPermissions() - exception: ${e.message}")
+            logger.error(LogCategory.PERMISSIONS, "AndroidPermissionDataSource.requestAllPermissions() - exception: ${e.message}", e)
             Result.failure(e)
         }
     }

@@ -35,7 +35,7 @@ class TrackerApplication : Application(), KoinComponent {
         ApplicationContextProvider.init(this)
 
         // Инициализируем Koin с Application-scoped зависимостями
-        AndroidKoinApp.initApplicationScope(this)
+        AndroidKoinApp.initApplicationScope(this, logger)
 
         // Запускаем управление Firebase токенами
         // Используем Application-scoped CoroutineScope

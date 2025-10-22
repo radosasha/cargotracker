@@ -3,6 +3,8 @@ package com.shiplocate.data.datasource.impl
 import android.content.Context
 import android.os.BatteryManager
 import android.os.Build
+import com.shiplocate.core.logging.LogCategory
+import com.shiplocate.core.logging.Logger
 import com.shiplocate.data.datasource.DeviceDataSource
 
 /**
@@ -11,15 +13,16 @@ import com.shiplocate.data.datasource.DeviceDataSource
  */
 class AndroidDeviceDataSource(
     private val context: Context,
+    private val logger: Logger,
 ) : DeviceDataSource {
     override suspend fun getBatteryLevel(): Float? {
         return try {
             val batteryManager = context.getSystemService(Context.BATTERY_SERVICE) as? BatteryManager
             val batteryLevel = batteryManager?.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)?.toFloat()
-            println("AndroidDeviceDataSource: Battery level: $batteryLevel%")
+            logger.debug(LogCategory.GENERAL, "AndroidDeviceDataSource: Battery level: $batteryLevel%")
             batteryLevel
         } catch (e: Exception) {
-            println("AndroidDeviceDataSource: Error getting battery level: ${e.message}")
+            logger.error(LogCategory.GENERAL, "AndroidDeviceDataSource: Error getting battery level: ${e.message}", e)
             null
         }
     }
@@ -28,10 +31,10 @@ class AndroidDeviceDataSource(
         return try {
             val batteryManager = context.getSystemService(Context.BATTERY_SERVICE) as? BatteryManager
             val isCharging = batteryManager?.isCharging ?: false
-            println("AndroidDeviceDataSource: Is charging: $isCharging")
+            logger.debug(LogCategory.GENERAL, "AndroidDeviceDataSource: Is charging: $isCharging")
             isCharging
         } catch (e: Exception) {
-            println("AndroidDeviceDataSource: Error checking charging status: ${e.message}")
+            logger.error(LogCategory.GENERAL, "AndroidDeviceDataSource: Error checking charging status: ${e.message}", e)
             false
         }
     }
@@ -43,10 +46,10 @@ class AndroidDeviceDataSource(
     override suspend fun getOsVersion(): String {
         return try {
             val version = Build.VERSION.RELEASE
-            println("AndroidDeviceDataSource: OS version: $version")
+            logger.debug(LogCategory.GENERAL, "AndroidDeviceDataSource: OS version: $version")
             version
         } catch (e: Exception) {
-            println("AndroidDeviceDataSource: Error getting OS version: ${e.message}")
+            logger.error(LogCategory.GENERAL, "AndroidDeviceDataSource: Error getting OS version: ${e.message}", e)
             "Unknown"
         }
     }
@@ -54,10 +57,10 @@ class AndroidDeviceDataSource(
     override suspend fun getDeviceModel(): String {
         return try {
             val model = Build.MODEL
-            println("AndroidDeviceDataSource: Device model: $model")
+            logger.debug(LogCategory.GENERAL, "AndroidDeviceDataSource: Device model: $model")
             model
         } catch (e: Exception) {
-            println("AndroidDeviceDataSource: Error getting device model: ${e.message}")
+            logger.error(LogCategory.GENERAL, "AndroidDeviceDataSource: Error getting device model: ${e.message}", e)
             "Unknown"
         }
     }
