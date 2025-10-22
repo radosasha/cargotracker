@@ -5,6 +5,8 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import com.shiplocate.core.logging.LogCategory
+import com.shiplocate.core.logging.Logger
 import com.shiplocate.domain.model.auth.AuthSession
 import com.shiplocate.domain.model.auth.AuthUser
 import com.shiplocate.domain.repository.AuthPreferencesRepository
@@ -16,6 +18,7 @@ import kotlinx.coroutines.flow.map
  */
 class AuthPreferencesRepositoryImpl(
     private val dataStore: DataStore<Preferences>,
+    private val logger: Logger,
 ) : AuthPreferencesRepository {
     companion object {
         private val KEY_TOKEN = stringPreferencesKey("auth_token")
@@ -25,18 +28,18 @@ class AuthPreferencesRepositoryImpl(
     }
 
     override suspend fun saveSession(session: AuthSession) {
-        println("💾 AuthPreferencesRepository: Saving session for user: ${session.user.name} (${session.user.phone})")
+        logger.info(LogCategory.AUTH, "💾 AuthPreferencesRepository: Saving session for user: ${session.user.name} (${session.user.phone})")
         dataStore.edit { preferences ->
             preferences[KEY_TOKEN] = session.token
             preferences[KEY_USER_ID] = session.user.id
             preferences[KEY_USER_PHONE] = session.user.phone
             preferences[KEY_USER_NAME] = session.user.name
         }
-        println("💾 AuthPreferencesRepository: ✅ Session saved successfully")
+        logger.info(LogCategory.AUTH, "💾 AuthPreferencesRepository: ✅ Session saved successfully")
     }
 
     override suspend fun getSession(): AuthSession? {
-        println("🔍 AuthPreferencesRepository: Getting session...")
+        logger.info(LogCategory.AUTH, "🔍 AuthPreferencesRepository: Getting session...")
         val session =
             dataStore.data.map { preferences ->
                 val token = preferences[KEY_TOKEN]
@@ -60,9 +63,9 @@ class AuthPreferencesRepositoryImpl(
             }.first()
 
         if (session != null) {
-            println("🔍 AuthPreferencesRepository: ✅ Session found: ${session.user.name}")
+            logger.info(LogCategory.AUTH, "🔍 AuthPreferencesRepository: ✅ Session found: ${session.user.name}")
         } else {
-            println("🔍 AuthPreferencesRepository: ⚠️ No session found")
+            logger.info(LogCategory.AUTH, "🔍 AuthPreferencesRepository: ⚠️ No session found")
         }
 
         return session
@@ -82,7 +85,7 @@ class AuthPreferencesRepositoryImpl(
             dataStore.data.map { preferences ->
                 preferences[KEY_TOKEN] != null
             }.first()
-        println("🔍 AuthPreferencesRepository: Has session = $has")
+        logger.info(LogCategory.AUTH, "🔍 AuthPreferencesRepository: Has session = $has")
         return has
     }
 }

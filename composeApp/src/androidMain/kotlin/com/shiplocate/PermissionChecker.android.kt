@@ -1,5 +1,7 @@
 package com.shiplocate
 
+import com.shiplocate.core.logging.LogCategory
+import com.shiplocate.core.logging.Logger
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
@@ -8,6 +10,7 @@ import org.koin.core.component.inject
  */
 actual class PermissionChecker : KoinComponent {
     private val activityContextProvider: ActivityProvider by inject()
+    private val logger: Logger by inject()
     private val permissionRequester = AndroidPermissionRequester(activityContextProvider.getActivity())
 
     actual suspend fun hasLocationPermissions(): Boolean {
@@ -24,7 +27,7 @@ actual class PermissionChecker : KoinComponent {
 
     actual suspend fun hasAllRequiredPermissions(): Boolean {
         val result = permissionRequester.hasAllRequiredPermissions()
-        println("PermissionChecker.hasAllRequiredPermissions(): $result")
+        logger.debug(LogCategory.PERMISSIONS, "PermissionChecker.hasAllRequiredPermissions(): $result")
         return result
     }
 

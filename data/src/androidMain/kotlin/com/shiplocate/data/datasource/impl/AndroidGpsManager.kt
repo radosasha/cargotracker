@@ -5,6 +5,8 @@ import android.content.pm.PackageManager
 import android.location.LocationListener
 import android.os.Looper
 import androidx.core.app.ActivityCompat
+import com.shiplocate.core.logging.LogCategory
+import com.shiplocate.core.logging.Logger
 import com.shiplocate.data.datasource.GpsManager
 import com.shiplocate.data.model.GpsLocation
 import kotlinx.coroutines.CoroutineScope
@@ -25,6 +27,7 @@ import android.location.LocationManager as AndroidLocationManager
  */
 class AndroidGpsManager(
     private val context: Context,
+    private val logger: Logger,
 ) : GpsManager {
     private val androidLocationManager = context.getSystemService(Context.LOCATION_SERVICE) as AndroidLocationManager
     private val gpsLocationFlow = MutableSharedFlow<GpsLocation>(replay = 1)
@@ -41,7 +44,7 @@ class AndroidGpsManager(
 
     override suspend fun startGpsTracking(): Result<Unit> {
         if (isTracking) {
-            println("AndroidGpsManager: Already tracking")
+            logger.debug(LogCategory.LOCATION, "AndroidGpsManager: Already tracking")
             return Result.success(Unit)
         }
 
@@ -51,12 +54,12 @@ class AndroidGpsManager(
                 android.Manifest.permission.ACCESS_FINE_LOCATION,
             ) != PackageManager.PERMISSION_GRANTED
         ) {
-            println("AndroidGpsManager: Location permission not granted")
+            logger.debug(LogCategory.LOCATION, "AndroidGpsManager: Location permission not granted")
             return Result.failure(SecurityException("Location permission not granted"))
         }
 
         try {
-            println("AndroidGpsManager: Starting GPS tracking")
+            logger.debug(LogCategory.LOCATION, "AndroidGpsManager: Starting GPS tracking")
 
             // Запрашиваем обновления GPS
             androidLocationManager.requestLocationUpdates(
@@ -77,30 +80,30 @@ class AndroidGpsManager(
             )
 
             isTracking = true
-            println("AndroidGpsManager: GPS tracking started successfully")
+            logger.debug(LogCategory.LOCATION, "AndroidGpsManager: GPS tracking started successfully")
             return Result.success(Unit)
         } catch (e: SecurityException) {
-            println("AndroidGpsManager: Security exception: ${e.message}")
+            logger.debug(LogCategory.LOCATION, "AndroidGpsManager: Security exception: ${e.message}")
             return Result.failure(e)
         } catch (e: Exception) {
-            println("AndroidGpsManager: Error starting tracking: ${e.message}")
+            logger.debug(LogCategory.LOCATION, "AndroidGpsManager: Error starting tracking: ${e.message}")
             return Result.failure(e)
         }
     }
 
     override suspend fun stopGpsTracking(): Result<Unit> {
         if (!isTracking) {
-            println("AndroidGpsManager: Not tracking")
+            logger.debug(LogCategory.LOCATION, "AndroidGpsManager: Not tracking")
             return Result.success(Unit)
         }
 
         try {
             androidLocationManager.removeUpdates(locationListener)
             isTracking = false
-            println("AndroidGpsManager: GPS tracking stopped")
+            logger.debug(LogCategory.LOCATION, "AndroidGpsManager: GPS tracking stopped")
             return Result.success(Unit)
         } catch (e: Exception) {
-            println("AndroidGpsManager: Error stopping tracking: ${e.message}")
+            logger.debug(LogCategory.LOCATION, "AndroidGpsManager: Error stopping tracking: ${e.message}")
             return Result.failure(e)
         }
     }
@@ -121,11 +124,11 @@ class AndroidGpsManager(
 
     private val locationListener =
         LocationListener { androidLocation ->
-            println("AndroidGpsManager: GPS Location received")
-            println("AndroidGpsManager: Lat: ${androidLocation.latitude}, Lon: ${androidLocation.longitude}")
-            println("AndroidGpsManager: Accuracy: ${androidLocation.accuracy}m, Time: ${androidLocation.time}")
-            println("AndroidGpsManager: Speed: ${if (androidLocation.hasSpeed()) androidLocation.speed else "N/A"} m/s")
-            println("AndroidGpsManager: Bearing: ${if (androidLocation.hasBearing()) androidLocation.bearing else "N/A"}°")
+            logger.debug(LogCategory.LOCATION, "AndroidGpsManager: GPS Location received")
+            logger.debug(LogCategory.LOCATION, "AndroidGpsManager: Lat: ${androidLocation.latitude}, Lon: ${androidLocation.longitude}")
+            logger.debug(LogCategory.LOCATION, "AndroidGpsManager: Accuracy: ${androidLocation.accuracy}m, Time: ${androidLocation.time}")
+            logger.debug(LogCategory.LOCATION, "AndroidGpsManager: Speed: ${if (androidLocation.hasSpeed()) androidLocation.speed else "N/A"} m/s")
+            logger.debug(LogCategory.LOCATION, "AndroidGpsManager: Bearing: ${if (androidLocation.hasBearing()) androidLocation.bearing else "N/A"}°")
 
             // Конвертируем Android Location в GpsLocation
             val gpsLocation = convertToGpsLocation(androidLocation)
@@ -133,7 +136,7 @@ class AndroidGpsManager(
             // Эмитим в flow
             scope.launch {
                 gpsLocationFlow.emit(gpsLocation)
-                println("AndroidGpsManager: Location emitted to flow")
+                logger.debug(LogCategory.LOCATION, "AndroidGpsManager: Location emitted to flow")
             }
         }
 

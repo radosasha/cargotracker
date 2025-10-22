@@ -1,5 +1,7 @@
 package com.shiplocate.data.datasource.impl
 
+import com.shiplocate.core.logging.LogCategory
+import com.shiplocate.core.logging.Logger
 import com.shiplocate.data.datasource.LocationRemoteDataSource
 import com.shiplocate.data.model.LocationDataModel
 import com.shiplocate.data.network.api.FlespiLocationApi
@@ -12,13 +14,14 @@ import com.shiplocate.data.network.api.OsmAndLocationApi
 class LocationRemoteDataSourceImpl(
     private val osmAndLocationApi: OsmAndLocationApi,
     private val flespiLocationApi: FlespiLocationApi,
+    private val logger: Logger,
 ) : LocationRemoteDataSource {
     override suspend fun sendLocation(
         loadId: String,
         location: LocationDataModel,
     ): Result<Unit> {
-        println("RemoteLocationDataSource: Sending single location to server")
-        println("RemoteLocationDataSource: Lat: ${location.latitude}, Lon: ${location.longitude}")
+        logger.debug(LogCategory.NETWORK, "RemoteLocationDataSource: Sending single location to server")
+        logger.debug(LogCategory.NETWORK, "RemoteLocationDataSource: Lat: ${location.latitude}, Lon: ${location.longitude}")
         return osmAndLocationApi.sendLocation(loadId, location)
     }
 
@@ -26,25 +29,25 @@ class LocationRemoteDataSourceImpl(
         loadId: String,
         locations: List<LocationDataModel>,
     ): Result<Unit> {
-        println("RemoteLocationDataSource: Sending ${locations.size} locations to server")
+        logger.debug(LogCategory.NETWORK, "RemoteLocationDataSource: Sending ${locations.size} locations to server")
         return try {
             if (locations.isEmpty()) {
-                println("RemoteLocationDataSource: No locations to send")
+                logger.debug(LogCategory.NETWORK, "RemoteLocationDataSource: No locations to send")
                 return Result.success(Unit)
             }
 
             // Используем Flespi протокол для пакетной отправки
-            println("RemoteLocationDataSource: Using Flespi protocol for batch sending")
+            logger.debug(LogCategory.NETWORK, "RemoteLocationDataSource: Using Flespi protocol for batch sending")
             val result = flespiLocationApi.sendLocations(loadId, locations)
 
             if (result.isSuccess) {
-                println("RemoteLocationDataSource: ✅ Successfully sent ${locations.size} locations via Flespi protocol")
+                logger.debug(LogCategory.NETWORK, "RemoteLocationDataSource: ✅ Successfully sent ${locations.size} locations via Flespi protocol")
             } else {
-                println("RemoteLocationDataSource: ❌ Failed to send locations via Flespi protocol: ${result.exceptionOrNull()?.message}")
+                logger.debug(LogCategory.NETWORK, "RemoteLocationDataSource: ❌ Failed to send locations via Flespi protocol: ${result.exceptionOrNull()?.message}")
             }
             result
         } catch (e: Exception) {
-            println("RemoteLocationDataSource: ❌ Network error: ${e.message}")
+            logger.debug(LogCategory.NETWORK, "RemoteLocationDataSource: ❌ Network error: ${e.message}")
             Result.failure(e)
         }
     }

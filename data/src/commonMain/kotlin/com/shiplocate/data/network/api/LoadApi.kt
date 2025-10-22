@@ -1,5 +1,7 @@
 package com.shiplocate.data.network.api
 
+import com.shiplocate.core.logging.LogCategory
+import com.shiplocate.core.logging.Logger
 import com.shiplocate.core.network.bodyOrThrow
 import com.shiplocate.data.network.dto.load.LoadDto
 import io.ktor.client.HttpClient
@@ -58,16 +60,17 @@ interface LoadApi {
 class LoadApiImpl(
     private val httpClient: HttpClient,
     private val baseUrl: String,
+    private val logger: Logger,
 ) : LoadApi {
     override suspend fun getLoads(token: String): List<LoadDto> {
-        println("🌐 LoadApi: Getting loads from $baseUrl")
+        logger.debug(LogCategory.NETWORK, "🌐 LoadApi: Getting loads from $baseUrl")
 
         val response =
             httpClient.get("$baseUrl/api/mobile/loads") {
                 header(HttpHeaders.Authorization, "Bearer $token")
             }
 
-        println("🌐 LoadApi: Response status: ${response.status}")
+        logger.debug(LogCategory.NETWORK, "🌐 LoadApi: Response status: ${response.status}")
         return response.bodyOrThrow()
     }
 
@@ -75,14 +78,14 @@ class LoadApiImpl(
         token: String,
         loadId: String,
     ): List<LoadDto> {
-        println("🌐 LoadApi: Connecting to load $loadId")
+        logger.debug(LogCategory.NETWORK, "🌐 LoadApi: Connecting to load $loadId")
 
         val response =
             httpClient.post("$baseUrl/api/mobile/loads/$loadId/connect") {
                 header(HttpHeaders.Authorization, "Bearer $token")
             }
 
-        println("🌐 LoadApi: Connect response status: ${response.status}")
+        logger.debug(LogCategory.NETWORK, "🌐 LoadApi: Connect response status: ${response.status}")
         return response.bodyOrThrow()
     }
 
@@ -90,14 +93,14 @@ class LoadApiImpl(
         token: String,
         loadId: String,
     ): List<LoadDto> {
-        println("🌐 LoadApi: Disconnecting from load $loadId")
+        logger.debug(LogCategory.NETWORK, "🌐 LoadApi: Disconnecting from load $loadId")
 
         val response =
             httpClient.post("$baseUrl/api/mobile/loads/$loadId/disconnect") {
                 header(HttpHeaders.Authorization, "Bearer $token")
             }
 
-        println("🌐 LoadApi: Disconnect response status: ${response.status}")
+        logger.debug(LogCategory.NETWORK, "🌐 LoadApi: Disconnect response status: ${response.status}")
         return response.bodyOrThrow()
     }
 }

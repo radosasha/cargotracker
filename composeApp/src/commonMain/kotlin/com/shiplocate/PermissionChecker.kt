@@ -3,7 +3,7 @@ package com.shiplocate
 /**
  * Общий интерфейс для проверки разрешений
  */
-expect class PermissionChecker() {
+expect class PermissionChecker {
     suspend fun hasLocationPermissions(): Boolean
 
     suspend fun hasBackgroundLocationPermission(): Boolean

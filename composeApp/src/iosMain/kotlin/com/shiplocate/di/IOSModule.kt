@@ -15,7 +15,7 @@ val iosModule =
     module {
 
         // iOS Permission Checker (Singleton - живет весь жизненный цикл приложения)
-        single<PermissionChecker> { IOSPermissionCheckerImpl() }
+        single<PermissionChecker> { IOSPermissionCheckerImpl(get()) }
 
         // iOS Permission Requester для domain слоя
         single<PermissionRequester> { IOSPermissionRequesterImpl() }

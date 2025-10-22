@@ -1,5 +1,7 @@
 package com.shiplocate.data.network.api
 
+import com.shiplocate.core.logging.LogCategory
+import com.shiplocate.core.logging.Logger
 import com.shiplocate.data.model.LocationDataModel
 import io.ktor.client.HttpClient
 import io.ktor.client.request.post
@@ -18,6 +20,7 @@ import kotlinx.serialization.Serializable
 class FlespiLocationApi(
     private val httpClient: HttpClient,
     private val serverUrl: String,
+    private val logger: Logger,
 ) {
     /**
      * Data класс для Flespi протокола
@@ -48,7 +51,7 @@ class FlespiLocationApi(
     ): Result<Unit> {
         return try {
             if (locations.isEmpty()) {
-                println("FlespiLocationApi: No locations to send")
+                logger.debug(LogCategory.NETWORK, "FlespiLocationApi: No locations to send")
                 return Result.success(Unit)
             }
 
@@ -69,8 +72,8 @@ class FlespiLocationApi(
                     )
                 }
 
-            println("FlespiLocationApi: Sending ${locations.size} locations to $serverUrl")
-            println("FlespiLocationApi: Device ID: $deviceId")
+            logger.debug(LogCategory.NETWORK, "FlespiLocationApi: Sending ${locations.size} locations to $serverUrl")
+            logger.debug(LogCategory.NETWORK, "FlespiLocationApi: Device ID: $deviceId")
 
             val response =
                 httpClient.post {
@@ -79,21 +82,21 @@ class FlespiLocationApi(
                     setBody(flespiPositions)
                 }
 
-            println("FlespiLocationApi: Response status: ${response.status}")
+            logger.debug(LogCategory.NETWORK, "FlespiLocationApi: Response status: ${response.status}")
 
             when (response.status) {
                 HttpStatusCode.OK -> {
-                    println("FlespiLocationApi: ✅ Successfully sent ${locations.size} locations")
+                    logger.debug(LogCategory.NETWORK, "FlespiLocationApi: ✅ Successfully sent ${locations.size} locations")
                     Result.success(Unit)
                 }
                 else -> {
                     val errorMessage = "HTTP ${response.status.value}: ${response.status.description}"
-                    println("FlespiLocationApi: ❌ Error: $errorMessage")
+                    logger.debug(LogCategory.NETWORK, "FlespiLocationApi: ❌ Error: $errorMessage")
                     Result.failure(Exception(errorMessage))
                 }
             }
         } catch (e: Exception) {
-            println("FlespiLocationApi: ❌ Exception: ${e.message}")
+            logger.debug(LogCategory.NETWORK, "FlespiLocationApi: ❌ Exception: ${e.message}")
             Result.failure(e)
         }
     }

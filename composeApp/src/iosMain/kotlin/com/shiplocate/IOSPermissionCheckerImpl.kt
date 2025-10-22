@@ -1,5 +1,7 @@
 package com.shiplocate
 
+import com.shiplocate.core.logging.LogCategory
+import com.shiplocate.core.logging.Logger
 import com.shiplocate.data.datasource.PermissionChecker
 import platform.CoreLocation.CLLocationManager
 import platform.CoreLocation.CLLocationManagerDelegateProtocol
@@ -24,7 +26,9 @@ import kotlin.coroutines.suspendCoroutine
 /**
  * iOS реализация PermissionChecker
  */
-class IOSPermissionCheckerImpl : PermissionChecker {
+class IOSPermissionCheckerImpl(
+    private val logger: Logger,
+) : PermissionChecker {
     // Lazy инициализация - создается только при первом обращении
     private val locationManager: CLLocationManager by lazy {
         val manager = CLLocationManager()
@@ -39,7 +43,7 @@ class IOSPermissionCheckerImpl : PermissionChecker {
 
         override fun locationManagerDidChangeAuthorization(manager: CLLocationManager) {
             val status = manager.authorizationStatus
-            println("iOS: Location authorization changed to: $status")
+            logger.debug(LogCategory.PERMISSIONS, "iOS: Location authorization changed to: $status")
             onAuthorizationChange?.invoke(status.toInt())
         }
     }
@@ -130,11 +134,11 @@ class IOSPermissionCheckerImpl : PermissionChecker {
         // Запрашиваем разрешения последовательно, используя callbacks
         dispatch_async(dispatch_get_main_queue()) {
             val status = locationManager.authorizationStatus
-            println("iOS: Current authorization status: $status")
+            logger.debug(LogCategory.PERMISSIONS, "iOS: Current authorization status: $status")
 
             when (status) {
                 kCLAuthorizationStatusNotDetermined -> {
-                    println("iOS: Requesting location permission...")
+                    logger.debug(LogCategory.PERMISSIONS, "iOS: Requesting location permission...")
                     // Устанавливаем callback для отслеживания результата
                     locationDelegate.onAuthorizationChange = { newStatus ->
                         handleLocationAuthorizationChange(newStatus)
@@ -142,7 +146,7 @@ class IOSPermissionCheckerImpl : PermissionChecker {
                     locationManager.requestWhenInUseAuthorization()
                 }
                 kCLAuthorizationStatusAuthorizedWhenInUse -> {
-                    println("iOS: Requesting background location permission...")
+                    logger.debug(LogCategory.PERMISSIONS, "iOS: Requesting background location permission...")
                     // Устанавливаем callback для отслеживания результата
                     locationDelegate.onAuthorizationChange = { newStatus ->
                         handleLocationAuthorizationChange(newStatus)
@@ -150,17 +154,17 @@ class IOSPermissionCheckerImpl : PermissionChecker {
                     locationManager.requestAlwaysAuthorization()
                 }
                 kCLAuthorizationStatusAuthorizedAlways -> {
-                    println("iOS: Location permission already granted, requesting notifications...")
+                    logger.debug(LogCategory.PERMISSIONS, "iOS: Location permission already granted, requesting notifications...")
                     // Местоположение уже разрешено, запрашиваем уведомления
                     requestNotificationPermissions()
                 }
                 kCLAuthorizationStatusDenied, kCLAuthorizationStatusRestricted -> {
-                    println("iOS: Location permission denied or restricted, stopping permission flow")
+                    logger.debug(LogCategory.PERMISSIONS, "iOS: Location permission denied or restricted, stopping permission flow")
                     // Местоположение отклонено - останавливаем процесс
                     // Не запрашиваем остальные разрешения
                 }
                 else -> {
-                    println("iOS: Unknown authorization status: $status")
+                    logger.debug(LogCategory.PERMISSIONS, "iOS: Unknown authorization status: $status")
                 }
             }
         }
@@ -168,27 +172,27 @@ class IOSPermissionCheckerImpl : PermissionChecker {
 
     private fun handleLocationAuthorizationChange(newStatus: Int) {
         dispatch_async(dispatch_get_main_queue()) {
-            println("iOS: Handling authorization change: $newStatus")
+            logger.debug(LogCategory.PERMISSIONS, "iOS: Handling authorization change: $newStatus")
 
             when (newStatus) {
                 kCLAuthorizationStatusAuthorizedWhenInUse.toInt() -> {
-                    println("iOS: Location permission granted, requesting background permission...")
+                    logger.debug(LogCategory.PERMISSIONS, "iOS: Location permission granted, requesting background permission...")
                     // Получили разрешение на местоположение, запрашиваем фоновое
                     locationManager.requestAlwaysAuthorization()
                 }
                 kCLAuthorizationStatusAuthorizedAlways.toInt() -> {
-                    println("iOS: Background location permission granted, requesting notifications...")
+                    logger.debug(LogCategory.PERMISSIONS, "iOS: Background location permission granted, requesting notifications...")
                     // Получили фоновое разрешение, запрашиваем уведомления
                     locationDelegate.onAuthorizationChange = null
                     requestNotificationPermissions()
                 }
                 kCLAuthorizationStatusDenied.toInt(), kCLAuthorizationStatusRestricted.toInt() -> {
-                    println("iOS: Location permission denied, stopping permission flow")
+                    logger.debug(LogCategory.PERMISSIONS, "iOS: Location permission denied, stopping permission flow")
                     // Пользователь отказал - останавливаем процесс
                     locationDelegate.onAuthorizationChange = null
                 }
                 else -> {
-                    println("iOS: Unexpected authorization status: $newStatus")
+                    logger.debug(LogCategory.PERMISSIONS, "iOS: Unexpected authorization status: $newStatus")
                 }
             }
         }
@@ -196,15 +200,15 @@ class IOSPermissionCheckerImpl : PermissionChecker {
 
     private fun requestNotificationPermissions() {
         dispatch_async(dispatch_get_main_queue()) {
-            println("iOS: Requesting notification permission...")
+            logger.debug(LogCategory.PERMISSIONS, "iOS: Requesting notification permission...")
             val center = UNUserNotificationCenter.currentNotificationCenter()
             center.requestAuthorizationWithOptions(
                 options = UNAuthorizationOptionAlert or UNAuthorizationOptionBadge or UNAuthorizationOptionSound,
                 completionHandler = { granted, error ->
                     if (granted) {
-                        println("iOS: Notification permission granted")
+                        logger.debug(LogCategory.PERMISSIONS, "iOS: Notification permission granted")
                     } else {
-                        println("iOS: Notification permission denied: ${error?.localizedDescription}")
+                        logger.debug(LogCategory.PERMISSIONS, "iOS: Notification permission denied: ${error?.localizedDescription}")
                     }
                 },
             )

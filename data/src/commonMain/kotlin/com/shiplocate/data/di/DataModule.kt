@@ -91,8 +91,8 @@ val dataModule =
             }
 
             // Network API
-            single { OsmAndLocationApi(get(), ServerConfig.OSMAND_SERVER_URL) }
-            single { FlespiLocationApi(get(), ServerConfig.FLESPI_SERVER_URL) }
+            single { OsmAndLocationApi(get(), ServerConfig.OSMAND_SERVER_URL, get()) }
+            single { FlespiLocationApi(get(), ServerConfig.FLESPI_SERVER_URL, get()) }
 
             // Auth API
             single<AuthApi> {
@@ -115,12 +115,13 @@ val dataModule =
                 LoadApiImpl(
                     httpClient = get(),
                     baseUrl = "http://${ServerConfig.BASE_URL}:8082",
+                    logger = get(),
                 )
             }
 
             // Data Sources
             single<GpsLocationDataSource> { GpsLocationDataSourceImpl(get()) }
-            single<LocationRemoteDataSource> { LocationRemoteDataSourceImpl(get(), get()) }
+            single<LocationRemoteDataSource> { LocationRemoteDataSourceImpl(get(), get(), get()) }
             single<TrackingDataSource> { TrackingDataSourceImpl(get()) }
             single<PrefsDataSource> { PrefsDataSourceImpl(get()) }
             single<AuthRemoteDataSource> { AuthRemoteDataSource(get(), get()) }
@@ -139,13 +140,13 @@ val dataModule =
             single<PrefsRepository> { PrefsRepositoryImpl(get()) }
             single<TrackingRepository> { TrackingRepositoryImpl(get()) }
             single<AuthRepository> { AuthRepositoryImpl(get()) }
-            single<AuthPreferencesRepository> { AuthPreferencesRepositoryImpl(get()) }
-            single<LoadRepository> { LoadRepositoryImpl(get(), get()) }
+            single<AuthPreferencesRepository> { AuthPreferencesRepositoryImpl(get(), get()) }
+            single<LoadRepository> { LoadRepositoryImpl(get(), get(), get()) }
             single<NotificationRepository> { NotificationRepositoryImpl(get(), get(), get(), get()) }
 
             // Domain Services - реализации в data слое
             single<LocationProcessor> { LocationProcessorImpl() }
-            single<LocationSyncService> { LocationSyncServiceImpl(get(), get(), get()) }
+            single<LocationSyncService> { LocationSyncServiceImpl(get(), get(), get(), get()) }
 
             // Firebase Token Service
             // FirebaseTokenService удален - заменен на ManageFirebaseTokensUseCase

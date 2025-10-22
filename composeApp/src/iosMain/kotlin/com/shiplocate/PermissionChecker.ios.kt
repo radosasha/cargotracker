@@ -1,5 +1,7 @@
 package com.shiplocate
 
+import com.shiplocate.core.logging.LogCategory
+import com.shiplocate.core.logging.Logger
 import platform.CoreLocation.CLLocationManager
 import platform.CoreLocation.kCLAuthorizationStatusAuthorizedAlways
 import platform.CoreLocation.kCLAuthorizationStatusAuthorizedWhenInUse
@@ -21,7 +23,9 @@ import kotlin.coroutines.suspendCoroutine
 /**
  * iOS реализация проверки разрешений
  */
-actual class PermissionChecker {
+actual class PermissionChecker(
+    private val logger: Logger,
+) {
     // Lazy инициализация - создается только при первом обращении
     private val locationManager: CLLocationManager by lazy {
         CLLocationManager()
@@ -147,9 +151,9 @@ actual class PermissionChecker {
                 options = UNAuthorizationOptionAlert or UNAuthorizationOptionBadge or UNAuthorizationOptionSound,
                 completionHandler = { granted, error ->
                     if (granted) {
-                        println("iOS: Notification permission granted")
+                        logger.debug(LogCategory.PERMISSIONS, "iOS: Notification permission granted")
                     } else {
-                        println("iOS: Notification permission denied: ${error?.localizedDescription}")
+                        logger.debug(LogCategory.PERMISSIONS, "iOS: Notification permission denied: ${error?.localizedDescription}")
                     }
                 },
             )

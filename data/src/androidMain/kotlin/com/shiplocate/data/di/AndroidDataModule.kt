@@ -25,7 +25,7 @@ actual val platformDataModule: Module =
         single<DatabaseProvider> { DatabaseProvider(get<Context>()) }
 
         // Android-specific Data Sources
-        single<GpsManager> { AndroidGpsManager(get()) }
+        single<GpsManager> { AndroidGpsManager(get(), get()) }
         single<DeviceDataSource> { AndroidDeviceDataSource(get(), get()) }
         single<PermissionDataSource> { AndroidPermissionDataSource(get(), get()) }
 

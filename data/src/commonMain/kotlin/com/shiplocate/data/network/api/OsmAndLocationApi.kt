@@ -1,5 +1,7 @@
 package com.shiplocate.data.network.api
 
+import com.shiplocate.core.logging.LogCategory
+import com.shiplocate.core.logging.Logger
 import com.shiplocate.data.model.LocationDataModel
 import io.ktor.client.HttpClient
 import io.ktor.client.request.forms.submitForm
@@ -20,6 +22,7 @@ import kotlinx.serialization.json.putJsonObject
 class OsmAndLocationApi(
     private val httpClient: HttpClient,
     private val serverUrl: String,
+    private val logger: Logger,
 ) {
     /**
      * Отправляет координаты на сервер через OsmAnd протокол
@@ -32,10 +35,10 @@ class OsmAndLocationApi(
     ): Result<Unit> {
         return try {
             val url = "$serverUrl/api/osmand"
-            println("LocationApi.sendLocation() - URL: $url")
-            println("LocationApi.sendLocation() - Load ID: $loadId")
-            println("LocationApi.sendLocation() - Location: lat=${location.latitude}, lon=${location.longitude}")
-            println("LocationApi.sendLocation() - Timestamp: ${location.timestamp}")
+            logger.debug(LogCategory.NETWORK, "LocationApi.sendLocation() - URL: $url")
+            logger.debug(LogCategory.NETWORK, "LocationApi.sendLocation() - Load ID: $loadId")
+            logger.debug(LogCategory.NETWORK, "LocationApi.sendLocation() - Location: lat=${location.latitude}, lon=${location.longitude}")
+            logger.debug(LogCategory.NETWORK, "LocationApi.sendLocation() - Timestamp: ${location.timestamp}")
 
             val response =
                 httpClient.submitForm(
@@ -57,22 +60,22 @@ class OsmAndLocationApi(
                         },
                 )
 
-            println("LocationApi.sendLocation() - Response status: ${response.status}")
-            println("LocationApi.sendLocation() - Response headers: ${response.headers}")
+            logger.debug(LogCategory.NETWORK, "LocationApi.sendLocation() - Response status: ${response.status}")
+            logger.debug(LogCategory.NETWORK, "LocationApi.sendLocation() - Response headers: ${response.headers}")
 
             when (response.status) {
                 HttpStatusCode.OK -> {
-                    println("LocationApi.sendLocation() - success: ${response.status}")
+                    logger.debug(LogCategory.NETWORK, "LocationApi.sendLocation() - success: ${response.status}")
                     Result.success(Unit)
                 }
                 else -> {
                     val errorMessage = "HTTP ${response.status.value}: ${response.status.description}"
-                    println("LocationApi.sendLocation() - error: $errorMessage")
+                    logger.debug(LogCategory.NETWORK, "LocationApi.sendLocation() - error: $errorMessage")
                     Result.failure(Exception(errorMessage))
                 }
             }
         } catch (e: Exception) {
-            println("LocationApi.sendLocation() - exception: ${e.message}")
+            logger.debug(LogCategory.NETWORK, "LocationApi.sendLocation() - exception: ${e.message}")
             Result.failure(e)
         }
     }
@@ -85,7 +88,7 @@ class OsmAndLocationApi(
         location: LocationDataModel,
     ): Result<Unit> {
         return try {
-            println("LocationApi.sendLocationJson() - sending JSON location")
+            logger.debug(LogCategory.NETWORK, "LocationApi.sendLocationJson() - sending JSON location")
 
             val jsonData =
                 buildJsonObject {
@@ -119,17 +122,17 @@ class OsmAndLocationApi(
 
             when (response.status) {
                 HttpStatusCode.OK -> {
-                    println("LocationApi.sendLocationJson() - success: ${response.status}")
+                    logger.debug(LogCategory.NETWORK, "LocationApi.sendLocationJson() - success: ${response.status}")
                     Result.success(Unit)
                 }
                 else -> {
                     val errorMessage = "HTTP ${response.status.value}: ${response.status.description}"
-                    println("LocationApi.sendLocationJson() - error: $errorMessage")
+                    logger.debug(LogCategory.NETWORK, "LocationApi.sendLocationJson() - error: $errorMessage")
                     Result.failure(Exception(errorMessage))
                 }
             }
         } catch (e: Exception) {
-            println("LocationApi.sendLocationJson() - exception: ${e.message}")
+            logger.debug(LogCategory.NETWORK, "LocationApi.sendLocationJson() - exception: ${e.message}")
             Result.failure(e)
         }
     }
