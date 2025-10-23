@@ -1,11 +1,10 @@
 package com.shiplocate.core.logging.files
 
-import io.ktor.utils.io.ByteReadChannel
-import io.ktor.utils.io.jvm.javaio.toByteReadChannel
+import io.ktor.utils.io.streams.asInput
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.io.Source
 import java.io.File
-import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
@@ -18,7 +17,7 @@ actual class FilesManager {
         return withContext(Dispatchers.IO) {
             val file = File(archivePath)
             file.parentFile?.mkdirs()
-            
+
             FileOutputStream(file).use { fos ->
                 ZipOutputStream(fos).use { zos ->
                     files.forEach { fileInfo ->
@@ -44,22 +43,11 @@ actual class FilesManager {
         }
     }
 
-    actual suspend fun readFile(filePath: String): ByteArray {
-        return withContext(Dispatchers.IO) {
-            File(filePath).readBytes()
-        }
-    }
-
-    actual suspend fun fileExists(filePath: String): Boolean {
-        return withContext(Dispatchers.IO) {
-            File(filePath).exists()
-        }
-    }
-
-    actual suspend fun createFileByteReadChannel(filePath: String): ByteReadChannel {
+    actual suspend fun getFileSource(filePath: String): Source {
         return withContext(Dispatchers.IO) {
             val file = File(filePath)
-            FileInputStream(file).toByteReadChannel()
+            val bytes = file.readBytes()
+            bytes.inputStream().buffered().asInput()
         }
     }
 }

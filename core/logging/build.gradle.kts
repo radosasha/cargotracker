@@ -11,6 +11,8 @@ kotlin {
             implementation(libs.kotlinx.datetime)
             implementation(libs.koin.core)
             implementation(libs.ktor.io)
+            implementation(libs.ktor.client.core)
+            implementation(libs.kotlinx.io)
         }
 
         androidMain.dependencies {

@@ -4,6 +4,7 @@ import com.shiplocate.core.logging.LogCategory
 import com.shiplocate.core.logging.Logger
 import com.shiplocate.core.logging.files.FilesManager
 import io.ktor.client.HttpClient
+import io.ktor.client.request.forms.InputProvider
 import io.ktor.client.request.forms.formData
 import io.ktor.client.request.forms.submitFormWithBinaryData
 import io.ktor.http.Headers
@@ -24,8 +25,7 @@ class LogsApiImpl(
             logger.debug(LogCategory.NETWORK, "LogsApi: Starting to send archive: $archivePath")
 
             // Создаем ByteReadChannel для чтения архива
-            val archiveChannel = filesManager.createFileByteReadChannel(archivePath)
-            val arch2 = filesManager.readFile(archivePath)
+            val archSource = filesManager.getFileSource(archivePath)
             logger.debug(LogCategory.NETWORK, "LogsApi: Archive channel created for: $archivePath")
 
 
@@ -36,10 +36,10 @@ class LogsApiImpl(
 
                     append(
                         key = "archive",
-                        value = arch2,
+                        value = InputProvider { archSource },
                         headers = Headers.build {
                             append(HttpHeaders.ContentType, "application/zip")
-                            append(HttpHeaders.ContentDisposition, "filename=\"logsfile.zip\"")
+                            append(HttpHeaders.ContentDisposition, "filename=\"logsfile${clientId}.zip\"")
                         }
                     )
                 }

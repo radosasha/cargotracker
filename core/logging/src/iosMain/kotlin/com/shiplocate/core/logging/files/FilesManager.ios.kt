@@ -1,10 +1,9 @@
 package com.shiplocate.core.logging.files
 
-import io.ktor.utils.io.ByteReadChannel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import platform.Foundation.NSData
-import platform.Foundation.dataWithContentsOfFile
+import kotlinx.io.Source
+import kotlinx.io.buffered
 
 /**
  * iOS реализация FilesManager
@@ -27,27 +26,11 @@ actual class FilesManager {
         }
     }
 
-    actual suspend fun readFile(filePath: String): ByteArray {
+    actual suspend fun getFileSource(filePath: String): Source {
         return withContext(Dispatchers.Main) {
             // TODO: Реализовать чтение файла для iOS
-            // Пока возвращаем пустой массив
-            ByteArray(0)
-        }
-    }
-
-    actual suspend fun fileExists(filePath: String): Boolean {
-        return withContext(Dispatchers.Main) {
-            // TODO: Реализовать проверку существования файла для iOS
             // Пока возвращаем заглушку
-            false
-        }
-    }
-
-    actual suspend fun createFileByteReadChannel(filePath: String): ByteReadChannel {
-        return withContext(Dispatchers.Main) {
-            // TODO: Реализовать чтение файла для iOS
-            // Пока возвращаем пустой ByteReadChannel
-            ByteReadChannel(ByteArray(0))
+            ByteArray(0).inputStream().buffered().source()
         }
     }
 }

@@ -95,6 +95,13 @@ fun LogsScreen(viewModel: LogsViewModel) {
                 ) {
                     Text("Unselect all")
                 }
+
+                OutlinedButton(
+                    onClick = viewModel::deleteSelectedFiles,
+                    enabled = !uiState.isSending && uiState.hasSelection,
+                ) {
+                    Text("Delete")
+                }
             }
 
             Spacer(modifier = Modifier.height(16.dp))

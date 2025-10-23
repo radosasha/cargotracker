@@ -6,6 +6,7 @@ import com.shiplocate.core.logging.LogCategory
 import com.shiplocate.core.logging.Logger
 import com.shiplocate.domain.usecase.logs.GetLogsUseCase
 import com.shiplocate.domain.usecase.logs.SendLogsUseCase
+import com.shiplocate.domain.repository.LogsRepository
 import com.shiplocate.presentation.model.LogsUiState
 import com.shiplocate.presentation.model.MessageType
 import kotlinx.coroutines.Dispatchers
@@ -21,6 +22,7 @@ import kotlinx.coroutines.withContext
 class LogsViewModel(
     private val getLogsUseCase: GetLogsUseCase,
     private val sendLogsUseCase: SendLogsUseCase,
+    private val logsRepository: LogsRepository,
     private val logger: Logger,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(LogsUiState())
@@ -175,6 +177,65 @@ class LogsViewModel(
                         message = "Failed to send: ${e.message}",
                         messageType = MessageType.ERROR,
                     )
+            }
+        }
+    }
+
+    /**
+     * Удаляет выбранные файлы
+     */
+    fun deleteSelectedFiles() {
+        val currentState = _uiState.value
+        val selectedFiles = currentState.logFiles.filter { it.isSelected }
+
+        if (selectedFiles.isEmpty()) {
+            logger.warn(LogCategory.GENERAL, "LogsViewModel: No files selected for deletion")
+            return
+        }
+
+        viewModelScope.launch {
+            try {
+                _uiState.value = currentState.copy(isSending = true, message = null)
+
+                logger.info(LogCategory.GENERAL, "LogsViewModel: Deleting ${selectedFiles.size} log files")
+
+                var deletedCount = 0
+                selectedFiles.forEach { file ->
+                    try {
+                        val result = withContext(Dispatchers.Default) {
+                            logsRepository.deleteLogFile(file.name)
+                        }
+                        if (result) {
+                            deletedCount++
+                        }
+                    } catch (e: Exception) {
+                        logger.error(LogCategory.GENERAL, "LogsViewModel: Failed to delete file ${file.name}: ${e.message}")
+                    }
+                }
+
+                if (deletedCount > 0) {
+                    // Обновляем список файлов после удаления
+                    loadLogFiles()
+                    _uiState.value = _uiState.value.copy(
+                        isSending = false,
+                        message = "Deleted $deletedCount files",
+                        messageType = MessageType.SUCCESS,
+                    )
+                    logger.info(LogCategory.GENERAL, "LogsViewModel: Successfully deleted $deletedCount log files")
+                } else {
+                    _uiState.value = _uiState.value.copy(
+                        isSending = false,
+                        message = "Failed to delete files",
+                        messageType = MessageType.ERROR,
+                    )
+                }
+            } catch (e: Exception) {
+                logger.error(LogCategory.GENERAL, "LogsViewModel: Error deleting log files: ${e.message}", e)
+                _uiState.value = _uiState.value.copy(
+                    isSending = false,
+                    message = "Failed to delete: ${e.message}",
+                    messageType = MessageType.ERROR,
+                )
             }
         }
     }

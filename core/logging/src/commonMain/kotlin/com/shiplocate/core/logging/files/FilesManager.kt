@@ -1,6 +1,8 @@
 package com.shiplocate.core.logging.files
 
+import io.ktor.client.request.forms.InputProvider
 import io.ktor.utils.io.ByteReadChannel
+import kotlinx.io.Source
 
 /**
  * Expect класс для работы с файлами на разных платформах
@@ -21,26 +23,8 @@ expect class FilesManager {
      */
     suspend fun deleteFile(filePath: String): Boolean
 
-    /**
-     * Читает содержимое файла как ByteArray
-     * @param filePath путь к файлу
-     * @return содержимое файла
-     */
-    suspend fun readFile(filePath: String): ByteArray
 
-    /**
-     * Проверяет существование файла
-     * @param filePath путь к файлу
-     * @return true если файл существует
-     */
-    suspend fun fileExists(filePath: String): Boolean
-
-    /**
-     * Создает ByteReadChannel для чтения файла
-     * @param filePath путь к файлу
-     * @return ByteReadChannel для чтения файла
-     */
-    suspend fun createFileByteReadChannel(filePath: String): ByteReadChannel
+    suspend fun getFileSource(filePath: String) : Source
 }
 
 /**

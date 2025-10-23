@@ -42,11 +42,8 @@ class LogsRepositoryImpl(
             
             if (result.isSuccess) {
                 logger.info(LogCategory.GENERAL, "LogsRepository: Successfully sent archive")
-                // Удаляем отправленные файлы
-                files.forEach { file ->
-                    logsLocalDataSource.deleteLogFile(file.name)
-                }
-                logger.info(LogCategory.GENERAL, "LogsRepository: Deleted ${files.size} sent log files")
+                // Оригинальные файлы НЕ удаляем - они остаются для дальнейшего использования
+                logger.info(LogCategory.GENERAL, "LogsRepository: Archive sent successfully, original files preserved")
             } else {
                 logger.error(LogCategory.GENERAL, "LogsRepository: Failed to send archive: ${result.exceptionOrNull()?.message}")
             }
