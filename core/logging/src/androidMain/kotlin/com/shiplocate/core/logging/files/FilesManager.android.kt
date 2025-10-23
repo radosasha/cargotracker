@@ -1,5 +1,6 @@
 package com.shiplocate.core.logging.files
 
+import android.content.Context
 import io.ktor.utils.io.streams.asInput
 import io.ktor.utils.io.streams.inputStream
 import kotlinx.coroutines.Dispatchers
@@ -7,13 +8,25 @@ import kotlinx.coroutines.withContext
 import kotlinx.io.Source
 import java.io.File
 import java.io.FileOutputStream
+import java.io.FileWriter
+import java.io.IOException
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
 /**
  * Android реализация FilesManager
  */
-actual class FilesManager {
+actual class FilesManager(
+    private val context: Context,
+) {
+    private val logDirectory: File by lazy {
+        val dir = File(context.filesDir, "logs")
+        if (!dir.exists()) {
+            dir.mkdirs()
+        }
+        dir
+    }
+
     actual suspend fun createZipArchive(files: List<FileInfo>, archivePath: String): String {
         return withContext(Dispatchers.IO) {
             val file = File(archivePath)
@@ -52,5 +65,56 @@ actual class FilesManager {
             val bytes = file.readBytes()
             bytes.inputStream().buffered().asInput()
         }
+    }
+
+    actual suspend fun writeToFile(filePath: String, content: String) {
+        withContext(Dispatchers.IO) {
+            try {
+                val file = File(filePath)
+                FileWriter(file, true).use { writer ->
+                    writer.append(content)
+                    writer.flush()
+                }
+            } catch (e: IOException) {
+                println("Failed to write to file $filePath: ${e.message}")
+            }
+        }
+    }
+
+    actual suspend fun getFileSize(filePath: String): Long {
+        return withContext(Dispatchers.IO) {
+            val file = File(filePath)
+            if (file.exists()) file.length() else 0L
+        }
+    }
+
+    actual suspend fun fileExists(filePath: String): Boolean {
+        return withContext(Dispatchers.IO) {
+            File(filePath).exists()
+        }
+    }
+
+    actual suspend fun listFiles(directoryPath: String): List<String> {
+        return withContext(Dispatchers.IO) {
+            val directory = File(directoryPath)
+            if (directory.exists() && directory.isDirectory) {
+                directory.listFiles()?.map { it.name } ?: emptyList()
+            } else {
+                emptyList()
+            }
+        }
+    }
+
+    actual suspend fun createDirectoryIfNotExists(directoryPath: String) {
+        withContext(Dispatchers.IO) {
+            val directory = File(directoryPath)
+            if (!directory.exists()) {
+                directory.mkdirs()
+            }
+        }
+    }
+
+    actual suspend fun getLogDirectoryPath(): String {
+        return logDirectory.absolutePath
     }
 }

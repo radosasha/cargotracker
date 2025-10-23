@@ -21,8 +21,52 @@ expect class FilesManager {
      */
     suspend fun deleteFile(filePath: String): Boolean
 
+    /**
+     * Получает Source для чтения файла
+     * @param filePath путь к файлу
+     * @return Source для чтения файла
+     */
+    suspend fun getFileSource(filePath: String): Source
 
-    suspend fun getFileSource(filePath: String) : Source
+    /**
+     * Записывает строку в файл (добавляет к существующему содержимому)
+     * @param filePath путь к файлу
+     * @param content содержимое для записи
+     */
+    suspend fun writeToFile(filePath: String, content: String)
+
+    /**
+     * Получает размер файла в байтах
+     * @param filePath путь к файлу
+     * @return размер файла в байтах
+     */
+    suspend fun getFileSize(filePath: String): Long
+
+    /**
+     * Проверяет существование файла
+     * @param filePath путь к файлу
+     * @return true если файл существует
+     */
+    suspend fun fileExists(filePath: String): Boolean
+
+    /**
+     * Получает список файлов в директории
+     * @param directoryPath путь к директории
+     * @return список имен файлов
+     */
+    suspend fun listFiles(directoryPath: String): List<String>
+
+    /**
+     * Создает директорию если она не существует
+     * @param directoryPath путь к директории
+     */
+    suspend fun createDirectoryIfNotExists(directoryPath: String)
+
+    /**
+     * Получает путь к директории логов
+     * @return путь к директории логов
+     */
+    suspend fun getLogDirectoryPath(): String
 }
 
 /**

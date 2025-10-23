@@ -14,15 +14,14 @@ import org.koin.dsl.module
 actual val platformLoggingModule: Module =
     module {
 
-        // Предоставляем iOS-специфичный FileAppender
-        single<FileAppender> {
-            val config = get<LoggingConfig>()
-            FileAppender(config)
-        }
-
         // Предоставляем iOS-специфичный FilesManager
         single<FilesManager> {
             FilesManager()
+        }
+
+        // Предоставляем iOS-специфичный FileAppender
+        single<FileAppender> {
+            FileAppender(get<LoggingConfig>(), get<FilesManager>())
         }
 
         // iOS-специфичный обработчик крешей

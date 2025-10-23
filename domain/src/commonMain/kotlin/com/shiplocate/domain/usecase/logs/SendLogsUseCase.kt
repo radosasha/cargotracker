@@ -31,7 +31,7 @@ class SendLogsUseCase(
                 return Result.failure(IllegalArgumentException("No files to send"))
             }
 
-            val actualClientId = getLogsClientId()
+            val actualClientId = sanitizeClientId(getLogsClientId())
             logger.debug(LogCategory.GENERAL, "SendLogsUseCase: Generated clientId: $actualClientId")
 
             val result = logsRepository.sendLogFilesAsArchive(files, actualClientId)
@@ -50,6 +50,11 @@ class SendLogsUseCase(
             logger.error(LogCategory.GENERAL, "SendLogsUseCase: Error sending log files as archive: ${e.message}", e)
             Result.failure(e)
         }
+    }
+
+    private fun sanitizeClientId(clientId: String): String {
+        // Remove any path separators and dangerous characters
+        return clientId.replace("[^a-zA-Z0-9._-]".toRegex(), "_")
     }
 
     private suspend fun getLogsClientId(): String {

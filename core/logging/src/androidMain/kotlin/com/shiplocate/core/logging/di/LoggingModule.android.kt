@@ -15,14 +15,14 @@ import org.koin.dsl.module
 actual val platformLoggingModule: Module =
     module {
 
-        // Предоставляем Android-специфичный FileAppender
-        single<FileAppender> {
-            FileAppender(get(), get())
-        }
-
         // Предоставляем Android-специфичный FilesManager
         single<FilesManager> {
-            FilesManager()
+            FilesManager(androidApplication())
+        }
+
+        // Предоставляем Android-специфичный FileAppender
+        single<FileAppender> {
+            FileAppender(get<LoggingConfig>(), get<FilesManager>())
         }
 
         // Android-специфичный обработчик крешей
