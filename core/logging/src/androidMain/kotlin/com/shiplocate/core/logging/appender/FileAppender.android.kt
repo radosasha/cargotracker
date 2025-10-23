@@ -3,11 +3,13 @@ package com.shiplocate.core.logging.appender
 import android.content.Context
 import com.shiplocate.core.logging.LogEntry
 import com.shiplocate.core.logging.LoggingConfig
+import io.ktor.utils.io.streams.asInput
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import kotlinx.io.Source
 import java.io.File
 import java.io.FileWriter
 import java.io.IOException
@@ -184,10 +186,10 @@ actual class FileAppender(
         }
     }
 
-    actual suspend fun getLogFileContent(fileName: String): ByteArray {
+    actual suspend fun getLogFileSource(fileName: String): Source {
         return withContext(Dispatchers.IO) {
             val file = File(logDirectory, fileName)
-            file.readBytes()
+            file.inputStream().buffered().asInput()
         }
     }
 

@@ -1,7 +1,5 @@
 package com.shiplocate.core.logging.files
 
-import io.ktor.client.request.forms.InputProvider
-import io.ktor.utils.io.ByteReadChannel
 import kotlinx.io.Source
 
 /**
@@ -32,23 +30,5 @@ expect class FilesManager {
  */
 data class FileInfo(
     val name: String,
-    val content: ByteArray,
-) {
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other == null || this::class != other::class) return false
-
-        other as FileInfo
-
-        if (name != other.name) return false
-        if (!content.contentEquals(other.content)) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        var result = name.hashCode()
-        result = 31 * result + content.contentHashCode()
-        return result
-    }
-}
+    val content: Source,
+)

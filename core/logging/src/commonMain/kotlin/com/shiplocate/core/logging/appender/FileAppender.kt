@@ -1,6 +1,7 @@
 package com.shiplocate.core.logging.appender
 
 import com.shiplocate.core.logging.LogEntry
+import kotlinx.io.Source
 
 /**
  * Appender для записи логов в файлы с поддержкой ротации
@@ -26,7 +27,7 @@ expect class FileAppender : LogAppender {
     /**
      * Получает содержимое лог-файла
      */
-    suspend fun getLogFileContent(fileName: String): ByteArray
+    suspend fun getLogFileSource(fileName: String): Source
 
     /**
      * Получает путь к директории с логами

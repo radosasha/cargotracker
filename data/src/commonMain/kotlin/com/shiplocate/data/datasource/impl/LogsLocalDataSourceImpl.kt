@@ -71,7 +71,7 @@ class LogsLocalDataSourceImpl(
                 // Подготавливаем файлы для архивирования
                 val filesToArchive = selectedFiles.mapNotNull { logFile ->
                     try {
-                        val fileContent = fileAppender.getLogFileContent(logFile.name)
+                        val fileContent = fileAppender.getLogFileSource(logFile.name)
                         FileInfo(logFile.name, fileContent)
                     } catch (e: Exception) {
                         logger.warn(LogCategory.GENERAL, "LogsLocalDataSource: Failed to read ${logFile.name}: ${e.message}")

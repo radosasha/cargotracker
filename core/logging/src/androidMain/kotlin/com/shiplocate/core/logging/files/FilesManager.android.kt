@@ -1,6 +1,7 @@
 package com.shiplocate.core.logging.files
 
 import io.ktor.utils.io.streams.asInput
+import io.ktor.utils.io.streams.inputStream
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.io.Source
@@ -23,7 +24,9 @@ actual class FilesManager {
                     files.forEach { fileInfo ->
                         val entry = ZipEntry(fileInfo.name)
                         zos.putNextEntry(entry)
-                        zos.write(fileInfo.content)
+                        fileInfo.content.inputStream().use { input ->
+                            input.copyTo(zos)
+                        }
                         zos.closeEntry()
                     }
                 }
