@@ -7,6 +7,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import kotlinx.io.Source
 
 /**
  * iOS-специфичная реализация FileAppender
@@ -161,11 +162,12 @@ actual class FileAppender(
         }
     }
 
-    actual suspend fun getLogFileContent(fileName: String): ByteArray {
-        return withContext(Dispatchers.Main) {
-            // Пока возвращаем пустой массив для iOS
-            ByteArray(0)
-        }
+    actual suspend fun getLogFileSource(fileName: String): Source {
+        TODO()
+//        return withContext(Dispatchers.Main) {
+//            // Пока возвращаем пустой массив для iOS
+////            ByteArray(0)
+//        }
     }
 
     actual suspend fun getLogDirectoryPath(): String {

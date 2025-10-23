@@ -38,7 +38,7 @@ class IOSPermissionCheckerImpl(
     private val locationDelegate = LocationManagerDelegate()
 
     // Делегат для отслеживания изменений статуса разрешений
-    private class LocationManagerDelegate : NSObject(), CLLocationManagerDelegateProtocol {
+    private inner class LocationManagerDelegate : NSObject(), CLLocationManagerDelegateProtocol {
         var onAuthorizationChange: ((Int) -> Unit)? = null
 
         override fun locationManagerDidChangeAuthorization(manager: CLLocationManager) {

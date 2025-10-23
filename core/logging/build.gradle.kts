@@ -13,6 +13,7 @@ kotlin {
             implementation(libs.ktor.io)
             implementation(libs.ktor.client.core)
             implementation(libs.kotlinx.io)
+            implementation("org.jetbrains.kotlinx:kotlinx-io-core:0.4.1")
         }
 
         androidMain.dependencies {
@@ -21,7 +22,8 @@ kotlin {
         }
 
         iosMain.dependencies {
-            // iOS specific dependencies if needed
+            // iOS использует встроенные Foundation API
+            implementation(libs.ktor.client.ios)
         }
     }
 }
