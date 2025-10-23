@@ -159,15 +159,12 @@ val dataModule =
             single<AuthRepository> { AuthRepositoryImpl(get()) }
             single<AuthPreferencesRepository> { AuthPreferencesRepositoryImpl(get(), get()) }
             single<LoadRepository> { LoadRepositoryImpl(get(), get(), get()) }
-            single<LogsRepository> { LogsRepositoryImpl(get(), get(), get(), get()) }
+            single<LogsRepository> { LogsRepositoryImpl(get(), get(), get()) }
             single<NotificationRepository> { NotificationRepositoryImpl(get(), get(), get(), get()) }
 
             // Domain Services - реализации в data слое
             single<LocationProcessor> { LocationProcessorImpl() }
             single<LocationSyncService> { LocationSyncServiceImpl(get(), get(), get(), get()) }
-
-            // Firebase Token Service
-            // FirebaseTokenService удален - заменен на ManageFirebaseTokensUseCase
 
             // CoroutineScope для LocationSyncService
             single<CoroutineScope> { CoroutineScope(SupervisorJob() + Dispatchers.Main) }

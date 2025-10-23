@@ -39,7 +39,7 @@ class LogsApiImpl(
                         value = InputProvider { archSource },
                         headers = Headers.build {
                             append(HttpHeaders.ContentType, "application/zip")
-                            append(HttpHeaders.ContentDisposition, "filename=\"logsfile${clientId}.zip\"")
+                            append(HttpHeaders.ContentDisposition, "filename=\"${clientId}.zip\"")
                         }
                     )
                 }

@@ -7,9 +7,6 @@ import com.shiplocate.domain.repository.AuthPreferencesRepository
 import com.shiplocate.domain.repository.DeviceRepository
 import com.shiplocate.domain.repository.LogsRepository
 import com.shiplocate.domain.repository.PrefsRepository
-import kotlinx.datetime.Clock
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 
 /**
  * Use Case для отправки лог-файлов на сервер
@@ -59,24 +56,18 @@ class SendLogsUseCase(
         return if (authPreferencesRepository.hasSession()) {
             val phoneNumber = prefsRepository.getPhoneNumber()
             if (phoneNumber == null) {
-                getAuthClientId("NoPhone")
+                getFormatedClientId("NoPhone")
             } else {
-                getAuthClientId(phoneNumber)
+                getFormatedClientId(phoneNumber)
             }
         } else {
-            getNotAuthClientId()
+            getFormatedClientId("NoPhone")
         }
     }
 
-    private suspend fun getAuthClientId(phoneNumber: String): String {
+    private suspend fun getFormatedClientId(phoneNumber: String): String {
         val deviceInfo = getDeviceInfo()
-        return "phone_${phoneNumber}_${deviceInfo}"
-    }
-
-    private suspend fun getNotAuthClientId(): String {
-        val timestamp = getCurrentTimestamp()
-        val deviceInfo = getDeviceInfo()
-        return "device_${timestamp}_${deviceInfo}"
+        return "${phoneNumber}_${deviceInfo}"
     }
 
     private suspend fun getDeviceInfo(): String {
@@ -108,12 +99,5 @@ class SendLogsUseCase(
         } catch (e: Exception) {
             "unknown"
         }
-    }
-
-    private fun getCurrentTimestamp(): String {
-        val now = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
-        return "${now.year}${now.monthNumber.toString().padStart(2, '0')}${now.dayOfMonth.toString().padStart(2, '0')}_${
-            now.hour.toString().padStart(2, '0')
-        }${now.minute.toString().padStart(2, '0')}${now.second.toString().padStart(2, '0')}"
     }
 }
