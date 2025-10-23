@@ -16,6 +16,7 @@ class PrefsRepositoryImpl(
         private const val GPS_ACCURACY_KEY = "gps_accuracy"
         private const val GPS_INTERVAL_KEY = "gps_interval"
         private const val DISTANCE_FILTER_KEY = "distance_filter"
+        private const val PHONE_KEY = "phone_number"
     }
 
     override suspend fun saveTrackingState(isTracking: Boolean) {
@@ -68,5 +69,13 @@ class PrefsRepositoryImpl(
 
     override suspend fun clearAllSettings() {
         prefsDataSource.clear()
+    }
+
+    override suspend fun savePhoneNumber(phoneNumber: String) {
+        prefsDataSource.saveString(PHONE_KEY, phoneNumber)
+    }
+
+    override suspend fun getPhoneNumber(): String? {
+        return prefsDataSource.getString(PHONE_KEY)
     }
 }

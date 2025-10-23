@@ -10,6 +10,7 @@ import com.shiplocate.domain.usecase.GetDeviceInfoUseCase
 import com.shiplocate.domain.usecase.SendCachedTokenOnAuthUseCase
 import com.shiplocate.domain.usecase.auth.SaveAuthSessionUseCase
 import com.shiplocate.domain.usecase.auth.VerifySmsCodeUseCase
+import com.shiplocate.domain.usecase.SavePhoneNumberUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -22,6 +23,7 @@ import kotlinx.coroutines.launch
 class EnterPinViewModel(
     private val verifySmsCodeUseCase: VerifySmsCodeUseCase,
     private val saveAuthSessionUseCase: SaveAuthSessionUseCase,
+    private val savePhoneNumberUseCase: SavePhoneNumberUseCase,
     private val sendCachedTokenOnAuthUseCase: SendCachedTokenOnAuthUseCase,
     private val getDeviceInfoUseCase: GetDeviceInfoUseCase,
     private val logger: Logger,
@@ -115,6 +117,11 @@ class EnterPinViewModel(
                         )
                     saveAuthSessionUseCase(session)
                     logger.info(LogCategory.AUTH, "EnterPinViewModel: Session saved")
+
+                    // Save phone number without "+" for logs
+                    val cleanPhone = state.phone.replace("+", "")
+                    savePhoneNumberUseCase(cleanPhone)
+                    logger.info(LogCategory.AUTH, "EnterPinViewModel: Phone number saved: $cleanPhone")
 
                     // Отправляем кешированный Firebase токен на сервер
                     sendCachedTokenOnAuthUseCase()

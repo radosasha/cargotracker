@@ -35,4 +35,8 @@ class DeviceRepositoryImpl(
         val deviceModel = getDeviceModel()
         return "$platform/$osVersion/$deviceModel"
     }
+
+    override suspend fun getApiLevel(): Int {
+        return deviceDataSource.getApiLevel()
+    }
 }

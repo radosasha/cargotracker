@@ -23,4 +23,5 @@ interface LogsRepository {
      * Удаляет лог-файл
      */
     suspend fun deleteLogFile(fileName: String): Boolean
+
 }

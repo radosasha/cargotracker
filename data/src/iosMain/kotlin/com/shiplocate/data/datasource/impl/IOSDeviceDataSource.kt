@@ -1,8 +1,8 @@
 package com.shiplocate.data.datasource.impl
 
 import com.shiplocate.data.datasource.DeviceDataSource
-import platform.UIKit.UIDevice
 import platform.Foundation.NSProcessInfo
+import platform.UIKit.UIDevice
 
 /**
  * iOS реализация DeviceDataSource
@@ -70,4 +70,10 @@ class IOSDeviceDataSource : DeviceDataSource {
             "Unknown"
         }
     }
+
+    override suspend fun getApiLevel(): Int {
+        // iOS не имеет API level, возвращаем -1
+        return -1
+    }
+
 }

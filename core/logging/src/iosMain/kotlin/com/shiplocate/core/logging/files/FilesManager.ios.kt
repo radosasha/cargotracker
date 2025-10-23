@@ -4,6 +4,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.io.Source
 import kotlinx.io.buffered
+import java.io.ByteArrayInputStream
 
 /**
  * iOS реализация FilesManager
@@ -30,7 +31,7 @@ actual class FilesManager {
         return withContext(Dispatchers.Main) {
             // TODO: Реализовать чтение файла для iOS
             // Пока возвращаем заглушку
-            ByteArray(0).inputStream().buffered().source()
+            ByteArrayInputStream(ByteArray(0)).buffered().source()
         }
     }
 }

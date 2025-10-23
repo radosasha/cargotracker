@@ -64,4 +64,16 @@ class AndroidDeviceDataSource(
             "Unknown"
         }
     }
+
+    override suspend fun getApiLevel(): Int {
+        return try {
+            val apiLevel = Build.VERSION.SDK_INT
+            logger.debug(LogCategory.GENERAL, "AndroidDeviceDataSource: API level: $apiLevel")
+            apiLevel
+        } catch (e: Exception) {
+            logger.error(LogCategory.GENERAL, "AndroidDeviceDataSource: Error getting API level: ${e.message}", e)
+            -1
+        }
+    }
+
 }

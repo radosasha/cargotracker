@@ -19,6 +19,7 @@ import com.shiplocate.domain.usecase.auth.HasAuthSessionUseCase
 import com.shiplocate.domain.usecase.auth.RequestSmsCodeUseCase
 import com.shiplocate.domain.usecase.auth.SaveAuthSessionUseCase
 import com.shiplocate.domain.usecase.auth.VerifySmsCodeUseCase
+import com.shiplocate.domain.usecase.SavePhoneNumberUseCase
 import com.shiplocate.domain.usecase.load.ConnectToLoadUseCase
 import com.shiplocate.domain.usecase.load.DisconnectFromLoadUseCase
 import com.shiplocate.domain.usecase.load.GetCachedLoadsUseCase
@@ -63,6 +64,7 @@ val useCasesModule =
         factoryOf(::GetAuthSessionUseCase)
         factoryOf(::HasAuthSessionUseCase)
         factoryOf(::ClearAuthSessionUseCase)
+        factoryOf(::SavePhoneNumberUseCase)
 
         // Load Use Cases
         factoryOf(::GetLoadsUseCase)

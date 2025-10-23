@@ -71,4 +71,14 @@ interface PrefsRepository {
      * Очищает все настройки
      */
     suspend fun clearAllSettings()
+
+    /**
+     * Сохраняет номер телефона пользователя
+     */
+    suspend fun savePhoneNumber(phoneNumber: String)
+
+    /**
+     * Получает номер телефона пользователя
+     */
+    suspend fun getPhoneNumber(): String?
 }

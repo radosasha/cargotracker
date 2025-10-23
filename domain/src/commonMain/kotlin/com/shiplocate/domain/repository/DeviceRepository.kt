@@ -40,4 +40,10 @@ interface DeviceRepository {
      * @return String - информация об устройстве в формате "Platform/OS/Model"
      */
     suspend fun getDeviceInfo(): String
+
+    /**
+     * Получает API level устройства (только для Android)
+     * @return Int - API level или -1 если недоступно
+     */
+    suspend fun getApiLevel(): Int
 }

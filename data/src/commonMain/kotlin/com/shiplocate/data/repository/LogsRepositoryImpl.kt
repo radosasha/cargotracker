@@ -6,6 +6,7 @@ import com.shiplocate.data.datasource.LogsLocalDataSource
 import com.shiplocate.data.datasource.LogsRemoteDataSource
 import com.shiplocate.domain.model.logs.LogFile
 import com.shiplocate.domain.repository.LogsRepository
+import com.shiplocate.domain.repository.PrefsRepository
 
 /**
  * Реализация репозитория для работы с логами
@@ -33,11 +34,14 @@ class LogsRepositoryImpl(
         return try {
             logger.info(LogCategory.GENERAL, "LogsRepository: Sending ${files.size} log files as archive")
             
+            // Используем переданный clientId
+            logger.debug(LogCategory.GENERAL, "LogsRepository: Using clientId: $clientId")
+            
             // Создаем архив
             archivePath = logsLocalDataSource.createArchive(files)
             logger.debug(LogCategory.GENERAL, "LogsRepository: Created archive: $archivePath")
             
-            // Отправляем архив
+            // Отправляем архив с переданным clientId
             val result = logsRemoteDataSource.sendLogArchive(archivePath, clientId)
             
             if (result.isSuccess) {

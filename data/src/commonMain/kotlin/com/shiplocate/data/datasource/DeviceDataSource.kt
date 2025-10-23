@@ -34,4 +34,10 @@ interface DeviceDataSource {
      * @return String - модель устройства
      */
     suspend fun getDeviceModel(): String
+
+    /**
+     * Получает API level устройства (только для Android)
+     * @return Int - API level или -1 если недоступно
+     */
+    suspend fun getApiLevel(): Int
 }
