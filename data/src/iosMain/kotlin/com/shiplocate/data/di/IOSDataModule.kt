@@ -29,5 +29,5 @@ actual val platformDataModule: Module =
         single<GpsManager> { IOSGpsManager() }
         single<DeviceDataSource> { IOSDeviceDataSource() }
         single<PermissionDataSource> { IOSPermissionDataSource(get()) }
-        single<LogsLocalDataSource> { LogsLocalDataSourceImpl(get(), get()) }
+        single<LogsLocalDataSource> { LogsLocalDataSourceImpl(get(), get(), get()) }
     }

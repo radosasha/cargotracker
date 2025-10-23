@@ -148,7 +148,7 @@ fun LogsScreen(viewModel: LogsViewModel) {
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                 }
-                Text("Отправить (${uiState.selectedCount})")
+                Text("Send logs (${uiState.selectedCount})")
             }
         }
     }

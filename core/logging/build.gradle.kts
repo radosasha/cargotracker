@@ -10,6 +10,7 @@ kotlin {
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.kotlinx.datetime)
             implementation(libs.koin.core)
+            implementation(libs.ktor.io)
         }
 
         androidMain.dependencies {

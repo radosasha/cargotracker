@@ -12,9 +12,12 @@ interface LogsRepository {
     suspend fun getLogFiles(): List<LogFile>
 
     /**
-     * Отправляет выбранные лог-файлы на сервер
+     * Отправляет выбранные лог-файлы на сервер через архив
+     * @param files список выбранных файлов для отправки
+     * @param clientId идентификатор клиента
+     * @param authToken токен аутентификации
      */
-    suspend fun sendLogFiles(files: List<LogFile>): Result<Unit>
+    suspend fun sendLogFilesAsArchive(files: List<LogFile>, clientId: String): Result<Unit>
 
     /**
      * Удаляет лог-файл

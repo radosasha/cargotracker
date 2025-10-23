@@ -183,4 +183,15 @@ actual class FileAppender(
             file.length()
         }
     }
+
+    actual suspend fun getLogFileContent(fileName: String): ByteArray {
+        return withContext(Dispatchers.IO) {
+            val file = File(logDirectory, fileName)
+            file.readBytes()
+        }
+    }
+
+    actual suspend fun getLogDirectoryPath(): String {
+        return logDirectory.absolutePath
+    }
 }

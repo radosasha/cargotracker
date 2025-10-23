@@ -15,4 +15,17 @@ interface LogsLocalDataSource {
      * Удаляет лог-файл
      */
     suspend fun deleteLogFile(fileName: String): Boolean
+
+    /**
+     * Создает ZIP архив из выбранных лог-файлов
+     * @param selectedFiles список выбранных файлов для архивирования
+     * @return путь к созданному архиву
+     */
+    suspend fun createArchive(selectedFiles: List<LogFile>): String
+
+    /**
+     * Удаляет архив после отправки
+     * @param archivePath путь к архиву для удаления
+     */
+    suspend fun deleteArchive(archivePath: String): Boolean
 }

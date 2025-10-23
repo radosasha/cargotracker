@@ -28,26 +28,43 @@ class LogsRepositoryImpl(
         }
     }
 
-    override suspend fun sendLogFiles(files: List<LogFile>): Result<Unit> {
+    override suspend fun sendLogFilesAsArchive(files: List<LogFile>, clientId: String): Result<Unit> {
+        var archivePath: String? = null
         return try {
-            logger.info(LogCategory.GENERAL, "LogsRepository: Sending ${files.size} log files")
-            val result = logsRemoteDataSource.sendLogFiles(files)
+            logger.info(LogCategory.GENERAL, "LogsRepository: Sending ${files.size} log files as archive")
+            
+            // Создаем архив
+            archivePath = logsLocalDataSource.createArchive(files)
+            logger.debug(LogCategory.GENERAL, "LogsRepository: Created archive: $archivePath")
+            
+            // Отправляем архив
+            val result = logsRemoteDataSource.sendLogArchive(archivePath, clientId)
             
             if (result.isSuccess) {
-                logger.info(LogCategory.GENERAL, "LogsRepository: Successfully sent log files")
+                logger.info(LogCategory.GENERAL, "LogsRepository: Successfully sent archive")
                 // Удаляем отправленные файлы
                 files.forEach { file ->
                     logsLocalDataSource.deleteLogFile(file.name)
                 }
                 logger.info(LogCategory.GENERAL, "LogsRepository: Deleted ${files.size} sent log files")
             } else {
-                logger.error(LogCategory.GENERAL, "LogsRepository: Failed to send log files: ${result.exceptionOrNull()?.message}")
+                logger.error(LogCategory.GENERAL, "LogsRepository: Failed to send archive: ${result.exceptionOrNull()?.message}")
             }
             
             result
         } catch (e: Exception) {
-            logger.error(LogCategory.GENERAL, "LogsRepository: Error sending log files: ${e.message}", e)
+            logger.error(LogCategory.GENERAL, "LogsRepository: Error sending archive: ${e.message}", e)
             Result.failure(e)
+        } finally {
+            // Удаляем архив в любом случае
+            archivePath?.let { path ->
+                try {
+                    logsLocalDataSource.deleteArchive(path)
+                    logger.debug(LogCategory.GENERAL, "LogsRepository: Cleaned up archive: $path")
+                } catch (e: Exception) {
+                    logger.warn(LogCategory.GENERAL, "LogsRepository: Failed to cleanup archive: ${e.message}")
+                }
+            }
         }
     }
 

@@ -4,6 +4,7 @@ import com.shiplocate.core.logging.CrashHandler
 import com.shiplocate.core.logging.Logger
 import com.shiplocate.core.logging.LoggingConfig
 import com.shiplocate.core.logging.appender.FileAppender
+import com.shiplocate.core.logging.files.FilesManager
 import org.koin.core.module.Module
 import org.koin.dsl.module
 
@@ -17,6 +18,11 @@ actual val platformLoggingModule: Module =
         single<FileAppender> {
             val config = get<LoggingConfig>()
             FileAppender(config)
+        }
+
+        // Предоставляем iOS-специфичный FilesManager
+        single<FilesManager> {
+            FilesManager()
         }
 
         // iOS-специфичный обработчик крешей

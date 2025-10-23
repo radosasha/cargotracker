@@ -130,6 +130,7 @@ val dataModule =
                 LogsApiImpl(
                     httpClient = get(),
                     baseUrl = "http://${ServerConfig.BASE_URL}:8082",
+                    filesManager = get(),
                     logger = get(),
                 )
             }

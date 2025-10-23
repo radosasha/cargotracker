@@ -22,4 +22,14 @@ expect class FileAppender : LogAppender {
      * Получает размер лог-файла
      */
     suspend fun getLogFileSize(fileName: String): Long
+
+    /**
+     * Получает содержимое лог-файла
+     */
+    suspend fun getLogFileContent(fileName: String): ByteArray
+
+    /**
+     * Получает путь к директории с логами
+     */
+    suspend fun getLogDirectoryPath(): String
 }

@@ -160,4 +160,18 @@ actual class FileAppender(
             0L
         }
     }
+
+    actual suspend fun getLogFileContent(fileName: String): ByteArray {
+        return withContext(Dispatchers.Main) {
+            // Пока возвращаем пустой массив для iOS
+            ByteArray(0)
+        }
+    }
+
+    actual suspend fun getLogDirectoryPath(): String {
+        return withContext(Dispatchers.Main) {
+            // Пока возвращаем пустую строку для iOS
+            ""
+        }
+    }
 }

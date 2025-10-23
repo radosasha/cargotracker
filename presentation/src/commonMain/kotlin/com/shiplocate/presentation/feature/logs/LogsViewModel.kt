@@ -144,7 +144,8 @@ class LogsViewModel(
 
                 val result =
                     withContext(Dispatchers.Default) {
-                        sendLogsUseCase(selectedFiles)
+                        // TODO Хардкодим clientId и authToken как запрошено
+                        sendLogsUseCase(selectedFiles, "12025000000")
                     }
 
                 if (result.isSuccess) {
@@ -185,3 +186,6 @@ class LogsViewModel(
         _uiState.value = _uiState.value.copy(message = null, messageType = null)
     }
 }
+
+
+
