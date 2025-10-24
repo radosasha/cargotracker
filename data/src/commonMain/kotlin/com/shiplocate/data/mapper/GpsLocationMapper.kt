@@ -12,7 +12,6 @@ object GpsLocationMapper {
      */
     fun toDomain(
         gpsLocation: GpsLocation,
-        deviceId: String,
     ): Location {
         return Location(
             latitude = gpsLocation.latitude,
@@ -22,17 +21,6 @@ object GpsLocationMapper {
             speed = gpsLocation.speed,
             bearing = gpsLocation.bearing,
             timestamp = gpsLocation.timestamp,
-            deviceId = deviceId,
         )
-    }
-
-    /**
-     * Преобразует список GpsLocation в список Domain Location
-     */
-    fun toDomainList(
-        gpsLocations: List<GpsLocation>,
-        deviceId: String,
-    ): List<Location> {
-        return gpsLocations.map { toDomain(it, deviceId) }
     }
 }

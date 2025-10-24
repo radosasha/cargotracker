@@ -24,8 +24,7 @@ class TestServerUseCase(
                     accuracy = 10f,
                     altitude = 150.0,
                     speed = 0f,
-                    bearing = 0f,
-                    deviceId = "40329715",
+                    bearing = 0f
                 )
 
             logger.info(

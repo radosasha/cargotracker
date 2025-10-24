@@ -1,15 +1,11 @@
 package com.shiplocate.data.repository
 
-import com.shiplocate.data.datasource.GpsLocationDataSource
 import com.shiplocate.data.datasource.LocationLocalDataSource
 import com.shiplocate.data.datasource.LocationRemoteDataSource
-import com.shiplocate.data.mapper.GpsLocationMapper
 import com.shiplocate.data.mapper.LocationEntityMapper
 import com.shiplocate.data.mapper.LocationMapper
 import com.shiplocate.domain.model.Location
 import com.shiplocate.domain.repository.LocationRepository
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
 
 /**
  * Реализация LocationRepository в data слое
@@ -17,7 +13,6 @@ import kotlinx.coroutines.flow.map
 class LocationRepositoryImpl(
     private val remoteLocationDataSource: LocationRemoteDataSource,
     private val localLocationDataSource: LocationLocalDataSource,
-    private val gpsLocationDataSource: GpsLocationDataSource,
 ) : LocationRepository {
     override suspend fun sendLocation(
         loadId: String,
@@ -74,15 +69,5 @@ class LocationRepositoryImpl(
 
     override suspend fun getUnsentCount(): Int {
         return localLocationDataSource.getUnsentCount()
-    }
-
-    override fun startGpsTracking(loadId: String): Flow<Location> {
-        return gpsLocationDataSource.startGpsTracking().map { gpsLocation ->
-            GpsLocationMapper.toDomain(gpsLocation, loadId)
-        }
-    }
-
-    override suspend fun stopGpsTracking(): Result<Unit> {
-        return gpsLocationDataSource.stopGpsTracking()
     }
 }

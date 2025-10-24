@@ -1,7 +1,6 @@
 package com.shiplocate.domain.repository
 
 import com.shiplocate.domain.model.Location
-import kotlinx.coroutines.flow.Flow
 
 /**
  * Repository для работы с GPS координатами
@@ -57,18 +56,4 @@ interface LocationRepository {
      * Получает количество неотправленных координат
      */
     suspend fun getUnsentCount(): Int
-
-    // GPS методы
-
-    /**
-     * Запускает GPS трекинг и возвращает поток координат
-     * @return Flow<Location> - поток GPS координат в Domain модели
-     */
-    fun startGpsTracking(loadId: String): Flow<Location>
-
-    /**
-     * Останавливает GPS трекинг
-     * @return Result<Unit> - результат операции
-     */
-    suspend fun stopGpsTracking(): Result<Unit>
 }

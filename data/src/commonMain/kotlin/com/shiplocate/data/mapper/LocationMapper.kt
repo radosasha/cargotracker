@@ -19,7 +19,6 @@ object LocationMapper {
             speed = dataModel.speed,
             bearing = dataModel.course, // course -> bearing
             timestamp = dataModel.timestamp,
-            deviceId = dataModel.deviceId,
         )
     }
 
@@ -37,7 +36,6 @@ object LocationMapper {
             speed = domainModel.speed,
             course = domainModel.bearing, // bearing -> course
             batteryLevel = null,
-            deviceId = domainModel.deviceId,
         )
     }
 

@@ -1,18 +1,18 @@
 package com.shiplocate.domain.usecase
 
-import com.shiplocate.domain.repository.LocationRepository
+import com.shiplocate.domain.repository.GpsRepository
 
 /**
  * Use Case для остановки GPS трекинга
  * Останавливает GPS трекинг
  */
-class StopProcessLocationsUseCase(
-    private val locationRepository: LocationRepository,
+class StopTrackerUseCase(
+    private val gpsRepository: GpsRepository,
 ) {
     suspend operator fun invoke(): Result<Unit> {
         return try {
             println("StopGpsTrackingUseCase: Stopping GPS tracking")
-            val result = locationRepository.stopGpsTracking()
+            val result = gpsRepository.stopGpsTracking()
             if (result.isSuccess) {
                 println("StopGpsTrackingUseCase: GPS tracking stopped successfully")
             } else {

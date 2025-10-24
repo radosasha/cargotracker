@@ -2,6 +2,7 @@ package com.shiplocate.domain.usecase
 
 import com.shiplocate.domain.model.Location
 import com.shiplocate.domain.repository.DeviceRepository
+import com.shiplocate.domain.repository.GpsRepository
 import com.shiplocate.domain.repository.LoadRepository
 import com.shiplocate.domain.repository.LocationRepository
 import com.shiplocate.domain.service.LocationProcessResult
@@ -16,8 +17,9 @@ import kotlinx.coroutines.withContext
  * Use Case для обработки GPS координат
  * Запускает GPS трекинг и обрабатывает поток координат
  */
-class StartProcessLocationsUseCase(
+class StartTrackerUseCase(
     private val locationRepository: LocationRepository,
+    private val gpsRepository: GpsRepository,
     private val locationProcessor: LocationProcessor,
     private val deviceRepository: DeviceRepository,
     private val loadRepository: LoadRepository,
@@ -34,7 +36,7 @@ class StartProcessLocationsUseCase(
             withContext(Dispatchers.Default) {
                 loadRepository.getConnectedLoad()
             } ?: throw IllegalStateException("Connected Load not found")
-        return locationRepository.startGpsTracking(connectedLoad.loadId)
+        return gpsRepository.startGpsTracking()
             .map { location ->
                 try {
                     println("StartProcessLocationsUseCase: 🔥 RECEIVED GPS location: Lat=${location.latitude}, Lon=${location.longitude}")

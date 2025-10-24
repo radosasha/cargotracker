@@ -2,8 +2,8 @@ package com.shiplocate
 
 import com.shiplocate.core.logging.LogCategory
 import com.shiplocate.core.logging.Logger
-import com.shiplocate.domain.usecase.StartProcessLocationsUseCase
-import com.shiplocate.domain.usecase.StopProcessLocationsUseCase
+import com.shiplocate.domain.usecase.StartTrackerUseCase
+import com.shiplocate.domain.usecase.StopTrackerUseCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -24,8 +24,8 @@ import org.koin.core.component.inject
 class IOSLocationTrackingService private constructor() : KoinComponent {
     private var isTracking = false
 
-    private val startProcessLocationsUseCase: StartProcessLocationsUseCase by inject()
-    private val stopProcessLocationsUseCase: StopProcessLocationsUseCase by inject()
+    private val startTrackerUseCase: StartTrackerUseCase by inject()
+    private val stopTrackerUseCase: StopTrackerUseCase by inject()
     private val logger: Logger by inject()
 
     // Coroutine scope for background operations
@@ -91,7 +91,7 @@ class IOSLocationTrackingService private constructor() : KoinComponent {
             logger.info(LogCategory.LOCATION, "$TAG: Starting GPS tracking through StartProcessLocationsUseCase")
 
             // Запускаем обработку GPS координат и подписываемся на Flow результатов
-            collectingJob = startProcessLocationsUseCase()
+            collectingJob = startTrackerUseCase()
                 .onEach { result ->
                     // Логируем результат обработки
                     if (result.shouldSend) {
@@ -129,7 +129,7 @@ class IOSLocationTrackingService private constructor() : KoinComponent {
             logger.info(LogCategory.LOCATION, "$TAG: Stopping GPS tracking through StopProcessLocationsUseCase")
 
             // Останавливаем обработку GPS координат
-            val result = stopProcessLocationsUseCase()
+            val result = stopTrackerUseCase()
             if (result.isSuccess) {
                 isTracking = false
                 logger.info(LogCategory.LOCATION, "$TAG: ✅ GPS tracking stopped successfully")
@@ -162,7 +162,7 @@ class IOSLocationTrackingService private constructor() : KoinComponent {
             logger.info(LogCategory.LOCATION, "$TAG: Stopping GPS tracking synchronously")
 
             // Останавливаем обработку GPS координат синхронно
-            val result = stopProcessLocationsUseCase()
+            val result = stopTrackerUseCase()
             if (result.isSuccess) {
                 isTracking = false
                 logger.info(LogCategory.LOCATION, "$TAG: ✅ GPS tracking stopped successfully")

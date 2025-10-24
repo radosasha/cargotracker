@@ -13,7 +13,6 @@ data class Location(
     val speed: Float? = null,
     val bearing: Float? = null,
     val timestamp: Instant,
-    val deviceId: String? = null,
 )
 
 /**

@@ -44,7 +44,6 @@ object LocationEntityMapper {
             speed = entity.speed,
             bearing = entity.bearing,
             timestamp = Instant.fromEpochMilliseconds(entity.timestamp),
-            deviceId = deviceId,
         )
     }
 

@@ -8,9 +8,9 @@ import com.shiplocate.domain.usecase.ManageFirebaseTokensUseCase
 import com.shiplocate.domain.usecase.RequestAllPermissionsUseCase
 import com.shiplocate.domain.usecase.RequestNotificationPermissionUseCase
 import com.shiplocate.domain.usecase.SendCachedTokenOnAuthUseCase
-import com.shiplocate.domain.usecase.StartProcessLocationsUseCase
+import com.shiplocate.domain.usecase.StartTrackerUseCase
 import com.shiplocate.domain.usecase.StartTrackingUseCase
-import com.shiplocate.domain.usecase.StopProcessLocationsUseCase
+import com.shiplocate.domain.usecase.StopTrackerUseCase
 import com.shiplocate.domain.usecase.StopTrackingUseCase
 import com.shiplocate.domain.usecase.TestServerUseCase
 import com.shiplocate.domain.usecase.auth.ClearAuthSessionUseCase
@@ -51,8 +51,8 @@ val useCasesModule =
         factoryOf(::StopTrackingUseCase)
 
         // Location Processing Use Cases
-        factoryOf(::StartProcessLocationsUseCase)
-        factoryOf(::StopProcessLocationsUseCase)
+        factoryOf(::StartTrackerUseCase)
+        factoryOf(::StopTrackerUseCase)
 
         // Server Use Cases
         factoryOf(::TestServerUseCase)

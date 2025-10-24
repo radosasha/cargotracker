@@ -5,17 +5,19 @@ import com.shiplocate.core.database.TrackerDatabase
 import com.shiplocate.core.datastore.DataStoreProvider
 import com.shiplocate.core.network.HttpClientProvider
 import com.shiplocate.data.config.ServerConfig
-import com.shiplocate.data.datasource.impl.FirebaseTokenLocalDataSourceImpl
 import com.shiplocate.data.datasource.FirebaseTokenRemoteDataSource
-import com.shiplocate.data.datasource.impl.FirebaseTokenRemoteDataSourceImpl
 import com.shiplocate.data.datasource.GpsLocationDataSource
 import com.shiplocate.data.datasource.LocationLocalDataSource
 import com.shiplocate.data.datasource.LocationRemoteDataSource
+import com.shiplocate.data.datasource.LogsRemoteDataSource
 import com.shiplocate.data.datasource.PrefsDataSource
 import com.shiplocate.data.datasource.TrackingDataSource
+import com.shiplocate.data.datasource.impl.FirebaseTokenLocalDataSourceImpl
+import com.shiplocate.data.datasource.impl.FirebaseTokenRemoteDataSourceImpl
 import com.shiplocate.data.datasource.impl.GpsLocationDataSourceImpl
 import com.shiplocate.data.datasource.impl.LocationLocalDataSourceImpl
 import com.shiplocate.data.datasource.impl.LocationRemoteDataSourceImpl
+import com.shiplocate.data.datasource.impl.LogsRemoteDataSourceImpl
 import com.shiplocate.data.datasource.impl.PrefsDataSourceImpl
 import com.shiplocate.data.datasource.impl.TrackingDataSourceImpl
 import com.shiplocate.data.datasource.load.LoadLocalDataSource
@@ -30,12 +32,11 @@ import com.shiplocate.data.network.api.LoadApi
 import com.shiplocate.data.network.api.LoadApiImpl
 import com.shiplocate.data.network.api.LogsApi
 import com.shiplocate.data.network.api.LogsApiImpl
-import com.shiplocate.data.datasource.LogsRemoteDataSource
-import com.shiplocate.data.datasource.impl.LogsRemoteDataSourceImpl
 import com.shiplocate.data.network.api.OsmAndLocationApi
 import com.shiplocate.data.repository.AuthPreferencesRepositoryImpl
 import com.shiplocate.data.repository.AuthRepositoryImpl
 import com.shiplocate.data.repository.DeviceRepositoryImpl
+import com.shiplocate.data.repository.GpsRepositoryImpl
 import com.shiplocate.data.repository.LoadRepositoryImpl
 import com.shiplocate.data.repository.LocationRepositoryImpl
 import com.shiplocate.data.repository.LogsRepositoryImpl
@@ -49,6 +50,7 @@ import com.shiplocate.domain.datasource.FirebaseTokenLocalDataSource
 import com.shiplocate.domain.repository.AuthPreferencesRepository
 import com.shiplocate.domain.repository.AuthRepository
 import com.shiplocate.domain.repository.DeviceRepository
+import com.shiplocate.domain.repository.GpsRepository
 import com.shiplocate.domain.repository.LoadRepository
 import com.shiplocate.domain.repository.LocationRepository
 import com.shiplocate.domain.repository.LogsRepository
@@ -151,8 +153,9 @@ val dataModule =
             // FirebaseTokenService регистрируется в платформо-специфичных модулях composeApp
 
             // Repositories
+            single<GpsRepository> { GpsRepositoryImpl(get()) }
             single<DeviceRepository> { DeviceRepositoryImpl(get()) }
-            single<LocationRepository> { LocationRepositoryImpl(get(), get(), get()) }
+            single<LocationRepository> { LocationRepositoryImpl(get(), get()) }
             single<PermissionRepository> { PermissionRepositoryImpl(get()) }
             single<PrefsRepository> { PrefsRepositoryImpl(get()) }
             single<TrackingRepository> { TrackingRepositoryImpl(get()) }

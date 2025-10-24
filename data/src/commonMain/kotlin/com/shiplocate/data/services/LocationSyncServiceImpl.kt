@@ -2,8 +2,8 @@ package com.shiplocate.data.services
 
 import com.shiplocate.core.logging.LogCategory
 import com.shiplocate.core.logging.Logger
-import com.shiplocate.domain.repository.LoadRepository
 import com.shiplocate.domain.repository.LocationRepository
+import com.shiplocate.domain.repository.LoadRepository
 import com.shiplocate.domain.service.LocationSyncService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
