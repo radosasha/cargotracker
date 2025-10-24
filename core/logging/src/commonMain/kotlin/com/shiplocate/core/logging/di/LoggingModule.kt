@@ -37,9 +37,7 @@ val loggingModule: Module =
         // Предоставляем appenders
         single<ConsoleAppender> { ConsoleAppender() }
         single<NetworkAppender> { NetworkAppender() }
-        
-        // FileAppender будет предоставлен в platform-specific модулях
-        
+
         // Предоставляем базовую реализацию логгера (будет переопределена в platform-specific модулях)
         single<Logger> {
             LoggerImpl(

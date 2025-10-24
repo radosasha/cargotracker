@@ -19,6 +19,8 @@ interface LogsRepository {
      */
     suspend fun sendLogFilesAsArchive(files: List<LogFile>, clientId: String): Result<Unit>
 
+    suspend fun sendLogFiles(files: List<LogFile>, clientId: String): Result<Unit>
+
     /**
      * Удаляет лог-файл
      */

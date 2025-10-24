@@ -6,7 +6,6 @@ import com.shiplocate.data.datasource.LogsLocalDataSource
 import com.shiplocate.data.datasource.LogsRemoteDataSource
 import com.shiplocate.domain.model.logs.LogFile
 import com.shiplocate.domain.repository.LogsRepository
-import com.shiplocate.domain.repository.PrefsRepository
 
 /**
  * Реализация репозитория для работы с логами
@@ -33,17 +32,17 @@ class LogsRepositoryImpl(
         var archivePath: String? = null
         return try {
             logger.info(LogCategory.GENERAL, "LogsRepository: Sending ${files.size} log files as archive")
-            
+
             // Используем переданный clientId
             logger.debug(LogCategory.GENERAL, "LogsRepository: Using clientId: $clientId")
-            
+
             // Создаем архив
-            archivePath = logsLocalDataSource.createArchive(files)
+            archivePath = logsLocalDataSource.createArchive(logsLocalDataSource.getLogsDirectory(), files)
             logger.debug(LogCategory.GENERAL, "LogsRepository: Created archive: $archivePath")
-            
+
             // Отправляем архив с переданным clientId
             val result = logsRemoteDataSource.sendLogArchive(archivePath, clientId)
-            
+
             if (result.isSuccess) {
                 logger.info(LogCategory.GENERAL, "LogsRepository: Successfully sent archive")
                 // Оригинальные файлы НЕ удаляем - они остаются для дальнейшего использования
@@ -51,7 +50,7 @@ class LogsRepositoryImpl(
             } else {
                 logger.error(LogCategory.GENERAL, "LogsRepository: Failed to send archive: ${result.exceptionOrNull()?.message}")
             }
-            
+
             result
         } catch (e: Exception) {
             logger.error(LogCategory.GENERAL, "LogsRepository: Error sending archive: ${e.message}", e)
@@ -66,6 +65,30 @@ class LogsRepositoryImpl(
                     logger.warn(LogCategory.GENERAL, "LogsRepository: Failed to cleanup archive: ${e.message}")
                 }
             }
+        }
+    }
+
+    override suspend fun sendLogFiles(files: List<LogFile>, clientId: String): Result<Unit> {
+        return try {
+            logger.info(LogCategory.GENERAL, "LogsRepository: Sending ${files.size} log files as archive")
+
+
+            // Отправляем архив с переданным clientId
+            logsLocalDataSource.getLogFiles()
+            val result = logsRemoteDataSource.sendLog(files.map { logsLocalDataSource.getLogsDirectory() + "/" + it.name }, clientId)
+
+            if (result.isSuccess) {
+                logger.info(LogCategory.GENERAL, "LogsRepository: Successfully sent archive")
+                // Оригинальные файлы НЕ удаляем - они остаются для дальнейшего использования
+                logger.info(LogCategory.GENERAL, "LogsRepository: Archive sent successfully, original files preserved")
+            } else {
+                logger.error(LogCategory.GENERAL, "LogsRepository: Failed to send archive: ${result.exceptionOrNull()?.message}")
+            }
+
+            result
+        } catch (e: Exception) {
+            logger.error(LogCategory.GENERAL, "LogsRepository: Error sending archive: ${e.message}", e)
+            Result.failure(e)
         }
     }
 

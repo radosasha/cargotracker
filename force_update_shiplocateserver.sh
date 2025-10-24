@@ -4,18 +4,21 @@ set -e
 
 echo "🔄 Принудительно обновляем субмодули..."
 
-cd traccarserver
+# Обновляем основной субмодуль shiplocateserver
+cd shiplocateserver
 git fetch origin
 git checkout develop
 git reset --hard origin/develop
 git clean -fd
 
-cd traccar-web
+# Обновляем веб-субмодуль shiplocate-web (находится внутри shiplocateserver)
+cd shiplocate-web
 git fetch origin
 git checkout develop
 git reset --hard origin/develop
 git clean -fd
 
+# Возвращаемся в корень проекта
 cd ../..
 
 echo "✅ Готово!"

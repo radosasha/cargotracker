@@ -1,7 +1,5 @@
 package com.shiplocate.data.datasource
 
-import com.shiplocate.domain.model.logs.LogFile
-
 /**
  * Интерфейс удаленного источника данных для работы с логами
  */
@@ -13,4 +11,5 @@ interface LogsRemoteDataSource {
      * @param clientId идентификатор клиента
      */
     suspend fun sendLogArchive(archivePath: String, clientId: String): Result<Unit>
+    suspend fun sendLog(files: List<String>, clientId: String): Result<Unit>
 }

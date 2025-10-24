@@ -21,11 +21,13 @@ interface LogsLocalDataSource {
      * @param selectedFiles список выбранных файлов для архивирования
      * @return путь к созданному архиву
      */
-    suspend fun createArchive(selectedFiles: List<LogFile>): String
+    suspend fun createArchive(logsDirectory: String, selectedFiles: List<LogFile>): String
 
     /**
      * Удаляет архив после отправки
      * @param archivePath путь к архиву для удаления
      */
     suspend fun deleteArchive(archivePath: String): Boolean
+
+    suspend fun getLogsDirectory() : String
 }

@@ -27,4 +27,22 @@ class LogsRemoteDataSourceImpl(
             Result.failure(e)
         }
     }
+
+    override suspend fun sendLog(files: List<String>, clientId: String): Result<Unit> {
+        return try {
+            logger.info(LogCategory.NETWORK, "LogsRemoteDataSource: Sending ${files.size} files to server for client: $clientId")
+            val result = logsApi.sendLogFiles(files, clientId)
+
+            if (result.isSuccess) {
+                logger.info(LogCategory.NETWORK, "LogsRemoteDataSource: Successfully sent ${files.size} files")
+                Result.success(Unit)
+            } else {
+                logger.error(LogCategory.NETWORK, "LogsRemoteDataSource: Failed to send files: ${result.exceptionOrNull()?.message}")
+                Result.failure(result.exceptionOrNull() ?: Exception("Unknown error"))
+            }
+        } catch (e: Exception) {
+            logger.error(LogCategory.NETWORK, "LogsRemoteDataSource: Error sending files: ${e.message}", e)
+            Result.failure(e)
+        }
+    }
 }

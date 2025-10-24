@@ -4,9 +4,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.shiplocate.core.logging.LogCategory
 import com.shiplocate.core.logging.Logger
+import com.shiplocate.domain.repository.LogsRepository
+import com.shiplocate.domain.usecase.logs.GetLogsClientIdUseCase
 import com.shiplocate.domain.usecase.logs.GetLogsUseCase
 import com.shiplocate.domain.usecase.logs.SendLogsUseCase
-import com.shiplocate.domain.repository.LogsRepository
 import com.shiplocate.presentation.model.LogsUiState
 import com.shiplocate.presentation.model.MessageType
 import kotlinx.coroutines.Dispatchers
@@ -22,6 +23,7 @@ import kotlinx.coroutines.withContext
 class LogsViewModel(
     private val getLogsUseCase: GetLogsUseCase,
     private val sendLogsUseCase: SendLogsUseCase,
+    private val getLogsClientIdUseCase: GetLogsClientIdUseCase,
     private val logsRepository: LogsRepository,
     private val logger: Logger,
 ) : ViewModel() {
@@ -144,10 +146,9 @@ class LogsViewModel(
 
                 logger.info(LogCategory.GENERAL, "LogsViewModel: Sending ${selectedFiles.size} log files")
 
-                val result =
-                    withContext(Dispatchers.Default) {
-                        sendLogsUseCase(selectedFiles)
-                    }
+                val result = withContext(Dispatchers.Default) {
+                    sendLogsUseCase(clientId = getLogsClientIdUseCase(), files = selectedFiles)
+                }
 
                 if (result.isSuccess) {
                     // Обновляем список файлов после успешной отправки

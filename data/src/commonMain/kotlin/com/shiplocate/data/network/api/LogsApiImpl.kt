@@ -58,4 +58,49 @@ class LogsApiImpl(
             Result.failure(e)
         }
     }
+
+    override suspend fun sendLogFiles(files: List<String>, clientId: String): Result<Unit> {
+        return try {
+            logger.debug(LogCategory.NETWORK, "LogsApi: Starting to send ${files.size} files for client: $clientId")
+
+            // Получаем источники файлов заранее
+            val fileSources = files.map { filePath ->
+                val fileName = filePath.substringAfterLast("/")
+                val source = filesManager.getFileSource(filePath)
+                Pair(fileName, source)
+            }
+
+            val response = httpClient.submitFormWithBinaryData(
+                url = "$baseUrl/api/logs/upload-files",
+                formData = formData {
+                    append("clientId", clientId)
+                    
+                    // Отправляем все файлы с одинаковым ключом "files"
+                    // Jersey должен автоматически собрать их в массив
+                    fileSources.forEach { (fileName, source) ->
+                        append(
+                            key = "files",
+                            value = InputProvider { source },
+                            headers = Headers.build {
+                                append(HttpHeaders.ContentType, "application/octet-stream")
+                                append(HttpHeaders.ContentDisposition, "filename=\"$fileName\"")
+                            }
+                        )
+                    }
+                }
+            )
+
+            if (response.status.value in 200..299) {
+                logger.info(LogCategory.NETWORK, "LogsApi: Successfully sent ${files.size} files")
+                Result.success(Unit)
+            } else {
+                logger.error(LogCategory.NETWORK, "LogsApi: Server error: ${response.status}")
+                Result.failure(Exception("Server error: ${response.status}"))
+            }
+
+        } catch (e: Exception) {
+            logger.error(LogCategory.NETWORK, "LogsApi: Error sending files: ${e.message}", e)
+            Result.failure(e)
+        }
+    }
 }

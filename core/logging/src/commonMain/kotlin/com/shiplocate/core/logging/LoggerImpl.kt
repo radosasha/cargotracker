@@ -32,8 +32,7 @@ class LoggerImpl(
             return
         }
 
-        val entry =
-            LogEntry(
+        val entry = LogEntry(
                 level = level,
                 category = category,
                 message = message,

@@ -1,4 +1,4 @@
-rootProject.name = "Tracker"
+rootProject.name = "ShipLocate"
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 pluginManagement {

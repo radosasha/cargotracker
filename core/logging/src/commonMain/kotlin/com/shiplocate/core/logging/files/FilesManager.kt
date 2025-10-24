@@ -55,18 +55,6 @@ expect class FilesManager {
      * @return список имен файлов
      */
     suspend fun listFiles(directoryPath: String): List<String>
-
-    /**
-     * Создает директорию если она не существует
-     * @param directoryPath путь к директории
-     */
-    suspend fun createDirectoryIfNotExists(directoryPath: String)
-
-    /**
-     * Получает путь к директории логов
-     * @return путь к директории логов
-     */
-    suspend fun getLogDirectoryPath(): String
 }
 
 /**
@@ -74,5 +62,6 @@ expect class FilesManager {
  */
 data class FileInfo(
     val name: String,
+    val path: String,
     val content: Source,
 )

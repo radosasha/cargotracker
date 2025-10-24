@@ -19,13 +19,6 @@ import java.util.zip.ZipOutputStream
 actual class FilesManager(
     private val context: Context,
 ) {
-    private val logDirectory: File by lazy {
-        val dir = File(context.filesDir, "logs")
-        if (!dir.exists()) {
-            dir.mkdirs()
-        }
-        dir
-    }
 
     actual suspend fun createZipArchive(files: List<FileInfo>, archivePath: String): String {
         return withContext(Dispatchers.IO) {
@@ -103,18 +96,5 @@ actual class FilesManager(
                 emptyList()
             }
         }
-    }
-
-    actual suspend fun createDirectoryIfNotExists(directoryPath: String) {
-        withContext(Dispatchers.IO) {
-            val directory = File(directoryPath)
-            if (!directory.exists()) {
-                directory.mkdirs()
-            }
-        }
-    }
-
-    actual suspend fun getLogDirectoryPath(): String {
-        return logDirectory.absolutePath
     }
 }

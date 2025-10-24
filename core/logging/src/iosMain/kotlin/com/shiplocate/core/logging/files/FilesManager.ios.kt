@@ -1,6 +1,5 @@
 package com.shiplocate.core.logging.files
 
-import io.ktor.utils.io.readText
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.refTo
@@ -22,39 +21,19 @@ import platform.Foundation.writeToFile
  * Использует Foundation API для работы с файлами
  */
 actual class FilesManager {
-    private val logDirectoryPath: String = "/tmp/logs"
 
     @OptIn(ExperimentalForeignApi::class)
     actual suspend fun createZipArchive(files: List<FileInfo>, archivePath: String): String {
         return withContext(Dispatchers.Default) {
             try {
 
-                // Создаем директорию для архива
-                val fileManager = NSFileManager.defaultManager
-                val archiveUrl = NSURL.fileURLWithPath(archivePath)
-                val parentDir = archiveUrl.URLByDeletingLastPathComponent
-                if (parentDir != null) {
-                    fileManager.createDirectoryAtURL(parentDir, true, null, null)
-                }
-
-                // Создаем простой архив (не ZIP) с объединенным содержимым
-                val combinedContent = files.joinToString("\n---FILE_SEPARATOR---\n") { fileInfo ->
-                    "FILE: ${fileInfo.name}\nCONTENT:\n${fileInfo.content.readText()}"
-                }
-
-                val combinedData = combinedContent.encodeToByteArray()
-                memScoped {
-                    val nsData = NSData.dataWithBytes(combinedData.refTo(0).getPointer(this@memScoped), combinedData.size.toULong())
-                    nsData.writeToFile(archivePath, true)
-                }
-
+                // FIXME not implmented
                 archivePath
             } catch (e: Exception) {
                 throw IllegalStateException("Failed to create archive: ${e.message}", e)
             }
         }
     }
-
 
 
     @OptIn(ExperimentalForeignApi::class)
@@ -133,22 +112,5 @@ actual class FilesManager {
                 emptyList()
             }
         }
-    }
-
-    @OptIn(ExperimentalForeignApi::class)
-    actual suspend fun createDirectoryIfNotExists(directoryPath: String) {
-        withContext(Dispatchers.Default) {
-            try {
-                val fileManager = NSFileManager.defaultManager
-                val url = NSURL.fileURLWithPath(directoryPath)
-                fileManager.createDirectoryAtURL(url, true, null, null)
-            } catch (e: Exception) {
-                println("Failed to create directory $directoryPath: ${e.message}")
-            }
-        }
-    }
-
-    actual suspend fun getLogDirectoryPath(): String {
-        return logDirectoryPath
     }
 }

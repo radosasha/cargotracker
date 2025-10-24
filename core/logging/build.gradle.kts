@@ -13,7 +13,6 @@ kotlin {
             implementation(libs.ktor.io)
             implementation(libs.ktor.client.core)
             implementation(libs.kotlinx.io)
-//            implementation("io.github.skolson:kmp-io:0.2.0")
         }
 
         androidMain.dependencies {

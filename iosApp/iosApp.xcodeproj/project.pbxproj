@@ -252,13 +252,16 @@
 				ARCHS = arm64;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ALLOW_ENTITLEMENTS_MODIFICATION = YES;
+				CODE_SIGN_ENTITLEMENTS = iosApp/iosApp.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_ASSET_PATHS = "\"iosApp/Preview Content\"";
-				DEVELOPMENT_TEAM = "${TEAM_ID}";
+				DEVELOPMENT_TEAM = 6SQ65RWDV4;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = iosApp/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = ShipLocate;
 				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "Это приложение использует GPS для постоянного отслеживания вашего местоположения, даже когда приложение находится в фоне.";
 				INFOPLIST_KEY_NSLocationAlwaysUsageDescription = "Это приложение использует GPS для постоянного отслеживания вашего местоположения, даже когда приложение находится в фоне.";
 				INFOPLIST_KEY_NSLocationUsageDescription = "Это приложение использует GPS для точного отслеживания местоположения.";
@@ -272,8 +275,6 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				CODE_SIGN_ALLOW_ENTITLEMENTS_MODIFICATION = YES;
-				CODE_SIGN_ENTITLEMENTS = iosApp/iosApp.entitlements;
 				PRODUCT_BUNDLE_IDENTIFIER = com.shiplocate;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -352,13 +353,16 @@
 				ARCHS = arm64;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ALLOW_ENTITLEMENTS_MODIFICATION = YES;
+				CODE_SIGN_ENTITLEMENTS = iosApp/iosApp.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_ASSET_PATHS = "\"iosApp/Preview Content\"";
-				DEVELOPMENT_TEAM = "${TEAM_ID}";
+				DEVELOPMENT_TEAM = 6SQ65RWDV4;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = iosApp/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = ShipLocate;
 				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "Это приложение использует GPS для постоянного отслеживания вашего местоположения, даже когда приложение находится в фоне.";
 				INFOPLIST_KEY_NSLocationAlwaysUsageDescription = "Это приложение использует GPS для постоянного отслеживания вашего местоположения, даже когда приложение находится в фоне.";
 				INFOPLIST_KEY_NSLocationUsageDescription = "Это приложение использует GPS для точного отслеживания местоположения.";
@@ -372,8 +376,6 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				CODE_SIGN_ALLOW_ENTITLEMENTS_MODIFICATION = YES;
-				CODE_SIGN_ENTITLEMENTS = iosApp/iosApp.entitlements;
 				PRODUCT_BUNDLE_IDENTIFIER = com.shiplocate;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;

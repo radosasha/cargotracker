@@ -55,8 +55,7 @@ class FlespiLocationApi(
                 return Result.success(Unit)
             }
 
-            val flespiPositions =
-                locations.map { location ->
+            val flespiPositions = locations.map { location ->
                     FlespiPosition(
                         ident = deviceId,
                         timestamp = location.timestamp.toEpochMilliseconds() / 1000, // Flespi использует Unix timestamp в секундах

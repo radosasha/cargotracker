@@ -2,6 +2,7 @@ package com.shiplocate.core.logging.appender
 
 import com.shiplocate.core.logging.LogEntry
 import com.shiplocate.core.logging.LoggingConfig
+import com.shiplocate.core.logging.LogsSettings
 import com.shiplocate.core.logging.files.FilesManager
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
@@ -14,6 +15,7 @@ import kotlinx.io.Source
 class FileAppender(
     private val config: LoggingConfig,
     private val filesManager: FilesManager,
+    private val logsSettings: LogsSettings,
 ) : LogAppender {
     private var currentFile: String? = null
     private var currentFileSize: Long = 0
@@ -31,7 +33,7 @@ class FileAppender(
             }
 
             // Записываем в файл
-            val filePath = "${filesManager.getLogDirectoryPath()}/$fileName"
+            val filePath = "${logsSettings.getLogsDirectory()}/$fileName"
             filesManager.writeToFile(filePath, formattedMessage)
 
             // Обновляем размер файла
@@ -135,14 +137,14 @@ class FileAppender(
      * Получает список всех лог-файлов
      */
     suspend fun getLogFiles(): List<String> {
-        return filesManager.listFiles(filesManager.getLogDirectoryPath())
+        return filesManager.listFiles(logsSettings.getLogsDirectory())
     }
 
     /**
      * Удаляет лог-файл
      */
     suspend fun deleteLogFile(fileName: String): Boolean {
-        val filePath = "${filesManager.getLogDirectoryPath()}/$fileName"
+        val filePath = "${logsSettings.getLogsDirectory()}/$fileName"
         return filesManager.deleteFile(filePath)
     }
 
@@ -150,7 +152,7 @@ class FileAppender(
      * Получает размер лог-файла
      */
     suspend fun getLogFileSize(fileName: String): Long {
-        val filePath = "${filesManager.getLogDirectoryPath()}/$fileName"
+        val filePath = "${logsSettings.getLogsDirectory()}/$fileName"
         return filesManager.getFileSize(filePath)
     }
 
@@ -158,7 +160,7 @@ class FileAppender(
      * Получает содержимое лог-файла
      */
     suspend fun getLogFileSource(fileName: String): Source {
-        val filePath = "${filesManager.getLogDirectoryPath()}/$fileName"
+        val filePath = "${logsSettings.getLogsDirectory()}/$fileName"
         return filesManager.getFileSource(filePath)
     }
 
@@ -166,6 +168,6 @@ class FileAppender(
      * Получает путь к директории с логами
      */
     suspend fun getLogDirectoryPath(): String {
-        return filesManager.getLogDirectoryPath()
+        return logsSettings.getLogsDirectory()
     }
 }
