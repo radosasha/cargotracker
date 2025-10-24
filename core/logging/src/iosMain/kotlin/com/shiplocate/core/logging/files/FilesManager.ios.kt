@@ -9,11 +9,16 @@ import kotlinx.io.Source
 import kotlinx.io.asSource
 import kotlinx.io.buffered
 import platform.Foundation.NSData
+import platform.Foundation.NSFileHandle
 import platform.Foundation.NSFileManager
 import platform.Foundation.NSInputStream
 import platform.Foundation.NSURL
+import platform.Foundation.closeFile
 import platform.Foundation.dataWithBytes
+import platform.Foundation.fileHandleForUpdatingAtPath
 import platform.Foundation.inputStreamWithFileAtPath
+import platform.Foundation.seekToEndOfFile
+import platform.Foundation.writeData
 import platform.Foundation.writeToFile
 
 /**
@@ -26,15 +31,13 @@ actual class FilesManager {
     actual suspend fun createZipArchive(files: List<FileInfo>, archivePath: String): String {
         return withContext(Dispatchers.Default) {
             try {
-
-                // FIXME not implmented
+                // FIXME not implemented
                 archivePath
             } catch (e: Exception) {
                 throw IllegalStateException("Failed to create archive: ${e.message}", e)
             }
         }
     }
-
 
     @OptIn(ExperimentalForeignApi::class)
     actual suspend fun deleteFile(filePath: String): Boolean {
@@ -70,11 +73,24 @@ actual class FilesManager {
                     fileManager.createDirectoryAtURL(parentDir, true, null, null)
                 }
 
-                // Записываем содержимое в файл
                 val data = content.encodeToByteArray()
                 memScoped {
                     val nsData = NSData.dataWithBytes(data.refTo(0).getPointer(this@memScoped), data.size.toULong())
-                    nsData.writeToFile(filePath, true)
+
+                    if (!fileManager.fileExistsAtPath(filePath)) {
+                        // Если файла нет — создаём новый
+                        nsData.writeToFile(filePath, true)
+                    } else {
+                        // Если есть — добавляем данные
+                        val fileHandle = NSFileHandle.fileHandleForUpdatingAtPath(filePath)
+                        fileHandle?.let {
+                            it.seekToEndOfFile()
+                            it.writeData(nsData)
+                            it.closeFile()
+                        } ?: run {
+                            println("Failed to open file handle for $filePath")
+                        }
+                    }
                 }
             } catch (e: Exception) {
                 println("Failed to write to file $filePath: ${e.message}")
@@ -107,7 +123,14 @@ actual class FilesManager {
             try {
                 val fileManager = NSFileManager.defaultManager
                 val contents = fileManager.contentsOfDirectoryAtPath(directoryPath, null)
-                contents?.mapNotNull { it as? String } ?: emptyList()
+                if (contents != null) {
+                    // Получаем список файлов и сортируем по имени (что обычно соответствует дате создания)
+                    val fileNames = contents.mapNotNull { it as? String }
+                    // Сортируем по имени файла (файлы обычно именуются с датой)
+                    fileNames.sorted()
+                } else {
+                    emptyList()
+                }
             } catch (e: Exception) {
                 emptyList()
             }

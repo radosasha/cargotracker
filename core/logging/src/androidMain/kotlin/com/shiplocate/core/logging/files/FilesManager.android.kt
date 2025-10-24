@@ -91,7 +91,9 @@ actual class FilesManager(
         return withContext(Dispatchers.IO) {
             val directory = File(directoryPath)
             if (directory.exists() && directory.isDirectory) {
-                directory.listFiles()?.map { it.name } ?: emptyList()
+                directory.listFiles()
+                    ?.sortedBy { it.lastModified() } // Сортируем по дате создания (lastModified)
+                    ?.map { it.name } ?: emptyList()
             } else {
                 emptyList()
             }
