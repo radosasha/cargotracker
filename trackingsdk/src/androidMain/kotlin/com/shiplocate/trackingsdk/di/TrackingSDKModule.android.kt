@@ -5,6 +5,7 @@ import com.shiplocate.core.logging.Logger
 import com.shiplocate.trackingsdk.TrackingSDK
 import com.shiplocate.trackingsdk.TrackingSDKAndroid
 import com.shiplocate.trackingsdk.TrackingSDKFactory
+import com.shiplocate.trackingsdk.TripRecorder
 import org.koin.core.module.Module
 import org.koin.dsl.module
 
@@ -12,6 +13,27 @@ import org.koin.dsl.module
  * Android-специфичный DI модуль для TrackingSDK
  */
 actual val trackingSDKModule: Module = module {
+    
+    // Регистрируем TripRecorder
+    single<TripRecorder> {
+        TripRecorder(
+            locationRepository = get(),
+            gpsRepository = get(),
+            locationProcessor = get(),
+            deviceRepository = get(),
+            loadRepository = get(),
+            permissionRepository = get(),
+            trackingRepository = get(),
+            prefsRepository = get(),
+            locationSyncService = get(),
+            logger = get()
+        )
+    }
+    
+    // Регистрируем TrackingManager
+    single<TrackingManager> {
+        TrackingManager(get())
+    }
     
     // Регистрируем TrackingSDK как singleton
     single<TrackingSDK> {
@@ -24,6 +46,4 @@ actual val trackingSDKModule: Module = module {
         TrackingSDKFactory.setInstance(sdk)
         TrackingSDKFactory.getInstance()
     }
-
-    single<TrackingManager> { TrackingManager(get(), get()) }
 }

@@ -4,6 +4,7 @@ import com.shiplocate.trackingsdk.IOSTrackingService
 import com.shiplocate.trackingsdk.TrackingSDK
 import com.shiplocate.trackingsdk.TrackingSDKFactory
 import com.shiplocate.trackingsdk.TrackingSDKIOS
+import com.shiplocate.trackingsdk.TripRecorder
 import org.koin.core.module.Module
 import org.koin.dsl.module
 
@@ -11,6 +12,32 @@ import org.koin.dsl.module
  * iOS-специфичный DI модуль для TrackingSDK
  */
 actual val trackingSDKModule: Module = module {
+    
+    // Регистрируем TripRecorder
+    single<TripRecorder> {
+        TripRecorder(
+            locationRepository = get(),
+            gpsRepository = get(),
+            locationProcessor = get(),
+            deviceRepository = get(),
+            loadRepository = get(),
+            permissionRepository = get(),
+            trackingRepository = get(),
+            prefsRepository = get(),
+            locationSyncService = get(),
+            logger = get()
+        )
+    }
+    
+    // Регистрируем TrackingManager
+    single<TrackingManager> {
+        TrackingManager(get())
+    }
+
+    // Регистрируем IOSTrackingService
+    single<IOSTrackingService> {
+        IOSTrackingService(get(), get())
+    }
 
     // Регистрируем TrackingSDK как singleton
     single<TrackingSDK> {
@@ -21,10 +48,4 @@ actual val trackingSDKModule: Module = module {
 
         TrackingSDKFactory.getInstance()
     }
-
-    single<IOSTrackingService> {
-        IOSTrackingService(get(), get())
-    }
-
-    single<TrackingManager> { TrackingManager(get(), get()) }
 }

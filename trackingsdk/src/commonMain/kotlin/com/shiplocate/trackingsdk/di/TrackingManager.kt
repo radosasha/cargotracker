@@ -1,21 +1,18 @@
 package com.shiplocate.trackingsdk.di
 
 import com.shiplocate.domain.service.LocationProcessResult
-import com.shiplocate.domain.usecase.StartTrackerUseCase
-import com.shiplocate.domain.usecase.StopTrackerUseCase
+import com.shiplocate.trackingsdk.TripRecorder
 import kotlinx.coroutines.flow.Flow
 
 class TrackingManager(
-    private val startTrackerUseCase: StartTrackerUseCase,
-    private val stopTrackerUseCase: StopTrackerUseCase,
+    private val tripRecorder: TripRecorder,
 ) {
 
     suspend fun startTracking(): Flow<LocationProcessResult> {
-        return startTrackerUseCase()
+        return tripRecorder.startTracking()
     }
 
-
     suspend fun stopTracking(): Result<Unit> {
-        return stopTrackerUseCase()
+        return tripRecorder.stopTracking()
     }
 }
