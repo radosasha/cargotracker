@@ -5,9 +5,15 @@ import com.shiplocate.core.logging.Logger
 import com.shiplocate.trackingsdk.parking.models.ParkingLocation
 import com.shiplocate.trackingsdk.parking.models.ParkingState
 import com.shiplocate.trackingsdk.utils.LocationUtils
+import com.shiplocate.trackingsdk.utils.ParkingTimeoutTimer
 import com.shiplocate.trackingsdk.utils.models.LatLng
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 
 /**
@@ -15,19 +21,35 @@ import kotlinx.datetime.Clock
  * на основе анализа координат за последние 20 минут
  */
 class ParkingTracker(
-    private val logger: Logger,
+    private val parkingTimeoutTimer: ParkingTimeoutTimer,
     private val parkingRadiusMeters: Int, // Радиус парковки в метрах
     private val trackingTimeMinutes: Int, // Время отслеживания в минутах
+    private val logger: Logger,
 ) {
 
     private val coordinates = mutableListOf<ParkingLocation>()
-    private val trackingTimeMs = trackingTimeMinutes * 60 * 1000L
+    private val triggerTimeMs = trackingTimeMinutes * 60 * 1000L
 
-    private val trackerFlow = MutableSharedFlow<ParkingState>()
+    private val parkingStateFlow = MutableSharedFlow<ParkingState>(replay = 0)
     private var currentState = ParkingState.NOT_IN_PARKING
+
+    // Таймер для отслеживания парковки
+    private val scope = CoroutineScope(Dispatchers.Default)
+
+    // Flow для уведомления о завершении парковки
+    private val parkingTimeoutEvent = MutableSharedFlow<Unit>(replay = 0)
 
     companion object {
         private const val TAG = "ParkingTracker"
+    }
+
+    init {
+        // Подписываемся на события таймера
+        scope.launch {
+            parkingTimeoutTimer.timerEvent
+                .onEach { onTimerEvent() }
+                .launchIn(scope)
+        }
     }
 
     /**
@@ -36,6 +58,11 @@ class ParkingTracker(
      * @return true если пользователь находится в парковке
      */
     suspend fun addCoordinate(parkingLocation: ParkingLocation): Boolean {
+        // Проверяем, запущен ли таймер, если нет - запускаем
+        if (!parkingTimeoutTimer.isRunning()) {
+            logger.debug(LogCategory.LOCATION, "$TAG: Timer not running, starting it")
+            parkingTimeoutTimer.start(parkingTimeoutTimer.timeoutMin)
+        }
 
         if (currentState == ParkingState.IN_PARKING) {
             logger.debug(LogCategory.LOCATION, "$TAG: ignore adding coordinate, already in parking")
@@ -46,7 +73,7 @@ class ParkingTracker(
         val currentTime = Clock.System.now().toEpochMilliseconds()
         if (coordinates.isNotEmpty()) {
             val firstCoord = coordinates.first()
-            if (currentTime - firstCoord.time > trackingTimeMs) {
+            if (currentTime - firstCoord.time > triggerTimeMs) {
                 coordinates.removeAt(0)
             }
         }
@@ -78,19 +105,49 @@ class ParkingTracker(
 
         logger.info(LogCategory.LOCATION, "$TAG: Parking status: $allInParkingRadius (${coordinates.size} coordinates)")
         currentState = if (allInParkingRadius) ParkingState.IN_PARKING else ParkingState.NOT_IN_PARKING
-        trackerFlow.emit(currentState)
+        parkingStateFlow.emit(currentState)
         return allInParkingRadius
     }
 
+
     /**
-     * Очищает все сохраненные координаты
+     * Обрабатывает событие таймера
      */
+    private suspend fun onTimerEvent() {
+        val currentTime = Clock.System.now().toEpochMilliseconds()
+
+        if (coordinates.isEmpty()) {
+            logger.debug(LogCategory.LOCATION, "$TAG: No coordinates, sending parking finished event")
+            parkingTimeoutEvent.emit(Unit)
+            return
+        }
+
+        val lastCoordinate = coordinates.last()
+        val timeDifference = currentTime - lastCoordinate.time
+
+        if (timeDifference > parkingTimeoutTimer.timeoutMin) {
+            logger.debug(LogCategory.LOCATION, "$TAG: Last coordinate too old (${timeDifference}ms), sending parking finished event")
+            clear()
+            parkingTimeoutEvent.emit(Unit)
+        } else {
+            // Перезапускаем таймер на оставшееся время + 1 минута
+            val remainingTime = parkingTimeoutTimer.timeoutMin - timeDifference + (60 * 1000L) // +1 минута
+            logger.debug(LogCategory.LOCATION, "$TAG: Restarting timer for ${remainingTime}ms")
+            parkingTimeoutTimer.start(remainingTime)
+        }
+    }
+
     fun clear() {
         coordinates.clear()
+        parkingTimeoutTimer.stop()
         logger.debug(LogCategory.LOCATION, "$TAG: Cleared all coordinates")
     }
 
     fun observeParkingStatus(): Flow<ParkingState> {
-        return trackerFlow
+        return parkingStateFlow
+    }
+
+    fun observeParkingTimeout(): Flow<Unit> {
+        return parkingTimeoutEvent
     }
 }
