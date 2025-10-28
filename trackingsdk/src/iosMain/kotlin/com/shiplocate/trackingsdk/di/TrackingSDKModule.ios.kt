@@ -7,6 +7,9 @@ import com.shiplocate.trackingsdk.TrackingSDKFactory
 import com.shiplocate.trackingsdk.TrackingSDKIOS
 import com.shiplocate.trackingsdk.TripRecorder
 import com.shiplocate.trackingsdk.parking.ParkingTracker
+import com.shiplocate.trackingsdk.motion.ActivityRecognitionConnector
+import com.shiplocate.trackingsdk.motion.MotionTracker
+import com.shiplocate.trackingsdk.utils.ParkingTimeoutTimer
 import org.koin.core.module.Module
 import org.koin.dsl.module
 
@@ -27,14 +30,29 @@ actual val trackingSDKModule: Module = module {
         )
     }
 
+    // Регистрируем ParkingTimeoutTimer
+    single<ParkingTimeoutTimer> {
+        ParkingTimeoutTimer(get())
+    }
+
     // Регистрируем ParkingTracker
     single<ParkingTracker> {
         ParkingTracker(get(), 200, 20, get())
     }
 
+        // Регистрируем ActivityRecognitionConnector
+        single<ActivityRecognitionConnector> {
+            ActivityRecognitionConnector(get())
+        }
+
+        // Регистрируем MotionTracker
+        single<MotionTracker> {
+            MotionTracker(get(), get())
+        }
+
     // Регистрируем TrackingManager
     single<TrackingManager> {
-        TrackingManager(get(), get(), get(), get())
+        TrackingManager(get(), get(), get(), get(), get())
     }
 
     // Регистрируем IOSTrackingService

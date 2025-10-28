@@ -40,6 +40,9 @@ kotlin {
             // Android Service dependencies
             implementation("androidx.lifecycle:lifecycle-service:2.7.0")
             implementation("androidx.core:core-ktx:1.12.0")
+            
+            // Google Play Services for ActivityRecognition
+            implementation("com.google.android.gms:play-services-location:21.0.1")
         }
         
         iosMain.dependencies {

@@ -4,6 +4,7 @@ import com.shiplocate.core.logging.LogCategory
 import com.shiplocate.core.logging.Logger
 import com.shiplocate.domain.service.LocationProcessResult
 import com.shiplocate.domain.service.LocationSyncService
+import com.shiplocate.trackingsdk.motion.MotionTracker
 import com.shiplocate.trackingsdk.parking.ParkingTracker
 import com.shiplocate.trackingsdk.parking.models.ParkingLocation
 import com.shiplocate.trackingsdk.parking.models.ParkingState
@@ -19,6 +20,7 @@ class TrackingManager(
     private val tripRecorder: TripRecorder,
     private val locationSyncService: LocationSyncService,
     private val parkingTracker: ParkingTracker,
+    private val motionTracker: MotionTracker,
     private val logger: Logger,
 ) {
     private var currentState = TrackingState.TRIP_RECORDING
@@ -27,6 +29,7 @@ class TrackingManager(
 
     private var parkingStateJob: Job? = null
     private var tripCoordinatedJob: Job? = null
+    private var motionTrackingJob: Job? = null
 
     suspend fun startTracking(): Flow<LocationProcessResult> {
         locationSyncService.startSync()
@@ -39,10 +42,25 @@ class TrackingManager(
             TrackingState.IN_PARKING -> {
                 tripCoordinatedJob?.cancel()
                 parkingStateJob?.cancel()
+                motionTrackingJob?.cancel()
                 tripRecorder.stopTracking()
+                logger.info(LogCategory.LOCATION, "TrackingManager: Switched to IN_PARKING state")
+
+                // observe motion events (движение в транспорте)
+                motionTrackingJob = motionTracker.vehicleMotionEvent.onEach {
+                    logger.info(LogCategory.LOCATION, "TrackingManager: Vehicle motion detected, switching to TRIP_RECORDING")
+                    currentState = TrackingState.TRIP_RECORDING
+                    switchToState(TrackingState.TRIP_RECORDING)
+                }.launchIn(trackingScope)
+
+                // Запускаем MotionTracker для отслеживания движения в транспорте
+                motionTracker.startTracking()
             }
 
             TrackingState.TRIP_RECORDING -> {
+                motionTrackingJob?.cancel()
+                motionTracker.stopTracking()
+
                 // observe trip coordinates
                 tripCoordinatedJob = tripRecorder.startTracking().onEach {
                     addToParkingTracker(it)
@@ -64,6 +82,8 @@ class TrackingManager(
                     currentState = TrackingState.IN_PARKING
                     switchToState(TrackingState.IN_PARKING)
                 }.launchIn(trackingScope)
+
+                logger.info(LogCategory.LOCATION, "TrackingManager: Switched to TRIP_RECORDING state")
             }
         }
     }
@@ -83,6 +103,7 @@ class TrackingManager(
     suspend fun stopTracking(): Result<Unit> {
         locationSyncService.stopSync()
         parkingTracker.clear()
+        motionTracker.destroy()
         return tripRecorder.stopTracking()
     }
 }
