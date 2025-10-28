@@ -2,7 +2,7 @@ package com.shiplocate.trackingsdk
 
 import com.shiplocate.core.logging.LogCategory
 import com.shiplocate.core.logging.Logger
-import com.shiplocate.trackingsdk.di.TrackingManager
+import com.shiplocate.trackingsdk.TrackingManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job

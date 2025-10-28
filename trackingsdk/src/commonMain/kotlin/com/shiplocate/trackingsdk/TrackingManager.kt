@@ -1,11 +1,9 @@
-package com.shiplocate.trackingsdk.di
+package com.shiplocate.trackingsdk
 
 import com.shiplocate.core.logging.LogCategory
 import com.shiplocate.core.logging.Logger
 import com.shiplocate.domain.service.LocationProcessResult
 import com.shiplocate.domain.service.LocationSyncService
-import com.shiplocate.trackingsdk.TrackingState
-import com.shiplocate.trackingsdk.TripRecorder
 import com.shiplocate.trackingsdk.parking.ParkingTracker
 import com.shiplocate.trackingsdk.parking.models.ParkingLocation
 import com.shiplocate.trackingsdk.parking.models.ParkingState

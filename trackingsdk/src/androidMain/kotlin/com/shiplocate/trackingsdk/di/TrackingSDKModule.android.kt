@@ -2,6 +2,7 @@ package com.shiplocate.trackingsdk.di
 
 import android.content.Context
 import com.shiplocate.core.logging.Logger
+import com.shiplocate.trackingsdk.TrackingManager
 import com.shiplocate.trackingsdk.TrackingSDK
 import com.shiplocate.trackingsdk.TrackingSDKAndroid
 import com.shiplocate.trackingsdk.TrackingSDKFactory

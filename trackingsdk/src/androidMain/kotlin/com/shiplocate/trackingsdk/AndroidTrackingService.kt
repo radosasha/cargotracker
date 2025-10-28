@@ -13,7 +13,7 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.coroutineScope
 import com.shiplocate.domain.util.DateFormatter
-import com.shiplocate.trackingsdk.di.TrackingManager
+import com.shiplocate.trackingsdk.TrackingManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn

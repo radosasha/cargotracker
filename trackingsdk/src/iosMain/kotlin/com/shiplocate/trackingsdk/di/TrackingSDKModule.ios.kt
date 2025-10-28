@@ -1,6 +1,7 @@
 package com.shiplocate.trackingsdk.di
 
 import com.shiplocate.trackingsdk.IOSTrackingService
+import com.shiplocate.trackingsdk.TrackingManager
 import com.shiplocate.trackingsdk.TrackingSDK
 import com.shiplocate.trackingsdk.TrackingSDKFactory
 import com.shiplocate.trackingsdk.TrackingSDKIOS
