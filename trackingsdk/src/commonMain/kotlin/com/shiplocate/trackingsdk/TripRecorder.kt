@@ -73,6 +73,10 @@ class TripRecorder(
                         totalSent = 0,
                         lastSentTime = 0,
                         trackingStats = locationProcessor.createCurrentTrackingStats(),
+                        lastCoordinateLat = location.latitude,
+                        lastCoordinateLon = location.longitude,
+                        lastCoordinateTime = location.timestamp.toEpochMilliseconds(),
+                        coordinateErrorMeters = location.accuracy.toInt(),
                     )
                 }
             }
@@ -154,7 +158,13 @@ class TripRecorder(
                         locationRepository.deleteLocationsFromDb(ids)
                         logger.debug(LogCategory.LOCATION, "TripRecorder: ${unsentLocations.size} locations uploaded and deleted from DB")
                     }
-                    return processResult.copy(reason = "Successfully sent to server and deleted from DB")
+                    return processResult.copy(
+                        reason = "Successfully sent to server and deleted from DB",
+                        lastCoordinateLat = location.latitude,
+                        lastCoordinateLon = location.longitude,
+                        lastCoordinateTime = location.timestamp.toEpochMilliseconds(),
+                        coordinateErrorMeters = location.accuracy.toInt(),
+                    )
                 } else {
                     // Если отправка не удалась - обновляем статистику ошибки
                     val errorMessage = uploadResult.exceptionOrNull()?.message ?: "Unknown error"
@@ -162,17 +172,32 @@ class TripRecorder(
 
                     // Оставляем в БД для последующей отправки
                     logger.debug(LogCategory.LOCATION, "TripRecorder: Locations saved to DB, will retry later: $errorMessage")
-                    return processResult.copy(reason = "Saved to DB, server upload failed (will retry later)")
+                    return processResult.copy(
+                        reason = "Saved to DB, server upload failed (will retry later)",
+                        lastCoordinateLat = location.latitude,
+                        lastCoordinateLon = location.longitude,
+                        lastCoordinateTime = location.timestamp.toEpochMilliseconds(),
+                        coordinateErrorMeters = location.accuracy.toInt(),
+                    )
                 }
             } catch (e: Exception) {
                 logger.error(LogCategory.LOCATION, "TripRecorder: Error: ${e.message}", e)
                 return processResult.copy(
                     shouldSend = false,
                     reason = "Failed to process location: ${e.message}",
+                    lastCoordinateLat = location.latitude,
+                    lastCoordinateLon = location.longitude,
+                    lastCoordinateTime = location.timestamp.toEpochMilliseconds(),
+                    coordinateErrorMeters = location.accuracy.toInt(),
                 )
             }
         }
 
-        return processResult
+        return processResult.copy(
+            lastCoordinateLat = location.latitude,
+            lastCoordinateLon = location.longitude,
+            lastCoordinateTime = location.timestamp.toEpochMilliseconds(),
+            coordinateErrorMeters = location.accuracy.toInt(),
+        )
     }
 }

@@ -2,6 +2,7 @@ package com.shiplocate.trackingsdk.di
 
 import android.content.Context
 import com.shiplocate.core.logging.Logger
+import com.shiplocate.trackingsdk.ParkingTracker
 import com.shiplocate.trackingsdk.TrackingSDK
 import com.shiplocate.trackingsdk.TrackingSDKAndroid
 import com.shiplocate.trackingsdk.TrackingSDKFactory
@@ -22,17 +23,18 @@ actual val trackingSDKModule: Module = module {
             locationProcessor = get(),
             deviceRepository = get(),
             loadRepository = get(),
-            permissionRepository = get(),
-            trackingRepository = get(),
-            prefsRepository = get(),
-            locationSyncService = get(),
             logger = get()
         )
     }
     
+    // Регистрируем ParkingTracker
+    single<ParkingTracker> {
+        ParkingTracker(get())
+    }
+    
     // Регистрируем TrackingManager
     single<TrackingManager> {
-        TrackingManager(get())
+        TrackingManager(get(), get(), get(), get())
     }
     
     // Регистрируем TrackingSDK как singleton

@@ -80,6 +80,10 @@ class LocationProcessorImpl : LocationProcessor {
                 totalSent = totalLocationsSent,
                 lastSentTime = lastLocationSentTime,
                 trackingStats = createCurrentTrackingStats(),
+                lastCoordinateLat = location.latitude,
+                lastCoordinateLon = location.longitude,
+                lastCoordinateTime = location.timestamp.toEpochMilliseconds(),
+                coordinateErrorMeters = location.accuracy.toInt(),
             )
         } else {
             val filterReason = getFilterReason(location)
@@ -104,6 +108,10 @@ class LocationProcessorImpl : LocationProcessor {
                 totalSent = totalLocationsSent,
                 lastSentTime = lastLocationSentTime,
                 trackingStats = createCurrentTrackingStats(),
+                lastCoordinateLat = location.latitude,
+                lastCoordinateLon = location.longitude,
+                lastCoordinateTime = location.timestamp.toEpochMilliseconds(),
+                coordinateErrorMeters = location.accuracy.toInt(),
             )
         }
     }

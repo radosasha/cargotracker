@@ -53,4 +53,8 @@ data class LocationProcessResult(
     val totalSent: Int,
     val lastSentTime: Long,
     val trackingStats: TrackingStats,
+    val lastCoordinateLat: Double,
+    val lastCoordinateLon: Double,
+    val lastCoordinateTime: Long,
+    val coordinateErrorMeters: Int,
 )

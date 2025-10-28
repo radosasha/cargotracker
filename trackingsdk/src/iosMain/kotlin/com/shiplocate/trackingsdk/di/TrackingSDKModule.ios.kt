@@ -1,10 +1,12 @@
 package com.shiplocate.trackingsdk.di
 
 import com.shiplocate.trackingsdk.IOSTrackingService
+import com.shiplocate.trackingsdk.ParkingTracker
 import com.shiplocate.trackingsdk.TrackingSDK
 import com.shiplocate.trackingsdk.TrackingSDKFactory
 import com.shiplocate.trackingsdk.TrackingSDKIOS
 import com.shiplocate.trackingsdk.TripRecorder
+import com.shiplocate.trackingsdk.parking.ParkingTracker
 import org.koin.core.module.Module
 import org.koin.dsl.module
 
@@ -25,9 +27,14 @@ actual val trackingSDKModule: Module = module {
         )
     }
 
+    // Регистрируем ParkingTracker
+    single<ParkingTracker> {
+        ParkingTracker(get(), 200, 20)
+    }
+    
     // Регистрируем TrackingManager
     single<TrackingManager> {
-        TrackingManager(get())
+        TrackingManager(get(), get(), get(), get())
     }
 
     // Регистрируем IOSTrackingService
