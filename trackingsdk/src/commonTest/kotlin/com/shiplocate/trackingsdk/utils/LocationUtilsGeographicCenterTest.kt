@@ -1,6 +1,6 @@
 package com.shiplocate.trackingsdk.utils
 
-import com.shiplocate.trackingsdk.LatLng
+import com.shiplocate.trackingsdk.utils.models.LatLng
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue

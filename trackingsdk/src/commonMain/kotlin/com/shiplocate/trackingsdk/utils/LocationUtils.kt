@@ -1,6 +1,6 @@
 package com.shiplocate.trackingsdk.utils
 
-import com.shiplocate.trackingsdk.LatLng
+import com.shiplocate.trackingsdk.utils.models.LatLng
 import kotlin.math.PI
 import kotlin.math.atan2
 import kotlin.math.cos

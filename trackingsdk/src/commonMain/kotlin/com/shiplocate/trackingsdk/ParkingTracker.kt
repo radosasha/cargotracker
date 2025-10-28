@@ -4,6 +4,7 @@ import com.shiplocate.core.logging.LogCategory
 import com.shiplocate.core.logging.Logger
 import com.shiplocate.trackingsdk.parking.models.ParkingLocation
 import com.shiplocate.trackingsdk.utils.LocationUtils
+import com.shiplocate.trackingsdk.utils.models.LatLng
 import kotlin.math.*
 import kotlinx.datetime.Clock
 

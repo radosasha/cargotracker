@@ -1,4 +1,4 @@
-package com.shiplocate.trackingsdk
+package com.shiplocate.trackingsdk.utils.models
 
 /**
  * Класс для представления географических координат

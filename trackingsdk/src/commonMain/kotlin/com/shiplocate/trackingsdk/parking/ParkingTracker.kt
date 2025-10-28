@@ -2,9 +2,9 @@ package com.shiplocate.trackingsdk.parking
 
 import com.shiplocate.core.logging.LogCategory
 import com.shiplocate.core.logging.Logger
-import com.shiplocate.trackingsdk.LatLng
 import com.shiplocate.trackingsdk.parking.models.ParkingLocation
 import com.shiplocate.trackingsdk.utils.LocationUtils
+import com.shiplocate.trackingsdk.utils.models.LatLng
 import kotlinx.datetime.Clock
 
 /**
