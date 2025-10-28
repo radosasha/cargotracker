@@ -1,6 +1,7 @@
 package com.shiplocate.trackingsdk.utils
 
 import com.shiplocate.trackingsdk.LatLng
+import kotlin.math.PI
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.pow
@@ -24,8 +25,8 @@ object LocationUtils {
         var z = 0.0
 
         for (coord in coords) {
-            val latRad = Math.toRadians(coord.latitude)
-            val lonRad = Math.toRadians(coord.longitude)
+            val latRad = PI * coord.latitude / 180.0
+            val lonRad = PI * coord.longitude / 180.0
 
             x += cos(latRad) * cos(lonRad)
             y += cos(latRad) * sin(lonRad)
@@ -44,7 +45,7 @@ object LocationUtils {
         // Вычисляем среднюю погрешность
         val avgError = coords.map { it.error }.average().toInt()
 
-        return LatLng(Math.toDegrees(lat), Math.toDegrees(lon), avgError)
+        return LatLng(180.0 * lat / PI, 180.0 * lon / PI, avgError)
     }
 
     /**
@@ -54,10 +55,10 @@ object LocationUtils {
     fun calculateDistance(coord1: LatLng, coord2: LatLng): Double {
         val earthRadius = 6371000.0 // Радиус Земли в метрах
 
-        val lat1Rad = Math.toRadians(coord1.latitude)
-        val lat2Rad = Math.toRadians(coord2.latitude)
-        val deltaLatRad = Math.toRadians(coord2.latitude - coord1.latitude)
-        val deltaLonRad = Math.toRadians(coord2.longitude - coord1.longitude)
+        val lat1Rad = PI * coord1.latitude / 180.0
+        val lat2Rad = PI * coord2.latitude / 180.0
+        val deltaLatRad = PI * (coord2.latitude - coord1.latitude) / 180.0
+        val deltaLonRad = PI * (coord2.longitude - coord1.longitude) / 180.0
 
         val a = sin(deltaLatRad / 2).pow(2) +
             cos(lat1Rad) * cos(lat2Rad) *

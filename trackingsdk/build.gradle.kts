@@ -45,5 +45,11 @@ kotlin {
         iosMain.dependencies {
             implementation(libs.kotlinx.coroutines.core)
         }
+        
+        commonTest.dependencies {
+            implementation(kotlin("test"))
+            implementation(kotlin("test-common"))
+            implementation(kotlin("test-annotations-common"))
+        }
     }
 }
