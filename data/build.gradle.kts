@@ -13,6 +13,9 @@ kotlin {
         commonMain.dependencies {
             // Domain module
             implementation(project(":domain"))
+            
+            // TrackingSDK module
+            implementation(project(":trackingsdk"))
 
             // Core modules
             implementation(project(":core:database")) // Room + SQLite

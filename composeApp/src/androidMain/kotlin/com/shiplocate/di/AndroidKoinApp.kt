@@ -4,6 +4,7 @@ import android.content.Context
 import com.shiplocate.ActivityProvider
 import com.shiplocate.core.logging.LogCategory
 import com.shiplocate.core.logging.Logger
+import com.shiplocate.trackingsdk.di.trackingSDKModule
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.GlobalContext
 import org.koin.core.context.startKoin
@@ -27,7 +28,7 @@ object AndroidKoinApp {
             printLogger()
             androidContext(application)
             modules(
-                appModule + activityModule + androidPlatformModule,
+                appModule + activityModule + androidPlatformModule  + trackingSDKModule,
             )
         }
     }

@@ -1,4 +1,4 @@
-package com.shiplocate
+package com.shiplocate.trackingsdk
 
 import android.app.Notification
 import android.app.NotificationChannel
@@ -81,10 +81,22 @@ class AndroidTrackingService : LifecycleService(), KoinComponent {
     }
 
     private fun createNotification(): Notification {
-        val intent =
-            Intent(this, MainActivity::class.java).apply {
+        // Используем рефлексию для получения MainActivity
+        val mainActivityClass = try {
+            Class.forName("com.shiplocate.MainActivity")
+        } catch (e: ClassNotFoundException) {
+            null
+        }
+
+        val intent = if (mainActivityClass != null) {
+            Intent(this, mainActivityClass).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
             }
+        } else {
+            Intent().apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            }
+        }
 
         val pendingIntent =
             PendingIntent.getActivity(

@@ -1,26 +1,27 @@
 package com.shiplocate.data.datasource.impl
 
 import com.shiplocate.data.datasource.TrackingDataSource
-import com.shiplocate.data.datasource.TrackingRequester
 import com.shiplocate.data.model.TrackingDataStatus
+import com.shiplocate.trackingsdk.TrackingSDK
 
 /**
  * Общая реализация TrackingDataSource для всех платформ
- * Stateless - только делегирует вызовы в TrackingRequester
+ * Получает TrackingSDK через DI конструктор
  */
 class TrackingDataSourceImpl(
-    private val trackingRequester: TrackingRequester,
+    private val trackingSDK: TrackingSDK
 ) : TrackingDataSource {
+    
     override suspend fun startTracking(): Result<Unit> {
-        return trackingRequester.startTracking()
+        return trackingSDK.startTracking()
     }
 
     override suspend fun stopTracking(): Result<Unit> {
-        return trackingRequester.stopTracking()
+        return trackingSDK.stopTracking()
     }
 
     override suspend fun getTrackingStatus(): TrackingDataStatus {
-        return if (trackingRequester.isTrackingActive()) {
+        return if (trackingSDK.isTrackingActive()) {
             TrackingDataStatus.ACTIVE
         } else {
             TrackingDataStatus.STOPPED

@@ -37,13 +37,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        
-        <!-- Foreground Service для GPS трекинга -->
-        <service
-            android:name=".AndroidTrackingService"
-            android:enabled="true"
-            android:exported="false"
-            android:foregroundServiceType="location" />
             
         <!-- Firebase Messaging Service -->
         <service

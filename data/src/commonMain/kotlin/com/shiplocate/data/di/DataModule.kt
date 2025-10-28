@@ -60,6 +60,7 @@ import com.shiplocate.domain.repository.PrefsRepository
 import com.shiplocate.domain.repository.TrackingRepository
 import com.shiplocate.domain.service.LocationProcessor
 import com.shiplocate.domain.service.LocationSyncService
+import com.shiplocate.trackingsdk.TrackingSDK
 import io.ktor.client.HttpClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
