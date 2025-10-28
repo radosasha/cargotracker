@@ -29,10 +29,6 @@ class TripRecorder(
     private val locationProcessor: LocationProcessor,
     private val deviceRepository: DeviceRepository,
     private val loadRepository: LoadRepository,
-    private val permissionRepository: PermissionRepository,
-    private val trackingRepository: TrackingRepository,
-    private val prefsRepository: PrefsRepository,
-    private val locationSyncService: LocationSyncService,
     private val logger: Logger,
 ) {
 

@@ -12,7 +12,7 @@ import org.koin.dsl.module
  * iOS-специфичный DI модуль для TrackingSDK
  */
 actual val trackingSDKModule: Module = module {
-    
+
     // Регистрируем TripRecorder
     single<TripRecorder> {
         TripRecorder(
@@ -21,14 +21,10 @@ actual val trackingSDKModule: Module = module {
             locationProcessor = get(),
             deviceRepository = get(),
             loadRepository = get(),
-            permissionRepository = get(),
-            trackingRepository = get(),
-            prefsRepository = get(),
-            locationSyncService = get(),
             logger = get()
         )
     }
-    
+
     // Регистрируем TrackingManager
     single<TrackingManager> {
         TrackingManager(get())
