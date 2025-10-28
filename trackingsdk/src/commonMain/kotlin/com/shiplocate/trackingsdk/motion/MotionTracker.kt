@@ -176,31 +176,18 @@ class MotionTracker(
         val lastEvent = motionHistory.last()
         val totalTimeMs = lastEvent.timestamp - firstEvent.timestamp
 
-        // Взвешенный расчет времени в каждом состоянии на основе реальных вероятностей
-        val vehicleTimeMs = motionHistory.sumOf { result ->
-            if (result.motionState == MotionState.IN_VEHICLE) {
-                // Время пропорционально уверенности
-                ((totalTimeMs / motionHistory.size) * (result.confidence / 100f)).toLong()
-            } else {
-                0L
-            }
-        }
+        // Вычисляем время для всех состояний сразу
+        // Один проход по данным, группируем по состояниям
+        val timeByState = motionHistory.zipWithNext { current, next ->
+            val intervalMs = next.timestamp - current.timestamp
+            val weightedTime = (intervalMs * (current.confidence / 100f)).toLong()
+            current.motionState to weightedTime
+        }.groupBy({ it.first }, { it.second })
+            .mapValues { it.value.sum() }
 
-        val walkingTimeMs = motionHistory.sumOf { result ->
-            if (result.motionState == MotionState.WALKING) {
-                ((totalTimeMs / motionHistory.size) * (result.confidence / 100f)).toLong()
-            } else {
-                0L
-            }
-        }
-
-        val stationaryTimeMs = motionHistory.sumOf { result ->
-            if (result.motionState == MotionState.STATIONARY) {
-                ((totalTimeMs / motionHistory.size) * (result.confidence / 100f)).toLong()
-            } else {
-                0L
-            }
-        }
+        val vehicleTimeMs = timeByState[MotionState.IN_VEHICLE] ?: 0L
+        val walkingTimeMs = timeByState[MotionState.WALKING] ?: 0L
+        val stationaryTimeMs = timeByState[MotionState.STATIONARY] ?: 0L
 
         val vehiclePercentage = if (totalTimeMs > 0) {
             vehicleTimeMs.toFloat() / totalTimeMs
