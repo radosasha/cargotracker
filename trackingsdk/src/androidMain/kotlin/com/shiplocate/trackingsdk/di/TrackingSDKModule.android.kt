@@ -24,4 +24,6 @@ actual val trackingSDKModule: Module = module {
         TrackingSDKFactory.setInstance(sdk)
         TrackingSDKFactory.getInstance()
     }
+
+    single<TrackingManager> { TrackingManager(get(), get()) }
 }

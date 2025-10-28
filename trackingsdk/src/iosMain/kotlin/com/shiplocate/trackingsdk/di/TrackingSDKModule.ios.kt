@@ -25,4 +25,6 @@ actual val trackingSDKModule: Module = module {
     single<IOSTrackingService> {
         IOSTrackingService(get(), get())
     }
+
+    single<TrackingManager> { TrackingManager(get(), get()) }
 }
