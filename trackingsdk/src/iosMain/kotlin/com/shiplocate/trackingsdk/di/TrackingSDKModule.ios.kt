@@ -1,7 +1,6 @@
 package com.shiplocate.trackingsdk.di
 
 import com.shiplocate.trackingsdk.IOSTrackingService
-import com.shiplocate.trackingsdk.ParkingTracker
 import com.shiplocate.trackingsdk.TrackingSDK
 import com.shiplocate.trackingsdk.TrackingSDKFactory
 import com.shiplocate.trackingsdk.TrackingSDKIOS
@@ -29,9 +28,9 @@ actual val trackingSDKModule: Module = module {
 
     // Регистрируем ParkingTracker
     single<ParkingTracker> {
-        ParkingTracker(get(), 200, 20)
+        ParkingTracker(get(), 200, 20, get())
     }
-    
+
     // Регистрируем TrackingManager
     single<TrackingManager> {
         TrackingManager(get(), get(), get(), get())

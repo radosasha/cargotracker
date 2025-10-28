@@ -39,10 +39,6 @@ class ParkingTracker(
     // Flow для уведомления о завершении парковки
     private val parkingTimeoutEvent = MutableSharedFlow<Unit>(replay = 0)
 
-    companion object {
-        private const val TAG = "ParkingTracker"
-    }
-
     init {
         // Подписываемся на события таймера
         scope.launch {
@@ -50,6 +46,10 @@ class ParkingTracker(
                 .onEach { onTimerEvent() }
                 .launchIn(scope)
         }
+    }
+
+    companion object {
+        private val TAG = ParkingTracker::class.simpleName
     }
 
     /**
