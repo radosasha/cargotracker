@@ -12,9 +12,8 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.coroutineScope
-import com.shiplocate.domain.usecase.StartTrackerUseCase
-import com.shiplocate.domain.usecase.StopTrackerUseCase
 import com.shiplocate.domain.util.DateFormatter
+import com.shiplocate.trackingsdk.di.TrackingManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
@@ -29,8 +28,7 @@ class AndroidTrackingService : LifecycleService(), KoinComponent {
     private var isTracking = false
 
     // Koin DI - используем новые Use Cases
-    private val startTrackerUseCase: StartTrackerUseCase by inject()
-    private val stopTrackerUseCase: StopTrackerUseCase by inject()
+    private val trackingManager: TrackingManager by inject()
 
     companion object Companion {
         private const val NOTIFICATION_ID = 1
@@ -128,7 +126,7 @@ class AndroidTrackingService : LifecycleService(), KoinComponent {
                 println("LocationTrackingService: Starting GPS tracking through StartProcessLocationsUseCase")
 
                 // Запускаем обработку GPS координат и подписываемся на Flow результатов
-                startTrackerUseCase()
+                trackingManager.startTracking()
                     .flowOn(Dispatchers.IO)
                     .onEach { result ->
                         // Обновляем уведомление с актуаьной статистикой
@@ -169,7 +167,7 @@ class AndroidTrackingService : LifecycleService(), KoinComponent {
             println("LocationTrackingService: Stopping GPS tracking synchronously")
 
             // Останавливаем обработку GPS координат синхронно
-            val result = stopTrackerUseCase()
+            val result = trackingManager.stopTracking()
             if (result.isSuccess) {
                 isTracking = false
                 println("LocationTrackingService: ✅ GPS tracking stopped successfully")

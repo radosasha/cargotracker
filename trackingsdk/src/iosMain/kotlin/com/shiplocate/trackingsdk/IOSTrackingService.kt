@@ -2,8 +2,7 @@ package com.shiplocate.trackingsdk
 
 import com.shiplocate.core.logging.LogCategory
 import com.shiplocate.core.logging.Logger
-import com.shiplocate.domain.usecase.StartTrackerUseCase
-import com.shiplocate.domain.usecase.StopTrackerUseCase
+import com.shiplocate.trackingsdk.di.TrackingManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -14,8 +13,7 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.runBlocking
 
 class IOSTrackingService(
-    val startTrackerUseCase: StartTrackerUseCase,
-    val stopTrackerUseCase: StopTrackerUseCase,
+    val trackingManager: TrackingManager,
     val logger: Logger,
 ) {
 
@@ -40,7 +38,7 @@ class IOSTrackingService(
             logger.info(LogCategory.LOCATION, "$TAG: Starting GPS tracking through StartProcessLocationsUseCase")
 
             // Запускаем обработку GPS координат и подписываемся на Flow результатов
-            collectingJob = startTrackerUseCase()
+            collectingJob = trackingManager.startTracking()
                 .onEach { result ->
                     // Логируем результат обработки
                     if (result.shouldSend) {
@@ -72,7 +70,7 @@ class IOSTrackingService(
             logger.info(LogCategory.LOCATION, "$TAG: Stopping GPS tracking through StopProcessLocationsUseCase")
 
             // Останавливаем обработку GPS координат
-            val result = stopTrackerUseCase()
+            val result = trackingManager.stopTracking()
             if (result.isSuccess) {
                 isTracking = false
                 logger.info(LogCategory.LOCATION, "$TAG: ✅ GPS tracking stopped successfully")
