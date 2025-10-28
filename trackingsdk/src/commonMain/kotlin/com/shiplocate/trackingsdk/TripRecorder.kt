@@ -106,68 +106,6 @@ class TripRecorder(
     }
 
     /**
-     * Запускает полный трекинг (с проверкой разрешений и состоянием)
-     */
-    suspend fun startFullTracking(): Result<Unit> {
-        val permissionStatus = permissionRepository.getPermissionStatus()
-
-        return if (permissionStatus.hasAllPermissions) {
-            // Проверяем, не активен ли уже трекинг
-            val currentStatus = trackingRepository.getTrackingStatus()
-            if (currentStatus == com.shiplocate.domain.model.TrackingStatus.ACTIVE) {
-                logger.info(LogCategory.LOCATION, "TripRecorder: Tracking is already active, no need to start")
-                // Убеждаемся, что состояние в DataStore корректное
-                prefsRepository.saveTrackingState(true)
-                return Result.success(Unit)
-            }
-
-            val result = trackingRepository.startTracking()
-
-            // Если трекинг успешно запущен, сохраняем состояние в DataStore
-            if (result.isSuccess) {
-                prefsRepository.saveTrackingState(true)
-                locationSyncService.startSync()
-                logger.info(LogCategory.LOCATION, "TripRecorder: Tracking started and state saved to DataStore")
-            }
-
-            result
-        } else {
-            Result.failure(
-                IllegalStateException("Не все необходимые разрешения получены"),
-            )
-        }
-    }
-
-    /**
-     * Останавливает полный трекинг (с сохранением состояния)
-     */
-    suspend fun stopFullTracking(): Result<Unit> {
-        // Проверяем, не остановлен ли уже трекинг
-        val currentStatus = trackingRepository.getTrackingStatus()
-        if (currentStatus == com.shiplocate.domain.model.TrackingStatus.STOPPED) {
-            logger.info(LogCategory.LOCATION, "TripRecorder: Tracking is already stopped, no need to stop")
-            // Убеждаемся, что состояние в DataStore корректное
-            prefsRepository.saveTrackingState(false)
-            return Result.success(Unit)
-        }
-
-        // Останавливаем синхронизацию
-        locationSyncService.stopSync()
-        logger.info(LogCategory.LOCATION, "TripRecorder: Location sync stopped")
-
-        // Останавливаем трекинг
-        val result = trackingRepository.stopTracking()
-
-        // Если трекинг успешно остановлен, сохраняем состояние в DataStore
-        if (result.isSuccess) {
-            prefsRepository.saveTrackingState(false)
-            logger.info(LogCategory.LOCATION, "TripRecorder: Tracking stopped and state saved to DataStore")
-        }
-
-        return result
-    }
-
-    /**
      * Обрабатывает одну GPS координату
      */
     private suspend fun processLocation(
