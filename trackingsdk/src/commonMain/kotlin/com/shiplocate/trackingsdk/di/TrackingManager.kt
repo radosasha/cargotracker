@@ -7,6 +7,7 @@ import com.shiplocate.domain.service.LocationSyncService
 import com.shiplocate.trackingsdk.TripRecorder
 import com.shiplocate.trackingsdk.parking.ParkingTracker
 import com.shiplocate.trackingsdk.parking.models.ParkingLocation
+import com.shiplocate.trackingsdk.parking.models.ParkingState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -25,20 +26,32 @@ class TrackingManager(
         val startResult = tripRecorder.startTracking()
         locationSyncService.startSync()
 
-        startResult.onEach {
-            // Передаем координаты в ParkingTracker для анализа парковки
-            val parkingLocation = ParkingLocation(
-                it.lastCoordinateLat,
-                it.lastCoordinateLon,
-                it.lastCoordinateTime,
-                it.coordinateErrorMeters
-            )
-            val isInParking = parkingTracker.addCoordinate(parkingLocation)
-            logger.debug(LogCategory.LOCATION, "TrackingManager: Parking status: $isInParking")
+        // observe parking
+        parkingTracker.observeParkingStatus().onEach {
+            if (it == ParkingState.IN_PARKING) {
+                parkingTracker.clear()
+                tripRecorder.stopTracking()
+            }
+        }.launchIn(trackingScope)
 
+        // observe new coors and add to parking tracker
+        startResult.onEach {
+            addToParkingTracker(it)
         }.launchIn(trackingScope)
 
         return startResult
+    }
+
+    suspend fun addToParkingTracker(location: LocationProcessResult) {
+        // Передаем координаты в ParkingTracker для анализа парковки
+        val parkingLocation = ParkingLocation(
+            location.lastCoordinateLat,
+            location.lastCoordinateLon,
+            location.lastCoordinateTime,
+            location.coordinateErrorMeters
+        )
+        val isInParking = parkingTracker.addCoordinate(parkingLocation)
+        logger.debug(LogCategory.LOCATION, "TrackingManager: Parking status: $isInParking")
     }
 
     suspend fun stopTracking(): Result<Unit> {
