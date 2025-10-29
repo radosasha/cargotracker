@@ -6,11 +6,10 @@ import com.shiplocate.trackingsdk.motion.models.MotionAnalysisEvent
 import com.shiplocate.trackingsdk.motion.models.MotionState
 import com.shiplocate.trackingsdk.motion.models.MotionStatistics
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 
 /**
  * Трекер движения пользователя
@@ -24,29 +23,31 @@ import kotlinx.coroutines.launch
  */
 class MotionTracker(
     private val activityRecognitionConnector: ActivityRecognitionConnector,
-    private val logger: Logger
+    // 5 минут
+    val analysisWindowMs: Long = 5 * 60 * 1000L,
+    // 1 минута для обрезки истории
+    val trimWindowMs: Long = 1 * 60 * 1000L,
+
+    // Пороги для определения движения в транспорте (обновлены для работы с реальными вероятностями)
+    // 60% времени в транспорте (снижено, так как теперь у нас реальные вероятности)
+    val vehicleTimeThreshold: Float = 0.6f,
+    // 70% уверенности (снижено, так как ActivityRecognition дает более точные данные)
+    val confidenceThreshold: Int = 70,
+    // Минимум 1 минута анализа (снижено для более быстрого реагирования)
+    val minAnalysisDurationMs: Long = 1 * 60 * 1000,
+    val logger: Logger,
+    private val scope: CoroutineScope,
 ) {
 
-    private val scope = CoroutineScope(Dispatchers.Default)
 
     // Статистика движения за последние 5 минут
     private val motionHistory = mutableListOf<MotionAnalysisEvent>()
-    private val analysisWindowMs = 5 * 60 * 1000L // 5 минут
-    private val trimWindowMs = 1 * 60 * 1000L // 1 минута для обрезки истории
-
-    // Пороги для определения движения в транспорте (обновлены для работы с реальными вероятностями)
-    private val vehicleTimeThreshold = 0.6f // 60% времени в транспорте (снижено, так как теперь у нас реальные вероятности)
-    private val confidenceThreshold = 70 // 70% уверенности (снижено, так как ActivityRecognition дает более точные данные)
-    private val minAnalysisDurationMs = 1 * 60 * 1000L // Минимум 1 минута анализа (снижено для более быстрого реагирования)
-    private val minVehicleConfidenceThreshold = 75 // Минимальная уверенность для IN_VEHICLE события
 
     // Flow для статистики движения
-    private val _motionStatistics = MutableSharedFlow<MotionStatistics>(replay = 0)
-    val motionStatistics: SharedFlow<MotionStatistics> = _motionStatistics.asSharedFlow()
+    private val motionStatistics = MutableSharedFlow<MotionStatistics>(replay = 0)
 
     // Flow для уведомления о движении в транспорте
-    private val _vehicleMotionEvent = MutableSharedFlow<Unit>(replay = 0)
-    val vehicleMotionEvent: SharedFlow<Unit> = _vehicleMotionEvent.asSharedFlow()
+    private val observeMotionTrigger = MutableSharedFlow<Unit>(replay = 0)
 
     companion object {
         private val TAG = MotionTracker::class.simpleName
@@ -62,24 +63,25 @@ class MotionTracker(
         activityRecognitionConnector.startTracking()
 
         // Подписываемся на события движения от ActivityRecognitionConnector
-        scope.launch {
-            activityRecognitionConnector.motionEvents.collect { motionEvent ->
-                logger.debug(LogCategory.LOCATION, "$TAG: Received motion event: ${motionEvent.motionState} (confidence: ${motionEvent.confidence}%)")
+        activityRecognitionConnector.observeMotionEvents().onEach { motionEvent ->
+            logger.debug(
+                LogCategory.LOCATION,
+                "$TAG: Received motion event: ${motionEvent.motionState} (confidence: ${motionEvent.confidence}%)"
+            )
 
-                // Добавляем событие в историю
-                val analysisResult = MotionAnalysisEvent(
-                    motionState = motionEvent.motionState,
-                    confidence = motionEvent.confidence,
-                    timestamp = motionEvent.timestamp
-                )
-                motionHistory.add(analysisResult)
+            // Добавляем событие в историю
+            val analysisResult = MotionAnalysisEvent(
+                motionState = motionEvent.motionState,
+                confidence = motionEvent.confidence,
+                timestamp = motionEvent.timestamp
+            )
+            motionHistory.add(analysisResult)
 
-                // Проверяем, нужно ли начать анализ
-                if (shouldStartAnalysis()) {
-                    performAnalysis()
-                }
+            // Проверяем, нужно ли начать анализ
+            if (shouldStartAnalysis()) {
+                performAnalysis()
             }
-        }
+        }.launchIn(scope)
     }
 
     /**
@@ -107,16 +109,18 @@ class MotionTracker(
         logger.debug(LogCategory.LOCATION, "$TAG: Cleared motion history")
     }
 
+    fun observeMotionTrigger(): Flow<Unit> = observeMotionTrigger
+
     /**
      * Проверяет, нужно ли начать анализ на основе накопленных данных
      */
     private fun shouldStartAnalysis(): Boolean {
         if (motionHistory.size < 2) return false
-        
+
         val firstEvent = motionHistory.first()
         val lastEvent = motionHistory.last()
         val timeSpan = lastEvent.timestamp - firstEvent.timestamp
-        
+
         return timeSpan >= analysisWindowMs
     }
 
@@ -125,13 +129,13 @@ class MotionTracker(
      */
     private suspend fun performAnalysis() {
         logger.debug(LogCategory.LOCATION, "$TAG: Starting analysis of ${motionHistory.size} events")
-        
+
         val statistics = calculateMotionStatistics()
-        _motionStatistics.emit(statistics)
-        
+        motionStatistics.emit(statistics)
+
         if (isInVehicle(statistics)) {
             logger.info(LogCategory.LOCATION, "$TAG: Vehicle motion detected based on analysis")
-            _vehicleMotionEvent.emit(Unit)
+            observeMotionTrigger.emit(Unit)
         } else {
             logger.debug(LogCategory.LOCATION, "$TAG: Not in vehicle, trimming history")
             // Если вероятность движения в транспорте низкая, обрезаем историю
@@ -144,15 +148,15 @@ class MotionTracker(
      */
     private fun trimHistory() {
         if (motionHistory.isEmpty()) return
-        
+
         val currentTime = motionHistory.last().timestamp
         val cutoffTime = currentTime - trimWindowMs
-        
+
         val initialSize = motionHistory.size
         motionHistory.removeAll { result ->
             result.timestamp < cutoffTime
         }
-        
+
         logger.debug(LogCategory.LOCATION, "$TAG: Trimmed history from $initialSize to ${motionHistory.size} events")
     }
 
@@ -171,7 +175,7 @@ class MotionTracker(
                 confidence = 0
             )
         }
-        
+
         val firstEvent = motionHistory.first()
         val lastEvent = motionHistory.last()
         val totalTimeMs = lastEvent.timestamp - firstEvent.timestamp
@@ -220,7 +224,10 @@ class MotionTracker(
         val result = isVehicleTimeSufficient && isConfidenceSufficient && isDurationSufficient
 
         logger.debug(LogCategory.LOCATION, "$TAG: Vehicle detection analysis:")
-        logger.debug(LogCategory.LOCATION, "  - Vehicle time: ${(statistics.vehiclePercentage * 100).toInt()}% (threshold: ${(vehicleTimeThreshold * 100).toInt()}%)")
+        logger.debug(
+            LogCategory.LOCATION,
+            "  - Vehicle time: ${(statistics.vehiclePercentage * 100).toInt()}% (threshold: ${(vehicleTimeThreshold * 100).toInt()}%)"
+        )
         logger.debug(LogCategory.LOCATION, "  - Confidence: ${statistics.confidence}% (threshold: $confidenceThreshold%)")
         logger.debug(LogCategory.LOCATION, "  - Duration: ${statistics.totalTimeMs}ms (threshold: ${minAnalysisDurationMs}ms)")
         logger.debug(LogCategory.LOCATION, "  - Result: $result")

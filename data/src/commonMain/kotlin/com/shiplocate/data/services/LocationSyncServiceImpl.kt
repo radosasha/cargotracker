@@ -2,8 +2,8 @@ package com.shiplocate.data.services
 
 import com.shiplocate.core.logging.LogCategory
 import com.shiplocate.core.logging.Logger
-import com.shiplocate.domain.repository.LocationRepository
 import com.shiplocate.domain.repository.LoadRepository
+import com.shiplocate.domain.repository.LocationRepository
 import com.shiplocate.domain.service.LocationSyncService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -44,31 +44,33 @@ class LocationSyncServiceImpl(
 
         logger.info(LogCategory.GENERAL, "LocationSyncManager: Starting periodic sync")
 
-        syncJob =
-            coroutineScope.launch {
-                val loadId =
-                    loadRepository.getConnectedLoad()?.loadId ?: throw IllegalStateException("Connected load not found")
-                while (isActive) {
-                    try {
-                        // Пытаемся отправить неотправленные координаты
-                        val result = uploadPendingLocations(loadId)
+        syncJob = coroutineScope.launch {
+            val loadId =
+                loadRepository.getConnectedLoad()?.loadId ?: throw IllegalStateException("Connected load not found")
+            while (isActive) {
+                try {
+                    // Пытаемся отправить неотправленные координаты
+                    val result = uploadPendingLocations(loadId)
 
-                        if (result.isSuccess) {
-                            val count = result.getOrNull() ?: 0
-                            if (count > 0) {
-                                logger.info(LogCategory.GENERAL, "LocationSyncManager: Successfully uploaded $count locations")
-                            }
-                        } else {
-                            logger.info(LogCategory.GENERAL, "LocationSyncManager: Failed to upload locations: ${result.exceptionOrNull()?.message}")
+                    if (result.isSuccess) {
+                        val count = result.getOrNull() ?: 0
+                        if (count > 0) {
+                            logger.info(LogCategory.GENERAL, "LocationSyncManager: Successfully uploaded $count locations")
                         }
-                    } catch (e: Exception) {
-                        logger.info(LogCategory.GENERAL, "LocationSyncManager: Error during sync: ${e.message}")
+                    } else {
+                        logger.info(
+                            LogCategory.GENERAL,
+                            "LocationSyncManager: Failed to upload locations: ${result.exceptionOrNull()?.message}"
+                        )
                     }
-
-                    // Ждем перед следующей попыткой
-                    delay(SYNC_INTERVAL_MS)
+                } catch (e: Exception) {
+                    logger.info(LogCategory.GENERAL, "LocationSyncManager: Error during sync: ${e.message}")
                 }
+
+                // Ждем перед следующей попыткой
+                delay(SYNC_INTERVAL_MS)
             }
+        }
     }
 
     /**
@@ -115,15 +117,22 @@ class LocationSyncServiceImpl(
                 if (result.isSuccess) {
                     val allIds = unsentLocations.map { it.first }
                     locationRepository.deleteLocationsFromDb(allIds)
-                    logger.info(LogCategory.GENERAL, "LocationSyncManager: Successfully uploaded ${unsentLocations.size} locations and deleted from DB")
+                    logger.info(
+                        LogCategory.GENERAL,
+                        "LocationSyncManager: Successfully uploaded ${unsentLocations.size} locations and deleted from DB"
+                    )
                     totalUploaded = unsentLocations.size
                 } else {
-                    logger.info(LogCategory.GENERAL, "LocationSyncManager: Failed to upload locations: ${result.exceptionOrNull()?.message}")
+                    logger.info(
+                        LogCategory.GENERAL,
+                        "LocationSyncManager: Failed to upload locations: ${result.exceptionOrNull()?.message}"
+                    )
                     return Result.failure(result.exceptionOrNull() ?: Exception("Unknown error"))
                 }
             } else {
                 // Большой список - обрабатываем пакетами
-                logger.info(LogCategory.GENERAL,
+                logger.info(
+                    LogCategory.GENERAL,
                     "LocationSyncManager: Large dataset detected (${unsentLocations.size} locations), " +
                         "processing in batches of $maxBatchSize",
                 )
@@ -132,7 +141,10 @@ class LocationSyncServiceImpl(
                 val allSuccessfulIds = mutableListOf<Long>()
 
                 batches.forEachIndexed { index, batch ->
-                    logger.info(LogCategory.GENERAL, "LocationSyncManager: Processing batch ${index + 1}/${batches.size} (${batch.size} locations)")
+                    logger.info(
+                        LogCategory.GENERAL,
+                        "LocationSyncManager: Processing batch ${index + 1}/${batches.size} (${batch.size} locations)"
+                    )
 
                     val locations = batch.map { it.second }
                     val result = locationRepository.sendLocations(loadId, locations)
@@ -141,9 +153,15 @@ class LocationSyncServiceImpl(
                         val batchIds = batch.map { it.first }
                         allSuccessfulIds.addAll(batchIds)
                         totalUploaded += batch.size
-                        logger.info(LogCategory.GENERAL, "LocationSyncManager: Batch ${index + 1} uploaded successfully (${batch.size} locations)")
+                        logger.info(
+                            LogCategory.GENERAL,
+                            "LocationSyncManager: Batch ${index + 1} uploaded successfully (${batch.size} locations)"
+                        )
                     } else {
-                        logger.info(LogCategory.GENERAL, "LocationSyncManager: Batch ${index + 1} failed: ${result.exceptionOrNull()?.message}")
+                        logger.info(
+                            LogCategory.GENERAL,
+                            "LocationSyncManager: Batch ${index + 1} failed: ${result.exceptionOrNull()?.message}"
+                        )
                         // Продолжаем с остальными пакетами даже если один не удался
                     }
                 }

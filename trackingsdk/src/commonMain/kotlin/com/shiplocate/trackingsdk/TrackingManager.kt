@@ -9,7 +9,6 @@ import com.shiplocate.trackingsdk.parking.ParkingTracker
 import com.shiplocate.trackingsdk.parking.models.ParkingLocation
 import com.shiplocate.trackingsdk.parking.models.ParkingState
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -22,9 +21,9 @@ class TrackingManager(
     private val parkingTracker: ParkingTracker,
     private val motionTracker: MotionTracker,
     private val logger: Logger,
+    private val trackingScope: CoroutineScope,
 ) {
     private var currentState = TrackingState.TRIP_RECORDING
-    private val trackingScope = CoroutineScope(Dispatchers.Default)
     private val trackingState = MutableSharedFlow<LocationProcessResult>(replay = 0)
 
     private var parkingStateJob: Job? = null
@@ -42,12 +41,11 @@ class TrackingManager(
             TrackingState.IN_PARKING -> {
                 tripCoordinatedJob?.cancel()
                 parkingStateJob?.cancel()
-                motionTrackingJob?.cancel()
                 tripRecorder.stopTracking()
                 logger.info(LogCategory.LOCATION, "TrackingManager: Switched to IN_PARKING state")
 
                 // observe motion events (движение в транспорте)
-                motionTrackingJob = motionTracker.vehicleMotionEvent.onEach {
+                motionTrackingJob = motionTracker.observeMotionTrigger().onEach {
                     logger.info(LogCategory.LOCATION, "TrackingManager: Vehicle motion detected, switching to TRIP_RECORDING")
                     currentState = TrackingState.TRIP_RECORDING
                     switchToState(TrackingState.TRIP_RECORDING)

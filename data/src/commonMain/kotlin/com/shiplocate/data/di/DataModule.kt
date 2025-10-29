@@ -171,5 +171,5 @@ val dataModule =
             single<LocationSyncService> { LocationSyncServiceImpl(get(), get(), get(), get()) }
 
             // CoroutineScope для LocationSyncService
-            single<CoroutineScope> { CoroutineScope(SupervisorJob() + Dispatchers.Main) }
+            factory<CoroutineScope> { CoroutineScope(Dispatchers.Default) }
         }

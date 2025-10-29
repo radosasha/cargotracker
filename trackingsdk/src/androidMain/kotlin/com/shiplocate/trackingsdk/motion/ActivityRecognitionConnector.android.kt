@@ -13,10 +13,8 @@ import com.shiplocate.core.logging.Logger
 import com.shiplocate.trackingsdk.motion.models.MotionEvent
 import com.shiplocate.trackingsdk.motion.models.MotionState
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 
 /**
@@ -25,22 +23,21 @@ import kotlinx.coroutines.launch
 actual class ActivityRecognitionConnector(
     private val context: Context,
     private val logger: Logger,
-    private val activityRecognitionClient: ActivityRecognitionClient
+    private val activityRecognitionClient: ActivityRecognitionClient,
+    private val scope: CoroutineScope,
 ) {
-    private val scope = CoroutineScope(Dispatchers.Default)
-    
+
     private var isTracking = false
-    
+
     // Flow для отправки событий движения
-    private val _motionEvents = MutableSharedFlow<MotionEvent>(replay = 0)
-    actual val motionEvents: SharedFlow<MotionEvent> = _motionEvents.asSharedFlow()
-    
+    private val motionEvents = MutableSharedFlow<MotionEvent>(replay = 0)
+
     private val activityRecognitionReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             if (intent?.action == ACTIVITY_RECOGNITION_ACTION) {
                 val activities = ActivityRecognitionResult.extractResult(intent)?.probableActivities
                 activities?.forEach { activity ->
-                    scope.launch { 
+                    scope.launch {
                         // Конвертируем DetectedActivity в MotionEvent с реальными вероятностями
                         val motionState = when (activity.type) {
                             DetectedActivity.IN_VEHICLE -> MotionState.IN_VEHICLE
@@ -49,45 +46,48 @@ actual class ActivityRecognitionConnector(
                             DetectedActivity.STILL -> MotionState.STATIONARY
                             else -> MotionState.UNKNOWN
                         }
-                        
+
                         // Используем реальную вероятность от ActivityRecognition
                         val confidence = activity.confidence
-                        
-                        logger.debug(LogCategory.LOCATION, "$TAG: Activity recognition: ${activity.type} -> $motionState (confidence: $confidence%)")
-                        
+
+                        logger.debug(
+                            LogCategory.LOCATION,
+                            "$TAG: Activity recognition: ${activity.type} -> $motionState (confidence: $confidence%)"
+                        )
+
                         val motionEvent = MotionEvent(
                             motionState = motionState,
                             confidence = confidence,
                             timestamp = System.currentTimeMillis()
                         )
-                        _motionEvents.tryEmit(motionEvent)
+                        motionEvents.tryEmit(motionEvent)
                     }
                 }
             }
         }
     }
-    
+
     companion object {
         private val TAG = ActivityRecognitionConnector::class.simpleName
         private const val REQUEST_CODE = 1001
         private const val ACTIVITY_RECOGNITION_ACTION = "com.shiplocate.trackingsdk.ACTIVITY_RECOGNITION"
     }
-    
+
     init {
         // Регистрируем BroadcastReceiver для получения событий ActivityRecognition
         val intentFilter = IntentFilter(ACTIVITY_RECOGNITION_ACTION)
         context.registerReceiver(activityRecognitionReceiver, intentFilter)
     }
-    
+
     actual fun startTracking() {
         if (isTracking) {
             logger.debug(LogCategory.LOCATION, "$TAG: Already tracking motion")
             return
         }
-        
+
         isTracking = true
         logger.info(LogCategory.LOCATION, "$TAG: Starting ActivityRecognition")
-        
+
         try {
             // Создаем Intent для BroadcastReceiver
             val intent = Intent(ACTIVITY_RECOGNITION_ACTION)
@@ -97,32 +97,32 @@ actual class ActivityRecognitionConnector(
                 intent,
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
-            
+
             // Запускаем ActivityRecognition с интервалом обновления 10 секунд
             val task = activityRecognitionClient.requestActivityUpdates(
                 10000L, // 10 секунд
                 pendingIntent
             )
-            
+
             task.addOnSuccessListener {
                 logger.info(LogCategory.LOCATION, "$TAG: ActivityRecognition started successfully")
             }.addOnFailureListener { exception ->
                 logger.error(LogCategory.LOCATION, "$TAG: Failed to start ActivityRecognition: ${exception.message}", exception)
                 isTracking = false
             }
-            
+
         } catch (e: Exception) {
             logger.error(LogCategory.LOCATION, "$TAG: Error starting ActivityRecognition: ${e.message}", e)
             isTracking = false
         }
     }
-    
+
     actual fun stopTracking() {
         if (!isTracking) {
             logger.debug(LogCategory.LOCATION, "$TAG: Not tracking motion")
             return
         }
-        
+
         try {
             val intent = Intent(ACTIVITY_RECOGNITION_ACTION)
             val pendingIntent = PendingIntent.getBroadcast(
@@ -131,7 +131,7 @@ actual class ActivityRecognitionConnector(
                 intent,
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
-            
+
             activityRecognitionClient.removeActivityUpdates(pendingIntent)
                 .addOnSuccessListener {
                     isTracking = false
@@ -140,18 +140,17 @@ actual class ActivityRecognitionConnector(
                 .addOnFailureListener { exception ->
                     logger.error(LogCategory.LOCATION, "$TAG: Failed to stop ActivityRecognition: ${exception.message}", exception)
                 }
-                
+
         } catch (e: Exception) {
             logger.error(LogCategory.LOCATION, "$TAG: Error stopping ActivityRecognition: ${e.message}", e)
         }
     }
-    
-    
+
     actual fun clear() {
         // Очистка не нужна для ActivityRecognition
         logger.debug(LogCategory.LOCATION, "$TAG: Cleared")
     }
-    
+
     actual fun destroy() {
         stopTracking()
         try {
@@ -161,4 +160,6 @@ actual class ActivityRecognitionConnector(
         }
         logger.debug(LogCategory.LOCATION, "$TAG: Destroyed")
     }
+
+    actual fun observeMotionEvents(): Flow<MotionEvent> = motionEvents
 }
