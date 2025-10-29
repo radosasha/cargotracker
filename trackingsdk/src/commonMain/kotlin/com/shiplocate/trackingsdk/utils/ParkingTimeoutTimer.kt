@@ -1,7 +1,6 @@
 package com.shiplocate.trackingsdk.utils
 
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -13,9 +12,11 @@ import kotlinx.coroutines.launch
  * Таймер на корутинах для ParkingTracker
  * Автоматически запускается при создании и работает каждые 10 минут
  */
-class ParkingTimeoutTimer(val timeoutMs: Long) {
+class ParkingTimeoutTimer(
+    val timeoutMs: Long,
+    private val scope: CoroutineScope
+) {
 
-    private val scope = CoroutineScope(Dispatchers.Default)
     private var timerJob: Job? = null
     private val _timerEvent = MutableSharedFlow<Unit>(replay = 0)
     val timerEvent: SharedFlow<Unit> = _timerEvent.asSharedFlow()
