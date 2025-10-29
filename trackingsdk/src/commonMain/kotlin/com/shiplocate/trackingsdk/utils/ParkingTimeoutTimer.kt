@@ -13,7 +13,7 @@ import kotlinx.coroutines.launch
  * Таймер на корутинах для ParkingTracker
  * Автоматически запускается при создании и работает каждые 10 минут
  */
-class ParkingTimeoutTimer(val timeoutMin: Long) {
+class ParkingTimeoutTimer(val timeoutMs: Long) {
 
     private val scope = CoroutineScope(Dispatchers.Default)
     private var timerJob: Job? = null

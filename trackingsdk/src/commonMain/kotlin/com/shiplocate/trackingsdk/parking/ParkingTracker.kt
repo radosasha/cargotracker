@@ -62,7 +62,7 @@ class ParkingTracker(
         // Проверяем, запущен ли таймер, если нет - запускаем
         if (!parkingTimeoutTimer.isRunning()) {
             logger.debug(LogCategory.LOCATION, "$TAG: Timer not running, starting it")
-            parkingTimeoutTimer.start(parkingTimeoutTimer.timeoutMin)
+            parkingTimeoutTimer.start(parkingTimeoutTimer.timeoutMs)
         }
 
         if (currentState == ParkingState.IN_PARKING) {
@@ -126,13 +126,13 @@ class ParkingTracker(
         val lastCoordinate = coordinates.last()
         val timeDifference = currentTime - lastCoordinate.time
 
-        if (timeDifference > parkingTimeoutTimer.timeoutMin) {
+        if (timeDifference > parkingTimeoutTimer.timeoutMs) {
             logger.debug(LogCategory.LOCATION, "$TAG: Last coordinate too old (${timeDifference}ms), sending parking finished event")
             clear()
             parkingTimeoutEvent.emit(Unit)
         } else {
             // Перезапускаем таймер на оставшееся время + 1 минута
-            val remainingTime = parkingTimeoutTimer.timeoutMin - timeDifference + (60 * 1000L) // +1 минута
+            val remainingTime = parkingTimeoutTimer.timeoutMs - timeDifference + (60 * 1000L) // +1 минута
             logger.debug(LogCategory.LOCATION, "$TAG: Restarting timer for ${remainingTime}ms")
             parkingTimeoutTimer.start(remainingTime)
         }
