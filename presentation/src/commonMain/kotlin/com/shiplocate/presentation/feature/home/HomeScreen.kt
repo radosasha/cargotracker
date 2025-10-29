@@ -152,17 +152,6 @@ fun HomeScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        /*        // Кнопка тестирования сервера
-                OutlinedButton(
-                    onClick = { viewModel.onTestServer() },
-                    enabled = !uiState.isLoading,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Test Server Connection")
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))*/
-
         // Сообщения
         uiState.message?.let { message ->
             MessageCard(

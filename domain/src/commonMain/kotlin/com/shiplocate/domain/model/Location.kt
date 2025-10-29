@@ -33,8 +33,9 @@ data class PermissionStatus(
     val hasLocationPermission: Boolean,
     val hasBackgroundLocationPermission: Boolean,
     val hasNotificationPermission: Boolean,
+    val hasActivityRecognitionPermission: Boolean,
     val isBatteryOptimizationDisabled: Boolean,
 ) {
     val hasAllPermissions: Boolean
-        get() = hasLocationPermission && hasBackgroundLocationPermission && hasNotificationPermission && isBatteryOptimizationDisabled
+        get() = hasLocationPermission && hasBackgroundLocationPermission && hasNotificationPermission && hasActivityRecognitionPermission && isBatteryOptimizationDisabled
 }

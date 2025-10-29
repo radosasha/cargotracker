@@ -20,6 +20,11 @@ interface PermissionChecker {
     suspend fun hasNotificationPermission(): Boolean
 
     /**
+     * Проверяет, есть ли разрешение на Activity Recognition
+     */
+    suspend fun hasActivityRecognitionPermission(): Boolean
+
+    /**
      * Проверяет, есть ли все необходимые разрешения
      */
     suspend fun hasAllRequiredPermissions(): Boolean

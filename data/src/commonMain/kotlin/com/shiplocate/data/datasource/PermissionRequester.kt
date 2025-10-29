@@ -11,6 +11,8 @@ interface PermissionRequester {
 
     suspend fun hasNotificationPermission(): Boolean
 
+    suspend fun hasActivityRecognitionPermission(): Boolean
+
     suspend fun isBatteryOptimizationDisabled(): Boolean
 
     suspend fun requestAllPermissions(): Result<Unit>

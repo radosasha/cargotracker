@@ -25,6 +25,10 @@ actual class PermissionChecker : KoinComponent {
         return permissionRequester.hasNotificationPermission()
     }
 
+    actual suspend fun hasActivityRecognitionPermission(): Boolean {
+        return permissionRequester.hasActivityRecognitionPermission()
+    }
+
     actual suspend fun hasAllRequiredPermissions(): Boolean {
         val result = permissionRequester.hasAllRequiredPermissions()
         logger.debug(LogCategory.PERMISSIONS, "PermissionChecker.hasAllRequiredPermissions(): $result")

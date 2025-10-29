@@ -73,17 +73,26 @@ actual class PermissionChecker(
         }
     }
 
+    actual suspend fun hasActivityRecognitionPermission(): Boolean {
+        // На iOS Core Motion (Activity Recognition) не требует явного разрешения
+        // Доступен автоматически, но можно проверить доступность сервиса
+        // Для простоты считаем, что если есть разрешение на местоположение, то Activity Recognition доступен
+        return hasLocationPermissions()
+    }
+
     actual suspend fun hasAllRequiredPermissions(): Boolean {
         val location = hasLocationPermissions()
         val background = hasBackgroundLocationPermission()
         val notifications = hasNotificationPermission()
-        return location && background && notifications
+        val activityRecognition = hasActivityRecognitionPermission()
+        return location && background && notifications && activityRecognition
     }
 
     actual suspend fun getPermissionStatusMessage(): String {
         val location = hasLocationPermissions()
         val background = hasBackgroundLocationPermission()
         val notifications = hasNotificationPermission()
+        val activityRecognition = hasActivityRecognitionPermission()
 
         val missingPermissions = mutableListOf<String>()
 
@@ -95,6 +104,9 @@ actual class PermissionChecker(
         }
         if (!notifications) {
             missingPermissions.add("Notifications")
+        }
+        if (!activityRecognition) {
+            missingPermissions.add("Activity Recognition")
         }
 
         return if (missingPermissions.isEmpty()) {

@@ -18,6 +18,7 @@ class IOSPermissionDataSource(
             hasLocationPermission = permissionChecker.hasLocationPermissions(),
             hasBackgroundLocationPermission = permissionChecker.hasBackgroundLocationPermission(),
             hasNotificationPermission = permissionChecker.hasNotificationPermission(),
+            hasActivityRecognitionPermission = permissionChecker.hasActivityRecognitionPermission(),
             isBatteryOptimizationDisabled = true, // В iOS нет понятия оптимизации батареи
         )
     }
@@ -33,7 +34,7 @@ class IOSPermissionDataSource(
             val status = getPermissionStatus()
             println("IOSPermissionDataSource: Permission status after request: $status")
 
-            if (status.hasLocationPermission && status.hasBackgroundLocationPermission && status.hasNotificationPermission) {
+            if (status.hasLocationPermission && status.hasBackgroundLocationPermission && status.hasNotificationPermission && status.hasActivityRecognitionPermission) {
                 Result.success(status)
             } else {
                 Result.failure(Exception("Не все разрешения получены"))

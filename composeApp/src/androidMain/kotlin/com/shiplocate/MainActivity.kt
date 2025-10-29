@@ -105,6 +105,7 @@ class MainActivity : ComponentActivity(), KoinComponent {
         const val REQUEST_NOTIFICATIONS_PERMISSION = 2310
         const val LOCATION_PERMISSION_REQUEST_CODE = 1001
         const val BACKGROUND_LOCATION_PERMISSION_REQUEST_CODE = 1002
+        const val ACTIVITY_RECOGNITION_PERMISSION_REQUEST_CODE = 1003
     }
 
     override fun onDestroy() {

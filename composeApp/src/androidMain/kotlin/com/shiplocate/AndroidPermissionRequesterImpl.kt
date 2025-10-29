@@ -27,6 +27,10 @@ class AndroidPermissionRequesterImpl : PermissionRequester, KoinComponent {
         return permissionRequester.hasNotificationPermission()
     }
 
+    override suspend fun hasActivityRecognitionPermission(): Boolean {
+        return permissionRequester.hasActivityRecognitionPermission()
+    }
+
     override suspend fun isBatteryOptimizationDisabled(): Boolean {
         return permissionRequester.isBatteryOptimizationDisabled()
     }

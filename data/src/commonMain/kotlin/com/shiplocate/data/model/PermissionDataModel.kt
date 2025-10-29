@@ -7,5 +7,6 @@ data class PermissionDataModel(
     val hasLocationPermission: Boolean,
     val hasBackgroundLocationPermission: Boolean,
     val hasNotificationPermission: Boolean,
+    val hasActivityRecognitionPermission: Boolean,
     val isBatteryOptimizationDisabled: Boolean,
 )

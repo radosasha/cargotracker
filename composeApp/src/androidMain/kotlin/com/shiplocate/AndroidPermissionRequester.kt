@@ -67,6 +67,20 @@ class AndroidPermissionRequester(private val context: Context) {
         }
     }
 
+    fun hasActivityRecognitionPermission(): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            // API 29+ (Android 10+): требуется разрешение ACTIVITY_RECOGNITION
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACTIVITY_RECOGNITION,
+            ) == PackageManager.PERMISSION_GRANTED
+        } else {
+            // API 24-28 (Android 7.0-9): Activity Recognition доступен через Google Play Services
+            // без необходимости в системном разрешении - доступ предоставляется автоматически
+            true
+        }
+    }
+
     fun isBatteryOptimizationDisabled(): Boolean {
         // API 23+ (Android 6.0+): оптимизация батареи доступна
         // Наш minSdk = 24, поэтому всегда проверяем
@@ -80,6 +94,7 @@ class AndroidPermissionRequester(private val context: Context) {
         return hasLocationPermissions() &&
             hasBackgroundLocationPermission() &&
             hasNotificationPermission() &&
+            hasActivityRecognitionPermission() &&
             isBatteryOptimizationDisabled()
     }
 
@@ -94,6 +109,9 @@ class AndroidPermissionRequester(private val context: Context) {
         }
         if (!hasNotificationPermission()) {
             missingPermissions.add("Notifications")
+        }
+        if (!hasActivityRecognitionPermission()) {
+            missingPermissions.add("Activity Recognition")
         }
         if (!isBatteryOptimizationDisabled()) {
             missingPermissions.add("Battery optimization")
@@ -217,6 +235,27 @@ class AndroidPermissionRequester(private val context: Context) {
         }
     }
 
+    fun requestActivityRecognitionPermission() {
+        println("AndroidPermissionRequester.requestActivityRecognitionPermission() called")
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && context is androidx.activity.ComponentActivity) {
+            // API 29+ (Android 10+): запрашиваем разрешение ACTIVITY_RECOGNITION
+            if (!hasActivityRecognitionPermission()) {
+                println("Requesting activity recognition permission")
+                ActivityCompat.requestPermissions(
+                    context,
+                    arrayOf(Manifest.permission.ACTIVITY_RECOGNITION),
+                    MainActivity.ACTIVITY_RECOGNITION_PERMISSION_REQUEST_CODE,
+                )
+            } else {
+                println("Activity recognition permission already granted")
+            }
+        } else {
+            // API 24-28 (Android 7.0-9): Activity Recognition доступен через Google Play Services
+            // без необходимости в системном разрешении - пропускаем запрос
+            println("Activity recognition available without permission for this Android version (API ${Build.VERSION.SDK_INT})")
+        }
+    }
+
     fun requestAllPermissions() {
         println("AndroidPermissionRequester.requestAllPermissions() called")
 
@@ -280,6 +319,9 @@ class AndroidPermissionRequester(private val context: Context) {
         } else if (!hasBackgroundLocationPermission()) {
             // Если основные разрешения есть, но фоновое нет - запрашиваем фоновое
             requestBackgroundLocationPermission()
+        } else if (!hasActivityRecognitionPermission()) {
+            // Если основные разрешения есть, но Activity Recognition нет - запрашиваем Activity Recognition
+            requestActivityRecognitionPermission()
         } else if (!hasNotificationPermission()) {
             // Если основные разрешения есть, но уведомления нет - запрашиваем уведомления
             requestNotificationPermission()
@@ -317,11 +359,24 @@ class AndroidPermissionRequester(private val context: Context) {
                 println("Background location permission result: $granted")
 
                 if (granted) {
-                    // Фоновое разрешение получено, продолжаем с уведомлениями
+                    // Фоновое разрешение получено, продолжаем с Activity Recognition
                     continuePermissionRequest()
                 } else {
                     // Пользователь отказал в фоновом разрешении - останавливаем процесс
                     println("Background location permission denied, stopping permission request process")
+                }
+            }
+
+            MainActivity.ACTIVITY_RECOGNITION_PERMISSION_REQUEST_CODE -> {
+                val granted = grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED
+                println("Activity recognition permission result: $granted")
+
+                if (granted) {
+                    // Activity Recognition разрешение получено, продолжаем с уведомлениями
+                    continuePermissionRequest()
+                } else {
+                    // Пользователь отказал в Activity Recognition разрешении - останавливаем процесс
+                    println("Activity recognition permission denied, stopping permission request process")
                 }
             }
 

@@ -10,6 +10,8 @@ expect class PermissionChecker {
 
     suspend fun hasNotificationPermission(): Boolean
 
+    suspend fun hasActivityRecognitionPermission(): Boolean
+
     suspend fun hasAllRequiredPermissions(): Boolean
 
     suspend fun getPermissionStatusMessage(): String

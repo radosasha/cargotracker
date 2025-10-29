@@ -18,6 +18,7 @@ class AndroidPermissionDataSource(
             hasLocationPermission = permissionRequester.hasLocationPermissions(),
             hasBackgroundLocationPermission = permissionRequester.hasBackgroundLocationPermission(),
             hasNotificationPermission = permissionRequester.hasNotificationPermission(),
+            hasActivityRecognitionPermission = permissionRequester.hasActivityRecognitionPermission(),
             isBatteryOptimizationDisabled = permissionRequester.isBatteryOptimizationDisabled(),
         )
     }
@@ -32,13 +33,14 @@ class AndroidPermissionDataSource(
                 LogCategory.PERMISSIONS,
                 "AndroidPermissionDataSource.requestAllPermissions() - status: location=${status.hasLocationPermission}, " +
                     "background=${status.hasBackgroundLocationPermission}, notification=${status.hasNotificationPermission}, " +
-                    "battery=${status.isBatteryOptimizationDisabled}",
+                    "activityRecognition=${status.hasActivityRecognitionPermission}, battery=${status.isBatteryOptimizationDisabled}",
             )
 
             if (
                 status.hasLocationPermission &&
                 status.hasBackgroundLocationPermission &&
                 status.hasNotificationPermission &&
+                status.hasActivityRecognitionPermission &&
                 status.isBatteryOptimizationDisabled
             ) {
                 logger.info(LogCategory.PERMISSIONS, "AndroidPermissionDataSource.requestAllPermissions() - all permissions granted, returning success")
