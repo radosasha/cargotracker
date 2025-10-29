@@ -44,7 +44,8 @@ actual val trackingSDKModule: Module = module {
             parkingTimeoutTimer = get(),
             parkingRadiusMeters = 200,
             triggerTimeMs = 20 * 60 * 1000L,
-            logger = get()
+            logger = get(),
+            scope = get()
         )
     }
 

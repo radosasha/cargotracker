@@ -74,13 +74,6 @@ class TrackingManager(
                     }
                 }.launchIn(scope)
 
-                // observe parking timeout
-                parkingTracker.observeParkingTimeout().onEach {
-                    logger.info(LogCategory.LOCATION, "TrackingManager: Parking finished event received")
-                    currentState = TrackingState.IN_PARKING
-                    switchToState(TrackingState.IN_PARKING)
-                }.launchIn(scope)
-
                 logger.info(LogCategory.LOCATION, "TrackingManager: Switched to TRIP_RECORDING state")
             }
         }

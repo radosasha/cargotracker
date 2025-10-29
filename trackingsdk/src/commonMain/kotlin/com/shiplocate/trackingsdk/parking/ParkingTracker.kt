@@ -8,7 +8,6 @@ import com.shiplocate.trackingsdk.utils.LocationUtils
 import com.shiplocate.trackingsdk.utils.ParkingTimeoutTimer
 import com.shiplocate.trackingsdk.utils.models.LatLng
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.launchIn
@@ -27,18 +26,13 @@ class ParkingTracker(
     // триггер парковки
     private val triggerTimeMs: Long = 20 * 60 * 1000L,
     private val logger: Logger,
+    private val scope: CoroutineScope
 ) {
 
     private val locationsHistory = mutableListOf<ParkingLocation>()
 
     private val parkingStateFlow = MutableSharedFlow<ParkingState>(replay = 0)
     private var currentState = ParkingState.NOT_IN_PARKING
-
-    // Таймер для отслеживания парковки
-    private val scope = CoroutineScope(Dispatchers.Default)
-
-    // Flow для уведомления о завершении парковки
-    private val parkingTimeoutEvent = MutableSharedFlow<Unit>(replay = 0)
 
     init {
         // Подписываемся на события таймера
@@ -126,7 +120,7 @@ class ParkingTracker(
 
         if (locationsHistory.isEmpty()) {
             logger.debug(LogCategory.LOCATION, "$TAG: No coordinates, sending parking finished event")
-            parkingTimeoutEvent.emit(Unit)
+            parkingStateFlow.emit(currentState)
             return
         }
 
@@ -136,7 +130,7 @@ class ParkingTracker(
         if (timeDifference > parkingTimeoutTimer.timeoutMs) {
             logger.debug(LogCategory.LOCATION, "$TAG: Last coordinate too old (${timeDifference}ms), sending parking finished event")
             clear()
-            parkingTimeoutEvent.emit(Unit)
+            parkingStateFlow.emit(currentState)
         } else {
             // Перезапускаем таймер на оставшееся время + 1 минута
             val remainingTime = parkingTimeoutTimer.timeoutMs - timeDifference + (60 * 1000L) // +1 минута
@@ -153,9 +147,5 @@ class ParkingTracker(
 
     fun observeParkingStatus(): Flow<ParkingState> {
         return parkingStateFlow
-    }
-
-    fun observeParkingTimeout(): Flow<Unit> {
-        return parkingTimeoutEvent
     }
 }
