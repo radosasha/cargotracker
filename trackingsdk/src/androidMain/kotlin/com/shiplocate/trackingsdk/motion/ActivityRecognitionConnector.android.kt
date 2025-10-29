@@ -21,9 +21,10 @@ import kotlinx.coroutines.launch
  * Android actual реализация ActivityRecognitionConnector
  */
 actual class ActivityRecognitionConnector(
+    private val activityFrequencyMs: Long,
     private val context: Context,
-    private val logger: Logger,
     private val activityRecognitionClient: ActivityRecognitionClient,
+    private val logger: Logger,
     private val scope: CoroutineScope,
 ) {
 
@@ -100,7 +101,7 @@ actual class ActivityRecognitionConnector(
 
             // Запускаем ActivityRecognition с интервалом обновления 10 секунд
             val task = activityRecognitionClient.requestActivityUpdates(
-                10000L, // 10 секунд
+                activityFrequencyMs, // 10 секунд
                 pendingIntent
             )
 

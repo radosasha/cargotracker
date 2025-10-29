@@ -21,7 +21,7 @@ class TrackingManager(
     private val parkingTracker: ParkingTracker,
     private val motionTracker: MotionTracker,
     private val logger: Logger,
-    private val trackingScope: CoroutineScope,
+    private val scope: CoroutineScope,
 ) {
     private var currentState = TrackingState.TRIP_RECORDING
     private val trackingState = MutableSharedFlow<LocationProcessResult>(replay = 0)
@@ -49,7 +49,7 @@ class TrackingManager(
                     logger.info(LogCategory.LOCATION, "TrackingManager: Vehicle motion detected, switching to TRIP_RECORDING")
                     currentState = TrackingState.TRIP_RECORDING
                     switchToState(TrackingState.TRIP_RECORDING)
-                }.launchIn(trackingScope)
+                }.launchIn(scope)
 
                 // Запускаем MotionTracker для отслеживания движения в транспорте
                 motionTracker.startTracking()
@@ -63,7 +63,7 @@ class TrackingManager(
                 tripCoordinatedJob = tripRecorder.startTracking().onEach {
                     addToParkingTracker(it)
                     trackingState.emit(it)
-                }.launchIn(trackingScope)
+                }.launchIn(scope)
 
                 // observe parking status
                 parkingStateJob = parkingTracker.observeParkingStatus().onEach {
@@ -72,14 +72,14 @@ class TrackingManager(
                         logger.info(LogCategory.LOCATION, "TrackingManager: User entered parking, stopping tracking")
                         switchToState(TrackingState.IN_PARKING)
                     }
-                }.launchIn(trackingScope)
+                }.launchIn(scope)
 
                 // observe parking timeout
                 parkingTracker.observeParkingTimeout().onEach {
                     logger.info(LogCategory.LOCATION, "TrackingManager: Parking finished event received")
                     currentState = TrackingState.IN_PARKING
                     switchToState(TrackingState.IN_PARKING)
-                }.launchIn(trackingScope)
+                }.launchIn(scope)
 
                 logger.info(LogCategory.LOCATION, "TrackingManager: Switched to TRIP_RECORDING state")
             }

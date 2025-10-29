@@ -22,13 +22,14 @@ import kotlinx.datetime.Clock
  */
 class ParkingTracker(
     private val parkingTimeoutTimer: ParkingTimeoutTimer,
-    private val parkingRadiusMeters: Int, // Радиус парковки в метрах
-    private val trackingTimeMinutes: Int, // Время отслеживания в минутах
+    // Радиус парковки в метрах
+    private val parkingRadiusMeters: Int,
+    // триггер парковки
+    private val triggerTimeMs: Long = 20 * 60 * 1000L,
     private val logger: Logger,
 ) {
 
     private val coordinates = mutableListOf<ParkingLocation>()
-    private val triggerTimeMs = trackingTimeMinutes * 60 * 1000L
 
     private val parkingStateFlow = MutableSharedFlow<ParkingState>(replay = 0)
     private var currentState = ParkingState.NOT_IN_PARKING

@@ -40,22 +40,49 @@ actual val trackingSDKModule: Module = module {
 
     // Регистрируем ParkingTracker
     single<ParkingTracker> {
-        ParkingTracker(get(), 200, 20, get())
+        ParkingTracker(
+            parkingTimeoutTimer = get(),
+            parkingRadiusMeters = 200,
+            triggerTimeMs = 20 * 60 * 1000L,
+            logger = get()
+        )
     }
 
     // Регистрируем ActivityRecognitionConnector
     single<ActivityRecognitionConnector> {
-        ActivityRecognitionConnector(get(), get(), get())
+        ActivityRecognitionConnector(
+            activityFrequencyMs = 10000L,
+            context = get(),
+            activityRecognitionClient = get(),
+            logger = get(),
+            scope = get()
+        )
     }
 
     // Регистрируем MotionTracker
     single<MotionTracker> {
-        MotionTracker(get(), get())
+        MotionTracker(
+            activityRecognitionConnector = get(),
+            analysisWindowMs = 5 * 60 * 1000L,
+            trimWindowMs = 1 * 60 * 1000L,
+            vehicleTimeThreshold = 0.6f,
+            confidenceThreshold = 70,
+            minAnalysisDurationMs = 1 * 60 * 1000,
+            logger = get(),
+            scope = get()
+        )
     }
 
     // Регистрируем TrackingManager
     single<TrackingManager> {
-        TrackingManager(get(), get(), get(), get(), get())
+        TrackingManager(
+            tripRecorder = get(),
+            locationSyncService = get(),
+            parkingTracker = get(),
+            motionTracker = get(),
+            logger = get(),
+            scope = get()
+        )
     }
 
     // Регистрируем TrackingSDK как singleton
