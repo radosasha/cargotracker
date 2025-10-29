@@ -29,7 +29,7 @@ class ParkingTracker(
     private val logger: Logger,
 ) {
 
-    private val coordinates = mutableListOf<ParkingLocation>()
+    private val locationsHistory = mutableListOf<ParkingLocation>()
 
     private val parkingStateFlow = MutableSharedFlow<ParkingState>(replay = 0)
     private var currentState = ParkingState.NOT_IN_PARKING
@@ -72,39 +72,46 @@ class ParkingTracker(
 
         // Удаляем первую координату (старше 20 минут)
         val currentTime = Clock.System.now().toEpochMilliseconds()
-        if (coordinates.isNotEmpty()) {
-            val firstCoord = coordinates.first()
+        if (locationsHistory.isNotEmpty()) {
+            val firstCoord = locationsHistory.first()
             if (currentTime - firstCoord.time > triggerTimeMs) {
-                coordinates.removeAt(0)
+                locationsHistory.removeAt(0)
             }
         }
 
         // Добавляем новую координату
-        coordinates.add(parkingLocation)
+        locationsHistory.add(parkingLocation)
 
         logger.debug(
             LogCategory.LOCATION,
-            "$TAG: Added coordinate: lat=${parkingLocation.lat}, lon=${parkingLocation.lon}, error=${parkingLocation.error}, total=${coordinates.size}"
+            "$TAG: Added coordinate: lat=${parkingLocation.lat}, lon=${parkingLocation.lon}, error=${parkingLocation.error}, total=${locationsHistory.size}"
         )
 
         // Если координат недостаточно для анализа, считаем что не в парковке
-        if (coordinates.size < 2) {
-            logger.debug(LogCategory.LOCATION, "$TAG: Not enough coordinates for analysis (${coordinates.size})")
+        if (locationsHistory.size < 2) {
+            logger.debug(LogCategory.LOCATION, "$TAG: Not enough coordinates for analysis (${locationsHistory.size})")
+            return false
+        }
+
+        // Проверяем, достаточно ли времени прошло для анализа парковки
+        val firstCoord = locationsHistory.first()
+        val lastCoord = locationsHistory.last()
+        val timeSpan = lastCoord.time - firstCoord.time
+
+        if (timeSpan < triggerTimeMs) {
             return false
         }
 
         // Вычисляем центр координат
-        val latLngs = coordinates.map {
+        val latLngs = locationsHistory.map {
             LatLng(it.lat, it.lon, it.error)
         }
         val center = LocationUtils.getGeographicCenter(latLngs)
 
-        logger.debug(LogCategory.LOCATION, "$TAG: Center calculated: lat=${center.latitude}, lon=${center.longitude}")
-
         // Проверяем, все ли координаты находятся в радиусе парковки
         val allInParkingRadius = LocationUtils.areAllInRadius(center, latLngs, parkingRadiusMeters)
 
-        logger.info(LogCategory.LOCATION, "$TAG: Parking status: $allInParkingRadius (${coordinates.size} coordinates)")
+        logger.info(LogCategory.LOCATION, "$TAG: Parking status: all coords in parking radius($allInParkingRadius) (${locationsHistory.size} coordinates)")
         currentState = if (allInParkingRadius) ParkingState.IN_PARKING else ParkingState.NOT_IN_PARKING
         parkingStateFlow.emit(currentState)
         return allInParkingRadius
@@ -117,13 +124,13 @@ class ParkingTracker(
     private suspend fun onTimerEvent() {
         val currentTime = Clock.System.now().toEpochMilliseconds()
 
-        if (coordinates.isEmpty()) {
+        if (locationsHistory.isEmpty()) {
             logger.debug(LogCategory.LOCATION, "$TAG: No coordinates, sending parking finished event")
             parkingTimeoutEvent.emit(Unit)
             return
         }
 
-        val lastCoordinate = coordinates.last()
+        val lastCoordinate = locationsHistory.last()
         val timeDifference = currentTime - lastCoordinate.time
 
         if (timeDifference > parkingTimeoutTimer.timeoutMs) {
@@ -139,7 +146,7 @@ class ParkingTracker(
     }
 
     fun clear() {
-        coordinates.clear()
+        locationsHistory.clear()
         parkingTimeoutTimer.stop()
         logger.debug(LogCategory.LOCATION, "$TAG: Cleared all coordinates")
     }
