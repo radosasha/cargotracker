@@ -23,11 +23,9 @@ import kotlinx.coroutines.flow.onEach
  */
 class MotionTracker(
     private val activityRecognitionConnector: ActivityRecognitionConnector,
-    // 5 минут
-    val analysisWindowMs: Long = 5 * 60 * 1000L,
+    val analysisWindowMs: Long = 3 * 60 * 1000L,
     // 1 минута для обрезки истории
     val trimWindowMs: Long = 1 * 60 * 1000L,
-
     // Пороги для определения движения в транспорте (обновлены для работы с реальными вероятностями)
     // 60% времени в транспорте (снижено, так как теперь у нас реальные вероятности)
     val vehicleTimeThreshold: Float = 0.6f,
