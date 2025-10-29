@@ -1,6 +1,7 @@
 package com.shiplocate
 
 import com.shiplocate.data.datasource.PermissionRequester
+import kotlinx.coroutines.suspendCancellableCoroutine
 import platform.CoreLocation.CLLocationManager
 import platform.CoreLocation.CLLocationManagerDelegateProtocol
 import platform.CoreLocation.kCLAuthorizationStatusAuthorizedAlways
@@ -8,7 +9,11 @@ import platform.CoreLocation.kCLAuthorizationStatusAuthorizedWhenInUse
 import platform.CoreLocation.kCLAuthorizationStatusDenied
 import platform.CoreLocation.kCLAuthorizationStatusNotDetermined
 import platform.CoreLocation.kCLAuthorizationStatusRestricted
+import platform.CoreMotion.CMMotionActivityManager
+import platform.Foundation.NSDate
+import platform.Foundation.NSOperationQueue
 import platform.Foundation.NSURL
+import platform.Foundation.dateWithTimeIntervalSinceNow
 import platform.UIKit.UIApplication
 import platform.UIKit.UIApplicationOpenSettingsURLString
 import platform.UserNotifications.UNAuthorizationOptionAlert
@@ -20,7 +25,6 @@ import platform.darwin.NSObject
 import platform.darwin.dispatch_async
 import platform.darwin.dispatch_get_main_queue
 import kotlin.coroutines.suspendCoroutine
-import kotlinx.coroutines.suspendCancellableCoroutine
 
 /**
  * iOS реализация PermissionRequester
@@ -82,6 +86,33 @@ class IOSPermissionRequesterImpl : PermissionRequester {
                 center.getNotificationSettingsWithCompletionHandler { settings ->
                     val hasPermission = settings?.authorizationStatus == UNAuthorizationStatusAuthorized
                     continuation.resumeWith(Result.success(hasPermission))
+                }
+            }
+        }
+    }
+
+    override suspend fun hasActivityRecognitionPermission(): Boolean {
+        return suspendCoroutine { continuation ->
+            dispatch_async(dispatch_get_main_queue()) {
+                try {
+                    val motionManager = CMMotionActivityManager()
+                    
+                    // Проверяем разрешение через queryActivityStartingFromDate
+                    val now = NSDate()
+                    val oneDayAgo = NSDate.dateWithTimeIntervalSinceNow(-86400.0)
+                    
+                    motionManager.queryActivityStartingFromDate(
+                        start = oneDayAgo,
+                        toDate = now,
+                        toQueue = NSOperationQueue.mainQueue
+                    ) { activities, error ->
+                        val hasPermission = error == null || 
+                            !(error.localizedDescription.contains("denied") || error.localizedDescription.contains("permission"))
+                        continuation.resumeWith(Result.success(hasPermission))
+                    }
+                } catch (e: Exception) {
+                    // При ошибке считаем, что разрешения нет
+                    continuation.resumeWith(Result.success(false))
                 }
             }
         }

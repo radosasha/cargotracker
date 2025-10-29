@@ -32,17 +32,26 @@ actual val trackingSDKModule: Module = module {
 
     // Регистрируем ParkingTimeoutTimer
     single<ParkingTimeoutTimer> {
-        ParkingTimeoutTimer(get())
+        ParkingTimeoutTimer(10L) // 10 минут
     }
 
     // Регистрируем ParkingTracker
     single<ParkingTracker> {
-        ParkingTracker(get(), 200, 20, get())
+        ParkingTracker(
+            parkingTimeoutTimer = get(),
+            parkingRadiusMeters = 200,
+            triggerTimeMs = 20 * 60 * 1000L,
+            logger = get()
+        )
     }
 
     // Регистрируем ActivityRecognitionConnector
     single<ActivityRecognitionConnector> {
-        ActivityRecognitionConnector(get())
+        ActivityRecognitionConnector(
+            activityFrequencyMs = 10000L, // 10 секунд, как на Android
+            logger = get(),
+            scope = get()
+        )
     }
 
     // Регистрируем MotionTracker
@@ -61,7 +70,14 @@ actual val trackingSDKModule: Module = module {
 
     // Регистрируем TrackingManager
     single<TrackingManager> {
-        TrackingManager(get(), get(), get(), get(), get())
+        TrackingManager(
+            tripRecorder = get(),
+            locationSyncService = get(),
+            parkingTracker = get(),
+            motionTracker = get(),
+            logger = get(),
+            scope = get()
+        )
     }
 
     // Регистрируем IOSTrackingService

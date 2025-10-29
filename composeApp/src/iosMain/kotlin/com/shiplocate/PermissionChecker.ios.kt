@@ -2,6 +2,7 @@ package com.shiplocate
 
 import com.shiplocate.core.logging.LogCategory
 import com.shiplocate.core.logging.Logger
+import kotlinx.coroutines.launch
 import platform.CoreLocation.CLLocationManager
 import platform.CoreLocation.kCLAuthorizationStatusAuthorizedAlways
 import platform.CoreLocation.kCLAuthorizationStatusAuthorizedWhenInUse
@@ -9,7 +10,9 @@ import platform.CoreLocation.kCLAuthorizationStatusDenied
 import platform.CoreLocation.kCLAuthorizationStatusNotDetermined
 import platform.CoreLocation.kCLAuthorizationStatusRestricted
 import platform.CoreMotion.CMMotionActivityManager
+import platform.Foundation.NSOperationQueue
 import platform.Foundation.NSURL
+import platform.Foundation.dateWithTimeIntervalSinceNow
 import platform.UIKit.UIApplication
 import platform.UIKit.UIApplicationOpenSettingsURLString
 import platform.UserNotifications.UNAuthorizationOptionAlert
@@ -17,15 +20,13 @@ import platform.UserNotifications.UNAuthorizationOptionBadge
 import platform.UserNotifications.UNAuthorizationOptionSound
 import platform.UserNotifications.UNAuthorizationStatusAuthorized
 import platform.UserNotifications.UNUserNotificationCenter
+import platform.darwin.DISPATCH_TIME_NOW
+import platform.darwin.dispatch_after
 import platform.darwin.dispatch_async
 import platform.darwin.dispatch_get_main_queue
-import platform.dispatch.dispatch_after
-import platform.dispatch.dispatch_time
-import platform.dispatch.DISPATCH_TIME_NOW
+import platform.darwin.dispatch_time
+import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlin.time.Duration.Companion.seconds
 
 /**
@@ -92,10 +93,10 @@ actual class PermissionChecker(
                     val now = platform.Foundation.NSDate()
                     val oneDayAgo = platform.Foundation.NSDate.dateWithTimeIntervalSinceNow(-86400.0)
                     
-                    motionManager.queryActivityStarting(
-                        fromDate = oneDayAgo,
+                    motionManager.queryActivityStartingFromDate(
+                        start = oneDayAgo,
                         toDate = now,
-                        queue = platform.dispatch.get_main_queue()
+                        toQueue = NSOperationQueue.mainQueue
                     ) { activities, error ->
                         // Если нет ошибки доступа - разрешение есть
                         val hasPermission = error == null || 
@@ -128,18 +129,18 @@ actual class PermissionChecker(
                     val timeoutDelay = 5.seconds
                     val timeoutTime = dispatch_time(DISPATCH_TIME_NOW, timeoutDelay.inWholeNanoseconds.toLong())
                     
-                    dispatch_after(timeoutTime, platform.dispatch.get_main_queue()) {
+                    dispatch_after(timeoutTime, dispatch_get_main_queue()) {
                         if (!callbackCalled) {
                             callbackCalled = true
                             logger.debug(LogCategory.PERMISSIONS, "iOS: Motion permission request timeout")
                             motionManager.stopActivityUpdates()
-                            continuation.resumeWith(Result.success(Unit))
+                            continuation.resume(Result.success(Unit))
                         }
                     }
                     
                     // Запускаем обновления - это точно покажет диалог при первом обращении
-                    motionManager.startActivityUpdates(
-                        queue = platform.dispatch.get_main_queue()
+                    motionManager.startActivityUpdatesToQueue(
+                        queue = NSOperationQueue.mainQueue
                     ) { activity ->
                         if (!callbackCalled) {
                             callbackCalled = true
@@ -149,12 +150,12 @@ actual class PermissionChecker(
                             motionManager.stopActivityUpdates()
                             
                             logger.debug(LogCategory.PERMISSIONS, "iOS: Motion permission granted or already had")
-                            continuation.resumeWith(Result.success(Unit))
+                            continuation.resume(Result.success(Unit))
                         }
                     }
                 } catch (e: Exception) {
                     logger.error(LogCategory.PERMISSIONS, "iOS: Error requesting motion permission: ${e.message}", e)
-                    continuation.resumeWith(Result.success(Unit))
+                    continuation.resume(Result.success(Unit))
                 }
             }
         }

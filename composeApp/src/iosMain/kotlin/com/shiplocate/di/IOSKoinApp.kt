@@ -6,6 +6,7 @@ import com.shiplocate.core.logging.LogCategory
 import com.shiplocate.core.logging.Logger
 import com.shiplocate.data.datasource.FirebaseTokenServiceDataSource
 import com.shiplocate.domain.usecase.ManageFirebaseTokensUseCase
+import com.shiplocate.trackingsdk.di.trackingSDKModule
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -46,7 +47,7 @@ object IOSKoinApp {
 
         startKoin {
             printLogger()
-            modules(appModule + iosModule + iosPlatformModule + iosAppModule)
+            modules(appModule + iosModule + iosPlatformModule + iosAppModule + trackingSDKModule)
         }
 
         applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)

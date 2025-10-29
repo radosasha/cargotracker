@@ -12,7 +12,9 @@ import platform.CoreLocation.kCLAuthorizationStatusNotDetermined
 import platform.CoreLocation.kCLAuthorizationStatusRestricted
 import platform.CoreMotion.CMMotionActivityManager
 import platform.Foundation.NSDate
+import platform.Foundation.NSOperationQueue
 import platform.Foundation.NSURL
+import platform.Foundation.dateWithTimeIntervalSinceNow
 import platform.UIKit.UIApplication
 import platform.UIKit.UIApplicationOpenSettingsURLString
 import platform.UserNotifications.UNAuthorizationOptionAlert
@@ -20,12 +22,12 @@ import platform.UserNotifications.UNAuthorizationOptionBadge
 import platform.UserNotifications.UNAuthorizationOptionSound
 import platform.UserNotifications.UNAuthorizationStatusAuthorized
 import platform.UserNotifications.UNUserNotificationCenter
+import platform.darwin.DISPATCH_TIME_NOW
 import platform.darwin.NSObject
+import platform.darwin.dispatch_after
 import platform.darwin.dispatch_async
 import platform.darwin.dispatch_get_main_queue
-import platform.dispatch.dispatch_after
-import platform.dispatch.dispatch_time
-import platform.dispatch.DISPATCH_TIME_NOW
+import platform.darwin.dispatch_time
 import kotlin.coroutines.suspendCoroutine
 import kotlin.time.Duration.Companion.seconds
 
@@ -106,10 +108,10 @@ class IOSPermissionCheckerImpl(
                     val now = NSDate()
                     val oneDayAgo = NSDate.dateWithTimeIntervalSinceNow(-86400.0)
                     
-                    motionManager.queryActivityStarting(
-                        fromDate = oneDayAgo,
+                    motionManager.queryActivityStartingFromDate(
+                        start = oneDayAgo,
                         toDate = now,
-                        queue = platform.dispatch.get_main_queue()
+                        toQueue = NSOperationQueue.mainQueue
                     ) { activities, error ->
                         val hasPermission = error == null || 
                             !(error.localizedDescription?.contains("denied") == true ||
@@ -273,10 +275,10 @@ class IOSPermissionCheckerImpl(
                 val oneDayAgo = NSDate.dateWithTimeIntervalSinceNow(-86400.0)
                 
                 // Сначала проверяем через queryActivityStarting
-                motionManager.queryActivityStarting(
-                    fromDate = oneDayAgo,
+                motionManager.queryActivityStartingFromDate(
+                    start = oneDayAgo,
                     toDate = now,
-                    queue = platform.dispatch.get_main_queue()
+                    toQueue =  NSOperationQueue.mainQueue
                 ) { activities, error ->
                     if (error == null) {
                         // Разрешение уже есть
@@ -289,7 +291,7 @@ class IOSPermissionCheckerImpl(
                         val timeoutDelay = 5.seconds
                         val timeoutTime = dispatch_time(DISPATCH_TIME_NOW, timeoutDelay.inWholeNanoseconds.toLong())
                         
-                        dispatch_after(timeoutTime, platform.dispatch.get_main_queue()) {
+                        dispatch_after(timeoutTime, dispatch_get_main_queue()) {
                             if (!callbackCalled) {
                                 callbackCalled = true
                                 logger.debug(LogCategory.PERMISSIONS, "iOS: Motion permission request timeout")
@@ -298,8 +300,8 @@ class IOSPermissionCheckerImpl(
                         }
                         
                         // Запускаем обновления - это точно покажет диалог при первом обращении
-                        motionManager.startActivityUpdates(
-                            queue = platform.dispatch.get_main_queue()
+                        motionManager.startActivityUpdatesToQueue(
+                            queue = NSOperationQueue.mainQueue
                         ) { activity ->
                             if (!callbackCalled) {
                                 callbackCalled = true

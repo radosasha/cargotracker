@@ -35,7 +35,7 @@ actual val trackingSDKModule: Module = module {
 
     // Регистрируем ParkingTimeoutTimer
     single<ParkingTimeoutTimer> {
-        ParkingTimeoutTimer(get())
+        ParkingTimeoutTimer(20)
     }
 
     // Регистрируем ParkingTracker
