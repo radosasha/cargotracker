@@ -71,4 +71,14 @@ actual class PermissionChecker : KoinComponent {
             throw e
         }
     }
+    
+    actual suspend fun requestActivityRecognitionPermission(): Result<Unit> {
+        return try {
+            permissionRequester.requestActivityRecognitionPermission()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            logger.error(LogCategory.PERMISSIONS, "Error requesting activity recognition permission: ${e.message}", e)
+            Result.failure(e)
+        }
+    }
 }

@@ -8,6 +8,7 @@ import platform.CoreLocation.kCLAuthorizationStatusAuthorizedWhenInUse
 import platform.CoreLocation.kCLAuthorizationStatusDenied
 import platform.CoreLocation.kCLAuthorizationStatusNotDetermined
 import platform.CoreLocation.kCLAuthorizationStatusRestricted
+import platform.CoreMotion.CMMotionActivityManager
 import platform.Foundation.NSURL
 import platform.UIKit.UIApplication
 import platform.UIKit.UIApplicationOpenSettingsURLString
@@ -18,7 +19,14 @@ import platform.UserNotifications.UNAuthorizationStatusAuthorized
 import platform.UserNotifications.UNUserNotificationCenter
 import platform.darwin.dispatch_async
 import platform.darwin.dispatch_get_main_queue
+import platform.dispatch.dispatch_after
+import platform.dispatch.dispatch_time
+import platform.dispatch.DISPATCH_TIME_NOW
 import kotlin.coroutines.suspendCoroutine
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * iOS реализация проверки разрешений
@@ -74,10 +82,82 @@ actual class PermissionChecker(
     }
 
     actual suspend fun hasActivityRecognitionPermission(): Boolean {
-        // На iOS Core Motion (Activity Recognition) не требует явного разрешения
-        // Доступен автоматически, но можно проверить доступность сервиса
-        // Для простоты считаем, что если есть разрешение на местоположение, то Activity Recognition доступен
-        return hasLocationPermissions()
+        return suspendCoroutine { continuation ->
+            dispatch_async(dispatch_get_main_queue()) {
+                try {
+                    val motionManager = CMMotionActivityManager()
+                    
+                    // Проверяем разрешение через queryActivityStarting
+                    // Если разрешение есть, запрос пройдет успешно
+                    val now = platform.Foundation.NSDate()
+                    val oneDayAgo = platform.Foundation.NSDate.dateWithTimeIntervalSinceNow(-86400.0)
+                    
+                    motionManager.queryActivityStarting(
+                        fromDate = oneDayAgo,
+                        toDate = now,
+                        queue = platform.dispatch.get_main_queue()
+                    ) { activities, error ->
+                        // Если нет ошибки доступа - разрешение есть
+                        val hasPermission = error == null || 
+                            !(error.localizedDescription?.contains("denied") == true ||
+                              error.localizedDescription?.contains("permission") == true)
+                        logger.debug(LogCategory.PERMISSIONS, "iOS: Motion permission check: hasPermission=$hasPermission, error=${error?.localizedDescription}")
+                        continuation.resumeWith(Result.success(hasPermission))
+                    }
+                } catch (e: Exception) {
+                    // При ошибке считаем, что разрешения нет
+                    logger.debug(LogCategory.PERMISSIONS, "iOS: Motion permission check exception: ${e.message}")
+                    continuation.resumeWith(Result.success(false))
+                }
+            }
+        }
+    }
+
+    actual suspend fun requestActivityRecognitionPermission(): Result<Unit> {
+        return suspendCoroutine { continuation ->
+            dispatch_async(dispatch_get_main_queue()) {
+                try {
+                    val motionManager = CMMotionActivityManager()
+                    var callbackCalled = false
+                    
+                    // Используем startActivityUpdates для запроса разрешения
+                    // Это гарантированно покажет диалог при первом обращении
+                    logger.debug(LogCategory.PERMISSIONS, "iOS: Requesting motion permission via startActivityUpdates")
+                    
+                    // Таймаут на случай, если callback не сработает (например, если пользователь не ответил на диалог)
+                    val timeoutDelay = 5.seconds
+                    val timeoutTime = dispatch_time(DISPATCH_TIME_NOW, timeoutDelay.inWholeNanoseconds.toLong())
+                    
+                    dispatch_after(timeoutTime, platform.dispatch.get_main_queue()) {
+                        if (!callbackCalled) {
+                            callbackCalled = true
+                            logger.debug(LogCategory.PERMISSIONS, "iOS: Motion permission request timeout")
+                            motionManager.stopActivityUpdates()
+                            continuation.resumeWith(Result.success(Unit))
+                        }
+                    }
+                    
+                    // Запускаем обновления - это точно покажет диалог при первом обращении
+                    motionManager.startActivityUpdates(
+                        queue = platform.dispatch.get_main_queue()
+                    ) { activity ->
+                        if (!callbackCalled) {
+                            callbackCalled = true
+                            
+                            // Останавливаем обновления сразу после первого callback
+                            // (это означает, что разрешение получено или уже было)
+                            motionManager.stopActivityUpdates()
+                            
+                            logger.debug(LogCategory.PERMISSIONS, "iOS: Motion permission granted or already had")
+                            continuation.resumeWith(Result.success(Unit))
+                        }
+                    }
+                } catch (e: Exception) {
+                    logger.error(LogCategory.PERMISSIONS, "iOS: Error requesting motion permission: ${e.message}", e)
+                    continuation.resumeWith(Result.success(Unit))
+                }
+            }
+        }
     }
 
     actual suspend fun hasAllRequiredPermissions(): Boolean {
@@ -128,7 +208,17 @@ actual class PermissionChecker(
     actual fun requestAllPermissions() {
         // Запрашиваем разрешения на местоположение
         requestLocationPermissions()
-
+        
+        // Запрашиваем разрешение на Motion (чтобы диалог показался когда пользователь активен)
+        // Используем корутину для асинхронного запроса
+        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Main).launch {
+            try {
+                requestActivityRecognitionPermission()
+            } catch (e: Exception) {
+                logger.error(LogCategory.PERMISSIONS, "iOS: Error requesting motion permission: ${e.message}", e)
+            }
+        }
+        
         // Запрашиваем разрешения на уведомления
         requestNotificationPermissions()
     }

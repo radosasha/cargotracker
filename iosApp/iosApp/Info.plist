@@ -34,6 +34,8 @@
 	<string>Это приложение использует GPS для постоянного отслеживания вашего местоположения, даже когда приложение находится в фоне.</string>
 	<key>NSLocationUsageDescription</key>
 	<string>Это приложение использует GPS для точного отслеживания местоположения.</string>
+	<key>NSMotionUsageDescription</key>
+	<string>Это приложение использует данные о движении для определения режима передвижения (пешком, в транспорте) для улучшения точности GPS трекинга и определения парковки.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>location</string>

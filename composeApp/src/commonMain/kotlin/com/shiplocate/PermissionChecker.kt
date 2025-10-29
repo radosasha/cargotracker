@@ -21,4 +21,6 @@ expect class PermissionChecker {
     fun requestAllPermissions()
 
     fun requestNotificationPermission()
+    
+    suspend fun requestActivityRecognitionPermission(): Result<Unit>
 }

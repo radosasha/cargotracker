@@ -10,6 +10,8 @@ import platform.CoreLocation.kCLAuthorizationStatusAuthorizedWhenInUse
 import platform.CoreLocation.kCLAuthorizationStatusDenied
 import platform.CoreLocation.kCLAuthorizationStatusNotDetermined
 import platform.CoreLocation.kCLAuthorizationStatusRestricted
+import platform.CoreMotion.CMMotionActivityManager
+import platform.Foundation.NSDate
 import platform.Foundation.NSURL
 import platform.UIKit.UIApplication
 import platform.UIKit.UIApplicationOpenSettingsURLString
@@ -21,7 +23,11 @@ import platform.UserNotifications.UNUserNotificationCenter
 import platform.darwin.NSObject
 import platform.darwin.dispatch_async
 import platform.darwin.dispatch_get_main_queue
+import platform.dispatch.dispatch_after
+import platform.dispatch.dispatch_time
+import platform.dispatch.DISPATCH_TIME_NOW
 import kotlin.coroutines.suspendCoroutine
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * iOS реализация PermissionChecker
@@ -90,17 +96,48 @@ class IOSPermissionCheckerImpl(
         }
     }
 
+    override suspend fun hasActivityRecognitionPermission(): Boolean {
+        return suspendCoroutine { continuation ->
+            dispatch_async(dispatch_get_main_queue()) {
+                try {
+                    val motionManager = CMMotionActivityManager()
+                    
+                    // Проверяем разрешение через queryActivityStarting
+                    val now = NSDate()
+                    val oneDayAgo = NSDate.dateWithTimeIntervalSinceNow(-86400.0)
+                    
+                    motionManager.queryActivityStarting(
+                        fromDate = oneDayAgo,
+                        toDate = now,
+                        queue = platform.dispatch.get_main_queue()
+                    ) { activities, error ->
+                        val hasPermission = error == null || 
+                            !(error.localizedDescription?.contains("denied") == true ||
+                              error.localizedDescription?.contains("permission") == true)
+                        logger.debug(LogCategory.PERMISSIONS, "iOS: Motion permission check: hasPermission=$hasPermission")
+                        continuation.resumeWith(Result.success(hasPermission))
+                    }
+                } catch (e: Exception) {
+                    logger.debug(LogCategory.PERMISSIONS, "iOS: Motion permission check exception: ${e.message}")
+                    continuation.resumeWith(Result.success(false))
+                }
+            }
+        }
+    }
+
     override suspend fun hasAllRequiredPermissions(): Boolean {
         val location = hasLocationPermissions()
         val background = hasBackgroundLocationPermission()
         val notifications = hasNotificationPermission()
-        return location && background && notifications
+        val activityRecognition = hasActivityRecognitionPermission()
+        return location && background && notifications && activityRecognition
     }
 
     override suspend fun getPermissionStatusMessage(): String {
         val location = hasLocationPermissions()
         val background = hasBackgroundLocationPermission()
         val notifications = hasNotificationPermission()
+        val activityRecognition = hasActivityRecognitionPermission()
 
         val missingPermissions = mutableListOf<String>()
 
@@ -112,6 +149,9 @@ class IOSPermissionCheckerImpl(
         }
         if (!notifications) {
             missingPermissions.add("Notifications")
+        }
+        if (!activityRecognition) {
+            missingPermissions.add("Activity Recognition")
         }
 
         return if (missingPermissions.isEmpty()) {
@@ -154,8 +194,9 @@ class IOSPermissionCheckerImpl(
                     locationManager.requestAlwaysAuthorization()
                 }
                 kCLAuthorizationStatusAuthorizedAlways -> {
-                    logger.debug(LogCategory.PERMISSIONS, "iOS: Location permission already granted, requesting notifications...")
-                    // Местоположение уже разрешено, запрашиваем уведомления
+                    logger.debug(LogCategory.PERMISSIONS, "iOS: Location permission already granted, requesting motion and notifications...")
+                    // Местоположение уже разрешено, запрашиваем Motion и уведомления
+                    requestMotionPermission()
                     requestNotificationPermissions()
                 }
                 kCLAuthorizationStatusDenied, kCLAuthorizationStatusRestricted -> {
@@ -181,9 +222,10 @@ class IOSPermissionCheckerImpl(
                     locationManager.requestAlwaysAuthorization()
                 }
                 kCLAuthorizationStatusAuthorizedAlways.toInt() -> {
-                    logger.debug(LogCategory.PERMISSIONS, "iOS: Background location permission granted, requesting notifications...")
-                    // Получили фоновое разрешение, запрашиваем уведомления
+                    logger.debug(LogCategory.PERMISSIONS, "iOS: Background location permission granted, requesting motion and notifications...")
+                    // Получили фоновое разрешение, запрашиваем Motion и уведомления
                     locationDelegate.onAuthorizationChange = null
+                    requestMotionPermission()
                     requestNotificationPermissions()
                 }
                 kCLAuthorizationStatusDenied.toInt(), kCLAuthorizationStatusRestricted.toInt() -> {
@@ -217,5 +259,62 @@ class IOSPermissionCheckerImpl(
 
     override fun requestNotificationPermission() {
         requestNotificationPermissions()
+    }
+    
+    private fun requestMotionPermission() {
+        dispatch_async(dispatch_get_main_queue()) {
+            logger.debug(LogCategory.PERMISSIONS, "iOS: Requesting motion permission...")
+            try {
+                val motionManager = CMMotionActivityManager()
+                var callbackCalled = false
+                
+                // Проверяем, есть ли уже разрешение
+                val now = NSDate()
+                val oneDayAgo = NSDate.dateWithTimeIntervalSinceNow(-86400.0)
+                
+                // Сначала проверяем через queryActivityStarting
+                motionManager.queryActivityStarting(
+                    fromDate = oneDayAgo,
+                    toDate = now,
+                    queue = platform.dispatch.get_main_queue()
+                ) { activities, error ->
+                    if (error == null) {
+                        // Разрешение уже есть
+                        logger.debug(LogCategory.PERMISSIONS, "iOS: Motion permission already granted")
+                    } else {
+                        // Разрешения нет, используем startActivityUpdates для запроса
+                        logger.debug(LogCategory.PERMISSIONS, "iOS: Motion permission not granted, requesting via startActivityUpdates")
+                        
+                        // Таймаут на случай, если callback не сработает
+                        val timeoutDelay = 5.seconds
+                        val timeoutTime = dispatch_time(DISPATCH_TIME_NOW, timeoutDelay.inWholeNanoseconds.toLong())
+                        
+                        dispatch_after(timeoutTime, platform.dispatch.get_main_queue()) {
+                            if (!callbackCalled) {
+                                callbackCalled = true
+                                logger.debug(LogCategory.PERMISSIONS, "iOS: Motion permission request timeout")
+                                motionManager.stopActivityUpdates()
+                            }
+                        }
+                        
+                        // Запускаем обновления - это точно покажет диалог при первом обращении
+                        motionManager.startActivityUpdates(
+                            queue = platform.dispatch.get_main_queue()
+                        ) { activity ->
+                            if (!callbackCalled) {
+                                callbackCalled = true
+                                
+                                // Останавливаем обновления сразу после первого callback
+                                motionManager.stopActivityUpdates()
+                                
+                                logger.debug(LogCategory.PERMISSIONS, "iOS: Motion permission granted")
+                            }
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                logger.error(LogCategory.PERMISSIONS, "iOS: Error requesting motion permission: ${e.message}", e)
+            }
+        }
     }
 }
