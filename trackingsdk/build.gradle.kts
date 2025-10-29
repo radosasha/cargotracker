@@ -53,6 +53,7 @@ kotlin {
             implementation(kotlin("test"))
             implementation(kotlin("test-common"))
             implementation(kotlin("test-annotations-common"))
+            implementation(libs.kotlinx.coroutines.test)
         }
     }
 }
