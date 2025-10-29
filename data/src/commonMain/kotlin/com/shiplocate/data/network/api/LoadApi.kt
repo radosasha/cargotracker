@@ -3,12 +3,17 @@ package com.shiplocate.data.network.api
 import com.shiplocate.core.logging.LogCategory
 import com.shiplocate.core.logging.Logger
 import com.shiplocate.core.network.bodyOrThrow
+import com.shiplocate.data.network.dto.load.ConnectLoadRequest
+import com.shiplocate.data.network.dto.load.DisconnectLoadRequest
 import com.shiplocate.data.network.dto.load.LoadDto
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.post
+import io.ktor.client.request.setBody
+import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
+import io.ktor.http.contentType
 
 /**
  * API interface for Load operations
@@ -80,9 +85,12 @@ class LoadApiImpl(
     ): List<LoadDto> {
         logger.debug(LogCategory.NETWORK, "🌐 LoadApi: Connecting to load $loadId")
 
+        val request = ConnectLoadRequest(loadId = loadId)
         val response =
-            httpClient.post("$baseUrl/api/mobile/loads/$loadId/connect") {
+            httpClient.post("$baseUrl/api/mobile/loads/connect") {
                 header(HttpHeaders.Authorization, "Bearer $token")
+                contentType(ContentType.Application.Json)
+                setBody(request)
             }
 
         logger.debug(LogCategory.NETWORK, "🌐 LoadApi: Connect response status: ${response.status}")
@@ -95,9 +103,12 @@ class LoadApiImpl(
     ): List<LoadDto> {
         logger.debug(LogCategory.NETWORK, "🌐 LoadApi: Disconnecting from load $loadId")
 
+        val request = DisconnectLoadRequest(loadId = loadId)
         val response =
-            httpClient.post("$baseUrl/api/mobile/loads/$loadId/disconnect") {
+            httpClient.post("$baseUrl/api/mobile/loads/disconnect") {
                 header(HttpHeaders.Authorization, "Bearer $token")
+                contentType(ContentType.Application.Json)
+                setBody(request)
             }
 
         logger.debug(LogCategory.NETWORK, "🌐 LoadApi: Disconnect response status: ${response.status}")
