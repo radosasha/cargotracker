@@ -23,8 +23,8 @@ import kotlinx.coroutines.flow.onEach
  */
 class MotionTracker(
     private val activityRecognitionConnector: ActivityRecognitionConnector,
-    val analysisWindowMs: Long = 3 * 60 * 1000L,
-    // 1 минута для обрезки истории
+    val analysisWindowMs: Long = 60 * 1000L,
+    // 1 минута для обрезки истории (используется как минимальный размер окна при тримминге)
     val trimWindowMs: Long = 1 * 60 * 1000L,
     // Пороги для определения движения в транспорте (обновлены для работы с реальными вероятностями)
     // 60% времени в транспорте (снижено, так как теперь у нас реальные вероятности)
@@ -33,6 +33,20 @@ class MotionTracker(
     val confidenceThreshold: Int = 70,
     // Минимум 1 минута анализа (снижено для более быстрого реагирования)
     val minAnalysisDurationMs: Long = 1 * 60 * 1000,
+    // Окно хранения истории (жесткий предел)
+    val retentionWindowMs: Long = 5 * 60 * 1000L,
+    // Минимальное и максимальное окно для поиска подпериода «вождения»
+    val minWindowMs: Long = 60 * 1000L,
+    val maxWindowMs: Long = 5 * 60 * 1000L,
+    // Интервалы анализа (адаптивные)
+    val initialAnalysisIntervalMs: Long = 60 * 1000L,
+    val fastAnalysisIntervalMs: Long = 30 * 1000L,
+    val lowAnalysisIntervalMs: Long = 2 * 60 * 1000L,
+    val backgroundAnalysisIntervalMs: Long = 5 * 60 * 1000L,
+    // Пороговые значения для смены интервалов по сериям результатов
+    val drivingStreakForFast: Int = 3,
+    val nonDrivingStreakForLow: Int = 5,
+    val nonDrivingStreakForBackground: Int = 10,
     val logger: Logger,
     private val scope: CoroutineScope,
 ) {
@@ -47,6 +61,13 @@ class MotionTracker(
     companion object {
         private val TAG = MotionTracker::class.simpleName
     }
+
+    // Динамическое управление частотой анализа
+    private var lastAnalysisTime: Long = 0L
+    private var currentAnalysisIntervalMs: Long = initialAnalysisIntervalMs // по умолчанию анализ раз в минуту
+    private var consecutiveDrivingCount: Int = 0
+    private var consecutiveNonDrivingCount: Int = 0
+
 
     /**
      * Запускает отслеживание движения через ActivityRecognitionConnector
@@ -72,8 +93,8 @@ class MotionTracker(
             )
             motionHistory.add(analysisResult)
 
-            // Проверяем, нужно ли начать анализ. Анализ запускается,
-            // когда накопленный временной интервал >= analysisWindowMs
+            // Проверяем, нужно ли начать анализ. Анализ запускается
+            // не чаще currentAnalysisIntervalMs и при наличии достаточных данных
             if (shouldStartAnalysis()) {
                 performAnalysis()
             }
@@ -116,15 +137,29 @@ class MotionTracker(
             return false
         }
 
+        // Используем метки времени событий как источник истины времени анализа
         val lastEvent = motionHistory.last()
-        val cutoffTime = lastEvent.timestamp - analysisWindowMs
-        
-        // Проверяем, есть ли достаточно данных за последние analysisWindowMs
-        val recentEvents = motionHistory.filter { it.timestamp >= cutoffTime }
+        val nowTs = lastEvent.timestamp
+
+        // Троттлим анализ по интервалу
+        val sinceLastAnalysis = nowTs - lastAnalysisTime
+        if (sinceLastAnalysis < currentAnalysisIntervalMs) {
+            logger.debug(
+                LogCategory.LOCATION,
+                "$TAG: shouldStartAnalysis: throttled (${sinceLastAnalysis}ms < ${currentAnalysisIntervalMs}ms)"
+            )
+            return false
+        }
+
+        // Убедимся, что есть хотя бы 2 события за последний retentionWindowMs
+        val cutoffTime = nowTs - retentionWindowMs
+        val recentEvents = motionHistory.asSequence().filter { it.timestamp >= cutoffTime }.toList()
         val result = recentEvents.size >= 2
-        
-        logger.debug(LogCategory.LOCATION, "$TAG: shouldStartAnalysis: size=${motionHistory.size}, recentEvents=${recentEvents.size}, cutoffTime=$cutoffTime, lastEvent=${lastEvent.timestamp}, analysisWindowMs=$analysisWindowMs, result=$result")
-        
+
+        logger.debug(
+            LogCategory.LOCATION,
+            "$TAG: shouldStartAnalysis: size=${motionHistory.size}, recentEvents=${recentEvents.size}, cutoff=${cutoffTime}, now=${nowTs}, interval=${currentAnalysisIntervalMs}, result=$result"
+        )
         return result
     }
 
@@ -132,20 +167,40 @@ class MotionTracker(
      * Выполняет анализ накопленных данных
      */
     private suspend fun performAnalysis() {
-        logger.debug(LogCategory.LOCATION, "$TAG: Starting analysis of ${motionHistory.size} events")
+        val nowTs = motionHistory.last().timestamp
+        lastAnalysisTime = nowTs
 
-        val statistics = calculateMotionStatistics()
+        logger.debug(LogCategory.LOCATION, "$TAG: Starting analysis of ${motionHistory.size} events at $nowTs")
 
-        if (isInVehicle(statistics)) {
-            logger.info(LogCategory.LOCATION, "$TAG: Vehicle motion detected based on analysis")
+        // Берем историю только за retentionWindowMs
+        val cutoff = nowTs - retentionWindowMs
+        val recent = motionHistory.filter { it.timestamp >= cutoff }
+
+        val drivingDetected = findDrivingWindow(
+            events = recent,
+            minWinMs = minWindowMs,
+            maxWinMs = maxWindowMs,
+            vehicleThreshold = vehicleTimeThreshold,
+            confThreshold = confidenceThreshold
+        )
+
+        if (drivingDetected) {
+            consecutiveDrivingCount += 1
+            consecutiveNonDrivingCount = 0
+            logger.info(LogCategory.LOCATION, "$TAG: Vehicle motion detected (consecutive=$consecutiveDrivingCount)")
             observeMotionTrigger.emit(Unit)
-            // Сразу очищаем историю, чтобы избежать повторных мгновенных триггеров
-            // при поступлении следующего события без достаточного нового окна данных
+            // После триггера — полная очистка, чтобы исключить повторные срабатывания
             clear()
+            // Ускоряем следующий анализ ненадолго (быстрый режим подтверждения)
+            currentAnalysisIntervalMs = fastAnalysisIntervalMs
         } else {
-            logger.debug(LogCategory.LOCATION, "$TAG: Not in vehicle, trimming history")
-            // Если вероятность движения в транспорте низкая, обрезаем историю
-            trimHistory()
+            consecutiveNonDrivingCount += 1
+            consecutiveDrivingCount = 0
+            logger.debug(LogCategory.LOCATION, "$TAG: Not in vehicle, applying cleanup policies")
+            // Чистим историю, гарантируя удержание последних 5 минут
+            cleanupHistory(nowTs)
+            // Увеличиваем интервал анализа для экономии батареи, если долго не едем
+            updateAnalysisInterval()
         }
     }
 
@@ -164,6 +219,117 @@ class MotionTracker(
         }
 
         logger.debug(LogCategory.LOCATION, "$TAG: Trimmed history from $initialSize to ${motionHistory.size} events")
+    }
+
+    /**
+     * Политика очистки истории: удерживаем максимум 5 минут данных и дополнительно
+     * очищаем более старые записи агрессивнее при длительном отсутствии вождения.
+     */
+    private fun cleanupHistory(nowTs: Long) {
+        if (motionHistory.isEmpty()) return
+        val hardCutoff = nowTs - retentionWindowMs
+
+        val before = motionHistory.size
+        motionHistory.removeAll { it.timestamp < hardCutoff }
+        val removed = before - motionHistory.size
+        if (removed > 0) {
+            logger.debug(LogCategory.LOCATION, "$TAG: cleanupHistory: removed=$removed, kept=${motionHistory.size}")
+        }
+
+        // Дополнительно: если долго не обнаруживаем вождение — слегка ужесточаем удержание
+        if (consecutiveNonDrivingCount >= 5 && motionHistory.size > 2) {
+            val strongerCutoff = nowTs - (retentionWindowMs - 2 * 60 * 1000L) // 5 мин -> 3 мин
+            val before2 = motionHistory.size
+            motionHistory.removeAll { it.timestamp < strongerCutoff }
+            val removed2 = before2 - motionHistory.size
+            if (removed2 > 0) {
+                logger.debug(LogCategory.LOCATION, "$TAG: cleanupHistory (aggressive): removed=$removed2, kept=${motionHistory.size}")
+            }
+        }
+    }
+
+    /**
+     * Адаптивное изменение интервала анализа для экономии батареи.
+     */
+    private fun updateAnalysisInterval() {
+        currentAnalysisIntervalMs = when {
+            consecutiveDrivingCount >= drivingStreakForFast -> fastAnalysisIntervalMs // активный режим подтверждения
+            consecutiveNonDrivingCount >= nonDrivingStreakForBackground -> backgroundAnalysisIntervalMs // давно не едем — фоновый
+            consecutiveNonDrivingCount >= nonDrivingStreakForLow -> lowAnalysisIntervalMs // низкая активность
+            else -> initialAnalysisIntervalMs // обычный режим
+        }
+        logger.debug(
+            LogCategory.LOCATION,
+            "$TAG: updateAnalysisInterval -> ${currentAnalysisIntervalMs}ms (driveCnt=$consecutiveDrivingCount, nonDriveCnt=$consecutiveNonDrivingCount)"
+        )
+    }
+
+    /**
+     * Поиск любого подокна длительностью от minWinMs до maxWinMs, удовлетворяющего критериям «вождения».
+     * Использует два указателя с инкрементальным учетом интервалов и взвешивания по confidence.
+     */
+    private fun findDrivingWindow(
+        events: List<MotionAnalysisEvent>,
+        minWinMs: Long,
+        maxWinMs: Long,
+        vehicleThreshold: Float,
+        confThreshold: Int,
+    ): Boolean {
+        if (events.size < 2) return false
+
+        data class Agg(
+            var totalTime: Long = 0L,
+            var vehicleTime: Long = 0L,
+            var weightedConfidenceSum: Long = 0L,
+            var timeSum: Long = 0L,
+        )
+
+        val agg = Agg()
+
+        fun addInterval(i: Int) {
+            val a = events[i]
+            val b = events[i + 1]
+            val dt = (b.timestamp - a.timestamp).coerceAtLeast(0L)
+            agg.totalTime += dt
+            val weighted = (dt * (a.confidence / 100f)).toLong()
+            agg.vehicleTime += if (a.motionState == MotionState.IN_VEHICLE) weighted else 0L
+            agg.weightedConfidenceSum += a.confidence.toLong() * dt
+            agg.timeSum += dt
+        }
+
+        fun removeInterval(i: Int) {
+            val a = events[i]
+            val b = events[i + 1]
+            val dt = (b.timestamp - a.timestamp).coerceAtLeast(0L)
+            agg.totalTime -= dt
+            val weighted = (dt * (a.confidence / 100f)).toLong()
+            agg.vehicleTime -= if (a.motionState == MotionState.IN_VEHICLE) weighted else 0L
+            agg.weightedConfidenceSum -= a.confidence.toLong() * dt
+            agg.timeSum -= dt
+        }
+
+        var left = 0
+        for (right in 1 until events.size) {
+            addInterval(right - 1)
+
+            // Сжимаем окно, если вышли за maxWinMs
+            while (left < right - 1 && (events[right].timestamp - events[left].timestamp) > maxWinMs) {
+                removeInterval(left)
+                left++
+            }
+
+            val windowMs = events[right].timestamp - events[left].timestamp
+            if (windowMs >= minWinMs && agg.totalTime > 0L && agg.timeSum > 0L) {
+                val vehiclePct = agg.vehicleTime.toFloat() / agg.totalTime
+                val avgConf = (agg.weightedConfidenceSum / agg.timeSum).toInt()
+                logger.debug(
+                    LogCategory.LOCATION,
+                    "$TAG: window [$left,$right] ms=$windowMs vehiclePct=${(vehiclePct * 100).toInt()}% avgConf=$avgConf%"
+                )
+                if (vehiclePct >= vehicleThreshold && avgConf >= confThreshold) return true
+            }
+        }
+        return false
     }
 
     /**

@@ -62,11 +62,21 @@ actual val trackingSDKModule: Module = module {
     single<MotionTracker> {
         MotionTracker(
             activityRecognitionConnector = get(),
-            analysisWindowMs = 3 * 60 * 1000L,
+            analysisWindowMs = 60 * 1000L,
             trimWindowMs = 1 * 60 * 1000L,
             vehicleTimeThreshold = 0.6f,
             confidenceThreshold = 70,
             minAnalysisDurationMs = 1 * 60 * 1000,
+            retentionWindowMs = 5 * 60 * 1000L,
+            minWindowMs = 60 * 1000L,
+            maxWindowMs = 5 * 60 * 1000L,
+            initialAnalysisIntervalMs = 60 * 1000L,
+            fastAnalysisIntervalMs = 30 * 1000L,
+            lowAnalysisIntervalMs = 2 * 60 * 1000L,
+            backgroundAnalysisIntervalMs = 5 * 60 * 1000L,
+            drivingStreakForFast = 3,
+            nonDrivingStreakForLow = 5,
+            nonDrivingStreakForBackground = 10,
             logger = get(),
             scope = get()
         )
