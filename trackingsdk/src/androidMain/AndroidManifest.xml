@@ -1,7 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
     <application>
+        <receiver
+            android:name="com.shiplocate.trackingsdk.motion.ActivityUpdatesReceiver"
+            android:exported="false" />
         <service
             android:name="com.shiplocate.trackingsdk.AndroidTrackingService"
             android:enabled="true"

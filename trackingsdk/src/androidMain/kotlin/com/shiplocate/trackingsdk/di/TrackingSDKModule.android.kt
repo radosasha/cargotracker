@@ -56,7 +56,7 @@ actual val trackingSDKModule: Module = module {
     single<ActivityRecognitionConnector> {
         ActivityRecognitionConnector(
             activityFrequencyMs = 10000L,
-            context = get(),
+            context = get<Context>(),
             activityRecognitionClient = get(),
             logger = get(),
             scope = get()
@@ -102,6 +102,6 @@ actual val trackingSDKModule: Module = module {
     }
 
     single<ActivityRecognitionClient> {
-        ActivityRecognition.getClient(get())
+        ActivityRecognition.getClient(get<Context>())
     }
 }
