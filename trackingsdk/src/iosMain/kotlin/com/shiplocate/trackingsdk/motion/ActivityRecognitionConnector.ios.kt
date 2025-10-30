@@ -65,10 +65,8 @@ actual class ActivityRecognitionConnector(
                             timestamp = kotlinx.datetime.Clock.System.now().toEpochMilliseconds()
                         )
 
-                        if (isTracking) {
-                            // Отправляем событие в flow
-                            motionEvents.tryEmit(motionEvent)
-                        }
+                        // Отправляем событие в flow
+                        motionEvents.tryEmit(motionEvent)
                     }
                 }
 

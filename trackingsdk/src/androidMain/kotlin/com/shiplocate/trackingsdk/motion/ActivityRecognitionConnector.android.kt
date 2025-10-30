@@ -37,8 +37,9 @@ actual class ActivityRecognitionConnector(
         override fun onReceive(context: Context?, intent: Intent?) {
             if (intent?.action == ACTIVITY_TRANSITION_ACTION) {
                 val activities = ActivityRecognitionResult.extractResult(intent)?.probableActivities
-                activities?.forEach { activity ->
-                    scope.launch {
+                scope.launch {
+                    activities?.forEach { activity ->
+                        println("activity: $activity")
                         // Конвертируем DetectedActivity в MotionEvent с реальными вероятностями
                         val motionState = when (activity.type) {
                             DetectedActivity.IN_VEHICLE -> MotionState.IN_VEHICLE

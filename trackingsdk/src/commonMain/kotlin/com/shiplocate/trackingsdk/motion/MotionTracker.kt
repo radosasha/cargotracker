@@ -16,9 +16,9 @@ import kotlinx.coroutines.flow.onEach
  * Анализирует активность пользователя и определяет, находится ли он в транспорте
  *
  * Алгоритм определения движения в транспорте:
- * 1. Собирает статистику активности за последние 5 минут
- * 2. Если >70% времени в состоянии IN_VEHICLE с уверенностью >80% - считаем что в транспорте
- * 3. Дополнительные проверки: скорость, ускорение, паттерны движения
+ * 1. Собирает статистику активности за период, равный analysisWindowMs
+ * 2. Если доля времени в IN_VEHICLE >= vehicleTimeThreshold и confidence >= confidenceThreshold — считаем, что в транспорте
+ * 3. Дополнительные проверки (при необходимости): скорость, ускорение, паттерны движения
  * 4. Фильтрация ложных срабатываний (кратковременные переходы)
  */
 class MotionTracker(
@@ -38,11 +38,8 @@ class MotionTracker(
 ) {
 
 
-    // Статистика движения за последние 5 минут
+    // Буфер событий движения за текущее аналитическое окно (analysisWindowMs)
     private val motionHistory = mutableListOf<MotionAnalysisEvent>()
-
-    // Flow для статистики движения
-    private val motionStatistics = MutableSharedFlow<MotionStatistics>(replay = 0)
 
     // Flow для уведомления о движении в транспорте
     private val observeMotionTrigger = MutableSharedFlow<Unit>(replay = 0)
@@ -75,7 +72,8 @@ class MotionTracker(
             )
             motionHistory.add(analysisResult)
 
-            // Проверяем, нужно ли начать анализ
+            // Проверяем, нужно ли начать анализ. Анализ запускается,
+            // когда накопленный временной интервал >= analysisWindowMs
             if (shouldStartAnalysis()) {
                 performAnalysis()
             }
@@ -129,11 +127,13 @@ class MotionTracker(
         logger.debug(LogCategory.LOCATION, "$TAG: Starting analysis of ${motionHistory.size} events")
 
         val statistics = calculateMotionStatistics()
-        motionStatistics.emit(statistics)
 
         if (isInVehicle(statistics)) {
             logger.info(LogCategory.LOCATION, "$TAG: Vehicle motion detected based on analysis")
             observeMotionTrigger.emit(Unit)
+            // Сразу очищаем историю, чтобы избежать повторных мгновенных триггеров
+            // при поступлении следующего события без достаточного нового окна данных
+            clear()
         } else {
             logger.debug(LogCategory.LOCATION, "$TAG: Not in vehicle, trimming history")
             // Если вероятность движения в транспорте низкая, обрезаем историю
@@ -198,7 +198,16 @@ class MotionTracker(
         }
 
         val lastActivity = motionHistory.lastOrNull()?.motionState ?: MotionState.UNKNOWN
-        val averageConfidence = motionHistory.map { it.confidence }.average().toInt()
+        // Усредняем confidence с учетом длительности интервалов между событиями
+        val intervals = motionHistory.zipWithNext { a, b ->
+            val dt = (b.timestamp - a.timestamp).coerceAtLeast(0L)
+            val conf = a.confidence
+            dt to conf
+        }
+        val totalDt = intervals.sumOf { it.first }
+        val weightedConfidence = if (totalDt > 0L) {
+            (intervals.sumOf { it.first * it.second } / totalDt).toInt()
+        } else 0
 
         return MotionStatistics(
             totalTimeMs = totalTimeMs,
@@ -207,7 +216,7 @@ class MotionTracker(
             stationaryTimeMs = stationaryTimeMs,
             vehiclePercentage = vehiclePercentage,
             lastActivity = lastActivity,
-            confidence = averageConfidence
+            confidence = weightedConfidence
         )
     }
 
@@ -215,6 +224,10 @@ class MotionTracker(
      * Определяет, находится ли пользователь в транспорте на основе статистики
      */
     private fun isInVehicle(statistics: MotionStatistics): Boolean {
+        // Логика определения «в транспорте» основывается на:
+        // 1) доле времени в IN_VEHICLE (vehiclePercentage) за окно analysisWindowMs,
+        // 2) усредненном confidence, рассчитанном с учетом времени между событиями,
+        // 3) минимальной длительности накопленных данных (minAnalysisDurationMs).
         val isVehicleTimeSufficient = statistics.vehiclePercentage >= vehicleTimeThreshold
         val isConfidenceSufficient = statistics.confidence >= confidenceThreshold
         val isDurationSufficient = statistics.totalTimeMs >= minAnalysisDurationMs
