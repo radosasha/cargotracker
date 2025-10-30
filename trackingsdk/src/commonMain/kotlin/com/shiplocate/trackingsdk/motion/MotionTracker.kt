@@ -142,13 +142,16 @@ class MotionTracker(
         val nowTs = lastEvent.timestamp
 
         // Троттлим анализ по интервалу
-        val sinceLastAnalysis = nowTs - lastAnalysisTime
-        if (sinceLastAnalysis < currentAnalysisIntervalMs) {
-            logger.debug(
-                LogCategory.LOCATION,
-                "$TAG: shouldStartAnalysis: throttled (${sinceLastAnalysis}ms < ${currentAnalysisIntervalMs}ms)"
-            )
-            return false
+        // Для первого анализа (lastAnalysisTime == 0) пропускаем троттлинг
+        if (lastAnalysisTime > 0L) {
+            val sinceLastAnalysis = nowTs - lastAnalysisTime
+            if (sinceLastAnalysis < currentAnalysisIntervalMs) {
+                logger.debug(
+                    LogCategory.LOCATION,
+                    "$TAG: shouldStartAnalysis: throttled (${sinceLastAnalysis}ms < ${currentAnalysisIntervalMs}ms)"
+                )
+                return false
+            }
         }
 
         // Убедимся, что есть хотя бы 2 события за последний retentionWindowMs
@@ -291,8 +294,9 @@ class MotionTracker(
             val b = events[i + 1]
             val dt = (b.timestamp - a.timestamp).coerceAtLeast(0L)
             agg.totalTime += dt
-            val weighted = (dt * (a.confidence / 100f)).toLong()
-            agg.vehicleTime += if (a.motionState == MotionState.IN_VEHICLE) weighted else 0L
+            // vehicleTime должен быть реальным временем в транспорте, а не взвешенным
+            // Confidence учитывается отдельно при вычислении avgConf
+            agg.vehicleTime += if (a.motionState == MotionState.IN_VEHICLE) dt else 0L
             agg.weightedConfidenceSum += a.confidence.toLong() * dt
             agg.timeSum += dt
         }
@@ -302,8 +306,8 @@ class MotionTracker(
             val b = events[i + 1]
             val dt = (b.timestamp - a.timestamp).coerceAtLeast(0L)
             agg.totalTime -= dt
-            val weighted = (dt * (a.confidence / 100f)).toLong()
-            agg.vehicleTime -= if (a.motionState == MotionState.IN_VEHICLE) weighted else 0L
+            // vehicleTime должен быть реальным временем в транспорте, а не взвешенным
+            agg.vehicleTime -= if (a.motionState == MotionState.IN_VEHICLE) dt else 0L
             agg.weightedConfidenceSum -= a.confidence.toLong() * dt
             agg.timeSum -= dt
         }
