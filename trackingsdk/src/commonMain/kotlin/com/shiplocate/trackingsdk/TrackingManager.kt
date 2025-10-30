@@ -7,7 +7,6 @@ import com.shiplocate.domain.service.LocationSyncService
 import com.shiplocate.trackingsdk.motion.MotionTracker
 import com.shiplocate.trackingsdk.parking.ParkingTracker
 import com.shiplocate.trackingsdk.parking.models.ParkingLocation
-import com.shiplocate.trackingsdk.parking.models.ParkingState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
@@ -67,11 +66,9 @@ class TrackingManager(
 
                 // observe parking status
                 parkingStateJob = parkingTracker.observeParkingStatus().onEach {
-                    if (it == ParkingState.IN_PARKING) {
-                        currentState = TrackingState.IN_PARKING
-                        logger.info(LogCategory.LOCATION, "TrackingManager: User entered parking, stopping tracking")
-                        switchToState(TrackingState.IN_PARKING)
-                    }
+                    currentState = TrackingState.IN_PARKING
+                    logger.info(LogCategory.LOCATION, "TrackingManager: User entered parking, stopping tracking, reason: $it}")
+                    switchToState(TrackingState.IN_PARKING)
                 }.launchIn(scope)
 
                 logger.info(LogCategory.LOCATION, "TrackingManager: Switched to TRIP_RECORDING state")

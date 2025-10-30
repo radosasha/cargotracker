@@ -54,6 +54,7 @@ kotlin {
             implementation(kotlin("test-common"))
             implementation(kotlin("test-annotations-common"))
             implementation(libs.kotlinx.coroutines.test)
+            implementation("io.mockk:mockk:1.14.6")
         }
     }
 }

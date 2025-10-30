@@ -2,8 +2,9 @@ package com.shiplocate.trackingsdk.parking
 
 import com.shiplocate.core.logging.LogCategory
 import com.shiplocate.core.logging.Logger
+import com.shiplocate.trackingsdk.parking.models.InReason
 import com.shiplocate.trackingsdk.parking.models.ParkingLocation
-import com.shiplocate.trackingsdk.parking.models.ParkingState
+import com.shiplocate.trackingsdk.parking.models.ParkingStatus
 import com.shiplocate.trackingsdk.utils.LocationUtils
 import com.shiplocate.trackingsdk.utils.ParkingTimeoutTimer
 import com.shiplocate.trackingsdk.utils.models.LatLng
@@ -12,7 +13,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 
 /**
@@ -26,21 +26,18 @@ class ParkingTracker(
     // триггер парковки
     private val triggerTimeMs: Long = 20 * 60 * 1000L,
     private val logger: Logger,
-    private val scope: CoroutineScope
+    private val scope: CoroutineScope,
 ) {
 
     private val locationsHistory = mutableListOf<ParkingLocation>()
 
-    private val parkingStateFlow = MutableSharedFlow<ParkingState>(replay = 0)
-    private var currentState = ParkingState.NOT_IN_PARKING
+    private val parkingStateFlow = MutableSharedFlow<ParkingStatus>(replay = 0)
 
     init {
         // Подписываемся на события таймера
-        scope.launch {
-            parkingTimeoutTimer.timerEvent
-                .onEach { onTimerEvent() }
-                .launchIn(scope)
-        }
+        parkingTimeoutTimer.timerEvent
+            .onEach { onTimerEvent() }
+            .launchIn(scope)
     }
 
     companion object {
@@ -59,22 +56,14 @@ class ParkingTracker(
             parkingTimeoutTimer.start(parkingTimeoutTimer.timeoutMs)
         }
 
-        if (currentState == ParkingState.IN_PARKING) {
-            logger.debug(LogCategory.LOCATION, "$TAG: ignore adding coordinate, already in parking")
-            return true
-        }
-
-        // Удаляем первую координату (старше 20 минут)
-        val currentTime = Clock.System.now().toEpochMilliseconds()
-        if (locationsHistory.isNotEmpty()) {
-            val firstCoord = locationsHistory.first()
-            if (currentTime - firstCoord.time > triggerTimeMs) {
-                locationsHistory.removeAt(0)
-            }
-        }
-
         // Добавляем новую координату
         locationsHistory.add(parkingLocation)
+
+        // Удаляем координаты старше окна анализа (относительно времени последней точки)
+        val lastTime = locationsHistory.last().time
+        while (locationsHistory.size > 1 && (lastTime - locationsHistory.first().time) > triggerTimeMs) {
+            locationsHistory.removeAt(0)
+        }
 
         logger.debug(
             LogCategory.LOCATION,
@@ -105,9 +94,17 @@ class ParkingTracker(
         // Проверяем, все ли координаты находятся в радиусе парковки
         val allInParkingRadius = LocationUtils.areAllInRadius(center, latLngs, parkingRadiusMeters)
 
-        logger.info(LogCategory.LOCATION, "$TAG: Parking status: all coords in parking radius($allInParkingRadius) (${locationsHistory.size} coordinates)")
-        currentState = if (allInParkingRadius) ParkingState.IN_PARKING else ParkingState.NOT_IN_PARKING
-        parkingStateFlow.emit(currentState)
+        logger.info(
+            LogCategory.LOCATION,
+            "$TAG: Parking status: all coords in parking radius($allInParkingRadius) (${locationsHistory.size} coordinates)"
+        )
+        if (allInParkingRadius) {
+            val newStatus = ParkingStatus.InParking(InReason.Radius)
+            parkingStateFlow.emit(newStatus)
+            // После входа в парковку очищаем, чтобы новая детекция началась с нуля
+            clear()
+            logger.debug(LogCategory.LOCATION, "$TAG: Cleared history after InParking (Radius) event")
+        }
         return allInParkingRadius
     }
 
@@ -119,8 +116,7 @@ class ParkingTracker(
         val currentTime = Clock.System.now().toEpochMilliseconds()
 
         if (locationsHistory.isEmpty()) {
-            logger.debug(LogCategory.LOCATION, "$TAG: No coordinates, sending parking finished event")
-            parkingStateFlow.emit(currentState)
+            // Нет координат — таймер не должен был вообще срабатывать
             return
         }
 
@@ -128,14 +124,18 @@ class ParkingTracker(
         val timeDifference = currentTime - lastCoordinate.time
 
         if (timeDifference > parkingTimeoutTimer.timeoutMs) {
-            logger.debug(LogCategory.LOCATION, "$TAG: Last coordinate too old (${timeDifference}ms), sending parking finished event")
+            logger.debug(LogCategory.LOCATION, "$TAG: Last coordinate too old (${timeDifference}ms), keep-alive parking by timeout")
+            val newStatus = ParkingStatus.InParking(InReason.Timeout)
+            parkingStateFlow.emit(newStatus)
+            // Очистка состояния; таймер не перезапускаем
             clear()
-            parkingStateFlow.emit(currentState)
+            logger.debug(LogCategory.LOCATION, "$TAG: Cleared history after InParking (Timeout) event")
         } else {
             // Перезапускаем таймер на оставшееся время + 1 минута
-            val remainingTime = parkingTimeoutTimer.timeoutMs - timeDifference + (60 * 1000L) // +1 минута
-            logger.debug(LogCategory.LOCATION, "$TAG: Restarting timer for ${remainingTime}ms")
-            parkingTimeoutTimer.start(remainingTime)
+            val remainingTimeMs =
+                (parkingTimeoutTimer.timeoutMs - timeDifference + (60 * 1000L)).coerceAtLeast(60 * 1000L) // минимум 1 минута
+            logger.debug(LogCategory.LOCATION, "$TAG: Restarting timer for ${remainingTimeMs}ms")
+            parkingTimeoutTimer.start(remainingTimeMs)
         }
     }
 
@@ -145,7 +145,7 @@ class ParkingTracker(
         logger.debug(LogCategory.LOCATION, "$TAG: Cleared all coordinates")
     }
 
-    fun observeParkingStatus(): Flow<ParkingState> {
+    fun observeParkingStatus(): Flow<ParkingStatus> {
         return parkingStateFlow
     }
 }
