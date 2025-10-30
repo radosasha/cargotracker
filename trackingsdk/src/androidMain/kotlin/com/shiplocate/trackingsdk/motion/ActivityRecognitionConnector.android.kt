@@ -44,7 +44,7 @@ actual class ActivityRecognitionConnector(
         logger.info(LogCategory.LOCATION, "$TAG: Starting ActivityRecognition")
 
         try {
-            // Запускаем ActivityRecognition с интервалом обновления 10 секунд
+            // Запускаем ActivityRecognition с интервалом обновления activityFrequencyMs
             val task = activityRecognitionClient.requestActivityUpdates(
                 activityFrequencyMs, // 10 секунд
                 createPendingIntent(context)
@@ -70,14 +70,6 @@ actual class ActivityRecognitionConnector(
         }
 
         try {
-            val intent = Intent(ACTIVITY_TRANSITION_ACTION)
-            val pendingIntent = PendingIntent.getBroadcast(
-                context,
-                REQUEST_CODE,
-                intent,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            )
-
             activityRecognitionClient.removeActivityUpdates(createPendingIntent(context))
                 .addOnSuccessListener {
                     isTracking = false

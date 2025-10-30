@@ -111,13 +111,21 @@ class MotionTracker(
      * Проверяет, нужно ли начать анализ на основе накопленных данных
      */
     private fun shouldStartAnalysis(): Boolean {
-        if (motionHistory.size < 2) return false
+        if (motionHistory.size < 2) {
+            logger.debug(LogCategory.LOCATION, "$TAG: shouldStartAnalysis: size=${motionHistory.size} < 2")
+            return false
+        }
 
-        val firstEvent = motionHistory.first()
         val lastEvent = motionHistory.last()
-        val timeSpan = lastEvent.timestamp - firstEvent.timestamp
-
-        return timeSpan >= analysisWindowMs
+        val cutoffTime = lastEvent.timestamp - analysisWindowMs
+        
+        // Проверяем, есть ли достаточно данных за последние analysisWindowMs
+        val recentEvents = motionHistory.filter { it.timestamp >= cutoffTime }
+        val result = recentEvents.size >= 2
+        
+        logger.debug(LogCategory.LOCATION, "$TAG: shouldStartAnalysis: size=${motionHistory.size}, recentEvents=${recentEvents.size}, cutoffTime=$cutoffTime, lastEvent=${lastEvent.timestamp}, analysisWindowMs=$analysisWindowMs, result=$result")
+        
+        return result
     }
 
     /**
@@ -174,13 +182,30 @@ class MotionTracker(
             )
         }
 
-        val firstEvent = motionHistory.first()
         val lastEvent = motionHistory.last()
+        val cutoffTime = lastEvent.timestamp - analysisWindowMs
+        
+        // Анализируем только последние analysisWindowMs данных
+        val recentEvents = motionHistory.filter { it.timestamp >= cutoffTime }
+        
+        if (recentEvents.size < 2) {
+            return MotionStatistics(
+                totalTimeMs = 0L,
+                vehicleTimeMs = 0L,
+                walkingTimeMs = 0L,
+                stationaryTimeMs = 0L,
+                vehiclePercentage = 0f,
+                lastActivity = MotionState.UNKNOWN,
+                confidence = 0
+            )
+        }
+
+        val firstEvent = recentEvents.first()
         val totalTimeMs = lastEvent.timestamp - firstEvent.timestamp
 
         // Вычисляем время для всех состояний сразу
         // Один проход по данным, группируем по состояниям
-        val timeByState = motionHistory.zipWithNext { current, next ->
+        val timeByState = recentEvents.zipWithNext { current, next ->
             val intervalMs = next.timestamp - current.timestamp
             val weightedTime = (intervalMs * (current.confidence / 100f)).toLong()
             current.motionState to weightedTime
@@ -197,9 +222,9 @@ class MotionTracker(
             0f
         }
 
-        val lastActivity = motionHistory.lastOrNull()?.motionState ?: MotionState.UNKNOWN
+        val lastActivity = recentEvents.lastOrNull()?.motionState ?: MotionState.UNKNOWN
         // Усредняем confidence с учетом длительности интервалов между событиями
-        val intervals = motionHistory.zipWithNext { a, b ->
+        val intervals = recentEvents.zipWithNext { a, b ->
             val dt = (b.timestamp - a.timestamp).coerceAtLeast(0L)
             val conf = a.confidence
             dt to conf
