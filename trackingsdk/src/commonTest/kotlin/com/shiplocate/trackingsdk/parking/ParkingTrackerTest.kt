@@ -122,7 +122,6 @@ class ParkingTrackerTest {
         tracker.addCoordinate(ParkingLocation(55.0, 37.0, t0, 10))
         tracker.addCoordinate(ParkingLocation(55.0005, 37.0005, t0 + 50, 10))
         val res = tracker.addCoordinate(ParkingLocation(55.0002, 37.0002, t0 + 100, 10))
-        advanceUntilIdle()
 
         assertTrue(res)
         val last = withTimeout(1000) { deferred.await() }

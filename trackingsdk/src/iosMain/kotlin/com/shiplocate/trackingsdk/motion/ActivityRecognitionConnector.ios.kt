@@ -23,7 +23,7 @@ actual class ActivityRecognitionConnector(
 ) {
 
     private var isTracking = false
-    
+
     // Motion manager для отслеживания активности
     private val motionManager: CMMotionActivityManager = CMMotionActivityManager()
 
@@ -64,12 +64,14 @@ actual class ActivityRecognitionConnector(
                             confidence = confidence,
                             timestamp = kotlinx.datetime.Clock.System.now().toEpochMilliseconds()
                         )
-                        
-                        // Отправляем событие в flow
-                        motionEvents.tryEmit(motionEvent)
+
+                        if (isTracking) {
+                            // Отправляем событие в flow
+                            motionEvents.tryEmit(motionEvent)
+                        }
                     }
                 }
-                
+
                 logger.info(LogCategory.LOCATION, "$TAG: ActivityRecognition started successfully")
             } catch (e: Exception) {
                 logger.error(LogCategory.LOCATION, "$TAG: Error starting ActivityRecognition: ${e.message}", e)
@@ -125,14 +127,14 @@ actual class ActivityRecognitionConnector(
     }
 
     /**
-     * Вычисляет уверенность на основе CMMotionActivity
-     * CMMotionActivity имеет confidence в диапазоне 0.0-1.0, конвертируем в проценты
+     * Вычисляет уверенность на основе CMMotionActivityConfidence (Low/Medium/High)
      */
     private fun calculateConfidence(activity: CMMotionActivity): Int {
-        // Используем общую уверенность из CMMotionActivity (диапазон 0.0-1.0)
-        val confidence = activity.confidence
-        
-        // Конвертируем из диапазона 0.0-1.0 в проценты 0-100
-        return (confidence * 100).toInt().coerceIn(0, 100)
+        return when (activity.confidence) {
+            platform.CoreMotion.CMMotionActivityConfidenceLow -> 33
+            platform.CoreMotion.CMMotionActivityConfidenceMedium -> 66
+            platform.CoreMotion.CMMotionActivityConfidenceHigh -> 100
+            else -> 0
+        }
     }
 }

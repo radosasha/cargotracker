@@ -35,13 +35,14 @@ actual class ActivityRecognitionConnector(
 
     private val activityRecognitionReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
-            if (intent?.action == ACTIVITY_RECOGNITION_ACTION) {
+            if (intent?.action == ACTIVITY_TRANSITION_ACTION) {
                 val activities = ActivityRecognitionResult.extractResult(intent)?.probableActivities
                 activities?.forEach { activity ->
                     scope.launch {
                         // Конвертируем DetectedActivity в MotionEvent с реальными вероятностями
                         val motionState = when (activity.type) {
                             DetectedActivity.IN_VEHICLE -> MotionState.IN_VEHICLE
+                            DetectedActivity.ON_BICYCLE -> MotionState.ON_BICYCLE
                             DetectedActivity.WALKING -> MotionState.WALKING
                             DetectedActivity.RUNNING -> MotionState.RUNNING
                             DetectedActivity.STILL -> MotionState.STATIONARY
@@ -61,7 +62,9 @@ actual class ActivityRecognitionConnector(
                             confidence = confidence,
                             timestamp = System.currentTimeMillis()
                         )
-                        motionEvents.tryEmit(motionEvent)
+                        if (isTracking) {
+                            motionEvents.tryEmit(motionEvent)
+                        }
                     }
                 }
             }
@@ -71,12 +74,12 @@ actual class ActivityRecognitionConnector(
     companion object {
         private val TAG = ActivityRecognitionConnector::class.simpleName
         private const val REQUEST_CODE = 1001
-        private const val ACTIVITY_RECOGNITION_ACTION = "com.shiplocate.trackingsdk.ACTIVITY_RECOGNITION"
+        private const val ACTIVITY_TRANSITION_ACTION = "com.shiplocate.trackingsdk.ACTIVITY_TRANSITION"
     }
 
     init {
         // Регистрируем BroadcastReceiver для получения событий ActivityRecognition
-        val intentFilter = IntentFilter(ACTIVITY_RECOGNITION_ACTION)
+        val intentFilter = IntentFilter(ACTIVITY_TRANSITION_ACTION)
         context.registerReceiver(activityRecognitionReceiver, intentFilter)
     }
 
@@ -91,7 +94,7 @@ actual class ActivityRecognitionConnector(
 
         try {
             // Создаем Intent для BroadcastReceiver
-            val intent = Intent(ACTIVITY_RECOGNITION_ACTION)
+            val intent = Intent(ACTIVITY_TRANSITION_ACTION)
             val pendingIntent = PendingIntent.getBroadcast(
                 context,
                 REQUEST_CODE,
@@ -125,7 +128,7 @@ actual class ActivityRecognitionConnector(
         }
 
         try {
-            val intent = Intent(ACTIVITY_RECOGNITION_ACTION)
+            val intent = Intent(ACTIVITY_TRANSITION_ACTION)
             val pendingIntent = PendingIntent.getBroadcast(
                 context,
                 REQUEST_CODE,
