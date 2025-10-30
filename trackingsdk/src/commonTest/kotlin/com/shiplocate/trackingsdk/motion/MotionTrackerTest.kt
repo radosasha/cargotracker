@@ -12,9 +12,9 @@ import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withTimeout
+import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertTrue
-import java.io.File
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class MotionTrackerTest {
@@ -187,7 +187,32 @@ class MotionTrackerTest {
 				}
 			}
 			
-			// Очищаем трекер после каждого датасета, чтобы завершить все корутины
+			// Вариант 1: Гарантируем завершение всех async-джобов перед destroy()
+			// Убеждаемся что emitJob завершен
+			try {
+				emitJob.await()
+			} catch (e: Exception) {
+				// Если уже завершен или отменен - это нормально
+			}
+			
+			// Отменяем triggerCollector если он еще активен
+			// Для Deferred используем cancel() и await() для ожидания завершения
+			if (!triggerCollector.isCompleted) {
+				triggerCollector.cancel()
+				try {
+					triggerCollector.await()
+				} catch (e: Exception) {
+					// Игнорируем исключения при отмене (CancellationException)
+				}
+			}
+			
+			advanceUntilIdle()
+			
+			// Останавливаем трекер перед destroy()
+			tracker.stopTracking()
+			advanceUntilIdle()
+			
+			// Очищаем трекер после каждого датасета
 			tracker.destroy()
 			advanceUntilIdle()
 		}
