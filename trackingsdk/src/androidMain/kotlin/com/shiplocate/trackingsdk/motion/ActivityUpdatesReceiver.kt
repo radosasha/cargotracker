@@ -9,7 +9,10 @@ import com.shiplocate.core.logging.LogCategory
 import com.shiplocate.core.logging.Logger
 import com.shiplocate.trackingsdk.motion.models.MotionEvent
 import com.shiplocate.trackingsdk.motion.models.MotionState
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.launch
 import org.koin.java.KoinJavaComponent.getKoin
 
 internal object MotionEventBus {
@@ -17,6 +20,9 @@ internal object MotionEventBus {
 }
 
 class ActivityUpdatesReceiver : BroadcastReceiver() {
+
+    private val scope = CoroutineScope(Dispatchers.IO)
+
     override fun onReceive(context: Context, intent: Intent) {
         val logger: Logger = getKoin().get()
         val result = ActivityRecognitionResult.extractResult(intent)
@@ -59,9 +65,12 @@ class ActivityUpdatesReceiver : BroadcastReceiver() {
             LogCategory.LOCATION,
             "AR best: ${best.type} -> $state ($confidence%)"
         )
-        MotionEventBus.flow.tryEmit(
-            MotionEvent(state, confidence, System.currentTimeMillis())
-        )
+
+        scope.launch {
+            MotionEventBus.flow.emit(
+                MotionEvent(state, confidence, System.currentTimeMillis())
+            )
+        }
 
         /*activities.forEach { activity ->
             val state = when (activity.type) {
