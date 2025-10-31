@@ -41,12 +41,6 @@ class TrackingManager(
 
     private suspend fun switchToState(state: TrackingState) {
 
-        // Проверяем, не переключаемся ли в то же состояние
-        if (currentState == state) {
-            logger.debug(LogCategory.LOCATION, "TrackingManager: Already in state $state, skipping switch")
-            return
-        }
-
         when (state) {
             TrackingState.IN_PARKING -> {
                 // Отменяем все jobs связанные с TRIP_RECORDING
