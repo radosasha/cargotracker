@@ -1,6 +1,6 @@
 package com.shiplocate.di
 
-import android.content.Context
+import android.app.Activity
 import com.shiplocate.ActivityProvider
 import com.shiplocate.core.logging.LogCategory
 import com.shiplocate.core.logging.Logger
@@ -53,7 +53,7 @@ object AndroidKoinApp {
      * Установка Activity контекста
      * Вызывается в Activity.onCreate()
      */
-    fun initActivityContext(context: Context, logger: Logger? = null) {
+    fun initActivityContext(context: Activity, logger: Logger? = null) {
         val activityContextProvider = GlobalContext.get().get<ActivityProvider>()
         activityContextProvider.setActivity(context)
         logger?.info(LogCategory.GENERAL, "AndroidKoinApp: Activity context set successfully")

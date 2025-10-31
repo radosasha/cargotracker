@@ -1,9 +1,9 @@
 package com.shiplocate
 
 import android.Manifest
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
-import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
@@ -11,18 +11,13 @@ import android.os.PowerManager
 import android.provider.Settings
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.core.content.edit
 
 /**
  * Android класс для запроса разрешений
+ * Использует только Android API для определения состояния разрешений,
+ * без использования SharedPreferences
  */
-class AndroidPermissionRequester(private val context: Context) {
-    // Callback для уведомления о результатах разрешений
-
-    // SharedPreferences для отслеживания запросов разрешений
-    private val prefs: SharedPreferences by lazy {
-        context.getSharedPreferences("permission_requests", Context.MODE_PRIVATE)
-    }
+class AndroidPermissionRequester(private val context: Activity) {
 
     fun hasLocationPermissions(): Boolean {
         val fineLocation =
@@ -125,18 +120,14 @@ class AndroidPermissionRequester(private val context: Context) {
     }
 
     fun shouldShowLocationPermissionRationale(): Boolean {
-        return if (context is androidx.activity.ComponentActivity) {
-            ActivityCompat.shouldShowRequestPermissionRationale(
-                context,
-                Manifest.permission.ACCESS_FINE_LOCATION,
-            )
-        } else {
-            false
-        }
+        return ActivityCompat.shouldShowRequestPermissionRationale(
+            context,
+            Manifest.permission.ACCESS_FINE_LOCATION,
+        )
     }
 
     fun shouldShowNotificationPermissionRationale(): Boolean {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && context is androidx.activity.ComponentActivity) {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             ActivityCompat.shouldShowRequestPermissionRationale(
                 context,
                 Manifest.permission.POST_NOTIFICATIONS,
@@ -146,52 +137,31 @@ class AndroidPermissionRequester(private val context: Context) {
         }
     }
 
-    private fun hasLocationBeenRequestedBefore(): Boolean {
-        return prefs.getBoolean("location_requested", false)
-    }
-
-    private fun hasNotificationBeenRequestedBefore(): Boolean {
-        return prefs.getBoolean("notification_requested", false)
-    }
-
-    private fun markLocationRequested() {
-        prefs.edit { putBoolean("location_requested", true) }
-    }
-
-    private fun markNotificationRequested() {
-        prefs.edit { putBoolean("notification_requested", true) }
-    }
-
     fun requestLocationPermissions() {
         println("AndroidPermissionRequester.requestLocationPermissions() called")
-        if (context is androidx.activity.ComponentActivity) {
-            if (!hasLocationPermissions()) {
-                if (shouldShowLocationPermissionRationale()) {
-                    println("Showing location permission rationale")
-                    // Показываем объяснение зачем нужны разрешения
-                }
-
-                println("Requesting location permissions")
-                markLocationRequested()
-                ActivityCompat.requestPermissions(
-                    context,
-                    arrayOf(
-                        Manifest.permission.ACCESS_FINE_LOCATION,
-                        Manifest.permission.ACCESS_COARSE_LOCATION,
-                    ),
-                    MainActivity.LOCATION_PERMISSION_REQUEST_CODE,
-                )
-            } else {
-                println("Location permissions already granted")
+        if (!hasLocationPermissions()) {
+            if (shouldShowLocationPermissionRationale()) {
+                println("Showing location permission rationale")
+                // Показываем объяснение зачем нужны разрешения
             }
+
+            println("Requesting location permissions")
+            ActivityCompat.requestPermissions(
+                context,
+                arrayOf(
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION,
+                ),
+                MainActivity.LOCATION_PERMISSION_REQUEST_CODE,
+            )
         } else {
-            println("Context is not ComponentActivity: ${context.javaClass}")
+            println("Location permissions already granted")
         }
     }
 
     fun requestBackgroundLocationPermission() {
         println("AndroidPermissionRequester.requestBackgroundLocationPermission() called")
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && context is androidx.activity.ComponentActivity) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             // API 29+ (Android 10+): запрашиваем отдельное разрешение ACCESS_BACKGROUND_LOCATION
             if (!hasBackgroundLocationPermission()) {
                 println("Requesting background location permission")
@@ -211,7 +181,7 @@ class AndroidPermissionRequester(private val context: Context) {
 
     fun requestNotificationPermission() {
         println("AndroidPermissionRequester.requestNotificationPermission() called")
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && context is androidx.activity.ComponentActivity) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             // API 33+ (Android 13+): запрашиваем разрешение POST_NOTIFICATIONS
             if (!hasNotificationPermission()) {
                 if (shouldShowNotificationPermissionRationale()) {
@@ -220,7 +190,6 @@ class AndroidPermissionRequester(private val context: Context) {
                 }
 
                 println("Requesting notification permission")
-                markNotificationRequested()
                 ActivityCompat.requestPermissions(
                     context,
                     arrayOf(Manifest.permission.POST_NOTIFICATIONS),
@@ -237,7 +206,7 @@ class AndroidPermissionRequester(private val context: Context) {
 
     fun requestActivityRecognitionPermission() {
         println("AndroidPermissionRequester.requestActivityRecognitionPermission() called")
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && context is androidx.activity.ComponentActivity) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             // API 29+ (Android 10+): запрашиваем разрешение ACTIVITY_RECOGNITION
             if (!hasActivityRecognitionPermission()) {
                 println("Requesting activity recognition permission")
@@ -259,51 +228,17 @@ class AndroidPermissionRequester(private val context: Context) {
     fun requestAllPermissions() {
         println("AndroidPermissionRequester.requestAllPermissions() called")
 
-        // Проверяем, можно ли показать диалоги разрешений
-        // shouldShowRequestPermissionRationale() возвращает:
-        // - false при первом запросе (можно показать диалог)
-        // - true если пользователь отказал, но можно показать диалог снова
-        // - false если пользователь отказал и выбрал "Don't ask again" (диалог заблокирован)
-
-        val hasLocation = hasLocationPermissions()
-        val hasNotification = hasNotificationPermission()
-        val locationRequestedBefore = hasLocationBeenRequestedBefore()
-        val notificationRequestedBefore = hasNotificationBeenRequestedBefore()
-        val locationRationale = if (context is androidx.activity.ComponentActivity) shouldShowLocationPermissionRationale() else false
-        val notificationRationale = if (context is androidx.activity.ComponentActivity) shouldShowNotificationPermissionRationale() else false
-
-        println("Permission status: hasLocation=$hasLocation, hasNotification=$hasNotification")
-        println("Requested before: location=$locationRequestedBefore, notification=$notificationRequestedBefore")
-        println("Rationale: location=$locationRationale, notification=$notificationRationale")
-
-        // Для геолокации: если нет разрешения И диалог заблокирован (rationale = false после отказа)
-        val locationDialogBlocked =
-            !hasLocation &&
-                context is androidx.activity.ComponentActivity &&
-                locationRequestedBefore &&
-                !locationRationale
-
-        // Для уведомлений: если нет разрешения И диалог заблокирован
-        val notificationDialogBlocked =
-            !hasNotification &&
-                context is androidx.activity.ComponentActivity &&
-                notificationRequestedBefore &&
-                !notificationRationale
-
-        println("Dialog blocked: location=$locationDialogBlocked, notification=$notificationDialogBlocked")
-
-        // Если диалоги заблокированы - перекидываем на конкретные страницы разрешений
-        if (locationDialogBlocked) {
-            println("Location permission dialog blocked, opening location settings")
-            openLocationSettings()
-            return
-        }
-
-        if (notificationDialogBlocked) {
-            println("Notification permission dialog blocked, opening notification settings")
-            openNotificationSettings()
-            return
-        }
+        // Логика определения состояния разрешений (по таблице):
+        // 1. GRANTED -> разрешение уже дано
+        // 2. DENIED + rationale = false -> может быть первое обращение (состояние 2) или "Don't ask again" (состояние 4)
+        //    Различие проявится при вызове requestPermission():
+        //    - Состояние 2: диалог появится
+        //    - Состояние 4: диалог НЕ появится, получим DENIED в handlePermissionResult()
+        // 3. DENIED + rationale = true -> пользователь отказал, но можно показать диалог снова (состояние 3)
+        //
+        // Мы не можем определить состояние 4 до вызова requestPermission(),
+        // поэтому всегда пытаемся вызвать диалог.
+        // Если диалог был заблокирован, это будет обработано в handlePermissionResult()
 
         println("No dialogs blocked, continuing with permission request")
         continuePermissionRequest()
@@ -349,8 +284,15 @@ class AndroidPermissionRequester(private val context: Context) {
                     // Основные разрешения получены, продолжаем с фоновым разрешением
                     continuePermissionRequest()
                 } else {
-                    // Пользователь отказал в разрешениях - останавливаем процесс
-                    println("Location permissions denied, stopping permission request process")
+                    // Пользователь отказал в разрешениях
+                    // Проверяем, был ли диалог заблокирован (состояние 4: Don't ask again)
+                    val rationale = shouldShowLocationPermissionRationale()
+                    println("Location permissions denied, rationale: $rationale")
+
+                    // rationale = false после отказа означает, что диалог был заблокирован
+                    // Нужно открыть настройки приложения
+                    println("Location permission dialog blocked, opening settings")
+                    openLocationSettings()
                 }
             }
 
@@ -362,8 +304,27 @@ class AndroidPermissionRequester(private val context: Context) {
                     // Фоновое разрешение получено, продолжаем с Activity Recognition
                     continuePermissionRequest()
                 } else {
-                    // Пользователь отказал в фоновом разрешении - останавливаем процесс
-                    println("Background location permission denied, stopping permission request process")
+                    // Пользователь отказал в фоновом разрешении
+                    // Проверяем, был ли диалог заблокирован (состояние 4: Don't ask again)
+                    val rationale = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                        ActivityCompat.shouldShowRequestPermissionRationale(
+                            context,
+                            Manifest.permission.ACCESS_BACKGROUND_LOCATION,
+                        )
+                    } else {
+                        false
+                    }
+                    println("Background location permission denied, rationale: $rationale")
+
+                    if (!rationale && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                        // rationale = false после отказа означает, что диалог был заблокирован
+                        // Нужно открыть настройки приложения
+                        println("Background location permission dialog blocked, opening settings")
+                        openLocationSettings()
+                    } else {
+                        // Пользователь просто отказал, но можно попробовать снова
+                        println("Background location permission denied by user")
+                    }
                 }
             }
 
@@ -375,8 +336,27 @@ class AndroidPermissionRequester(private val context: Context) {
                     // Activity Recognition разрешение получено, продолжаем с уведомлениями
                     continuePermissionRequest()
                 } else {
-                    // Пользователь отказал в Activity Recognition разрешении - останавливаем процесс
-                    println("Activity recognition permission denied, stopping permission request process")
+                    // Пользователь отказал в Activity Recognition разрешении
+                    // Проверяем, был ли диалог заблокирован (состояние 4: Don't ask again)
+                    val rationale = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                        ActivityCompat.shouldShowRequestPermissionRationale(
+                            context,
+                            Manifest.permission.ACTIVITY_RECOGNITION,
+                        )
+                    } else {
+                        false
+                    }
+                    println("Activity recognition permission denied, rationale: $rationale")
+
+                    if (!rationale && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                        // rationale = false после отказа означает, что диалог был заблокирован
+                        // Нужно открыть настройки приложения
+                        println("Activity recognition permission dialog blocked, opening settings")
+                        openLocationSettings() // Activity Recognition обычно находится в настройках разрешений вместе с геолокацией
+                    } else {
+                        // Пользователь просто отказал, но можно попробовать снова
+                        println("Activity recognition permission denied by user")
+                    }
                 }
             }
 
@@ -389,8 +369,20 @@ class AndroidPermissionRequester(private val context: Context) {
                     // Уведомления получены - завершаем процесс (не продолжаем с другими разрешениями)
                     println("Notification permission granted, permission request process completed")
                 } else {
-                    // Пользователь отказал в уведомлениях - завершаем процесс
-                    println("Notification permission denied, permission request process completed")
+                    // Пользователь отказал в уведомлениях
+                    // Проверяем, был ли диалог заблокирован (состояние 4: Don't ask again)
+                    val rationale = shouldShowNotificationPermissionRationale()
+                    println("Notification permission denied, rationale: $rationale")
+
+                    if (!rationale && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        // rationale = false после отказа означает, что диалог был заблокирован
+                        // Нужно открыть настройки уведомлений
+                        println("Notification permission dialog blocked, opening settings")
+                        openNotificationSettings()
+                    } else {
+                        // Пользователь просто отказал, но можно попробовать снова
+                        println("Notification permission denied by user")
+                    }
                 }
             }
         }
@@ -398,26 +390,17 @@ class AndroidPermissionRequester(private val context: Context) {
 
     fun requestBatteryOptimizationDisable() {
         println("requestBatteryOptimizationDisable() called")
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (context is androidx.activity.ComponentActivity) {
-                try {
-                    val intent =
-                        Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
-                            data = Uri.parse("package:${context.packageName}")
-                        }
-                    context.startActivity(intent)
-                    println("Battery optimization request sent")
-                } catch (e: Exception) {
-                    println("Error requesting battery optimization disable: ${e.message}")
-                    // Fallback to battery optimization settings page
-                    openBatteryOptimizationSettings()
+        try {
+            val intent =
+                Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+                    data = Uri.parse("package:${context.packageName}")
                 }
-            } else {
-                println("Context is not ComponentActivity: ${context.javaClass}")
-                openBatteryOptimizationSettings()
-            }
-        } else {
-            println("Battery optimization not required for this Android version")
+            context.startActivity(intent)
+            println("Battery optimization request sent")
+        } catch (e: Exception) {
+            println("Error requesting battery optimization disable: ${e.message}")
+            // Fallback to battery optimization settings page
+            openBatteryOptimizationSettings()
         }
     }
 

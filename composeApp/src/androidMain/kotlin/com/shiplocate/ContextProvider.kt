@@ -1,5 +1,6 @@
 package com.shiplocate
 
+import android.app.Activity
 import android.content.Context
 
 /**
@@ -29,14 +30,14 @@ object ApplicationContextProvider {
  * Провайдер Activity Context (управляется через Koin)
  */
 class ActivityProvider {
-    private var activityContext: Context? = null
+    private var activityContext: Activity? = null
 
-    fun setActivity(context: Context) {
+    fun setActivity(context: Activity) {
         println("ActivityContextProvider.setContext() called with context: ${context.javaClass}")
         activityContext = context
     }
 
-    fun getActivity(): Context {
+    fun getActivity(): Activity {
         val context = activityContext
         if (context == null) {
             println("ActivityContextProvider.getContext() failed - context is null")
