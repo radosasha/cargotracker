@@ -4,7 +4,6 @@ import com.shiplocate.core.logging.LogCategory
 import com.shiplocate.core.logging.Logger
 import com.shiplocate.trackingsdk.motion.models.MotionAnalysisEvent
 import com.shiplocate.trackingsdk.motion.models.MotionState
-import com.shiplocate.trackingsdk.motion.models.MotionStatistics
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -208,23 +207,6 @@ class MotionTracker(
     }
 
     /**
-     * Обрезает историю, удаляя старые записи
-     */
-    private fun trimHistory() {
-        if (motionHistory.isEmpty()) return
-
-        val currentTime = motionHistory.last().timestamp
-        val cutoffTime = currentTime - trimWindowMs
-
-        val initialSize = motionHistory.size
-        motionHistory.removeAll { result ->
-            result.timestamp < cutoffTime
-        }
-
-        logger.debug(LogCategory.LOCATION, "$TAG: Trimmed history from $initialSize to ${motionHistory.size} events")
-    }
-
-    /**
      * Политика очистки истории: удерживаем максимум 5 минут данных и дополнительно
      * очищаем более старые записи агрессивнее при длительном отсутствии вождения.
      */
@@ -334,110 +316,5 @@ class MotionTracker(
             }
         }
         return false
-    }
-
-    /**
-     * Вычисляет статистику движения за анализируемый период с учетом реальных вероятностей
-     */
-    private fun calculateMotionStatistics(): MotionStatistics {
-        if (motionHistory.isEmpty()) {
-            return MotionStatistics(
-                totalTimeMs = 0L,
-                vehicleTimeMs = 0L,
-                walkingTimeMs = 0L,
-                stationaryTimeMs = 0L,
-                vehiclePercentage = 0f,
-                lastActivity = MotionState.UNKNOWN,
-                confidence = 0
-            )
-        }
-
-        val lastEvent = motionHistory.last()
-        val cutoffTime = lastEvent.timestamp - analysisWindowMs
-        
-        // Анализируем только последние analysisWindowMs данных
-        val recentEvents = motionHistory.filter { it.timestamp >= cutoffTime }
-        
-        if (recentEvents.size < 2) {
-            return MotionStatistics(
-                totalTimeMs = 0L,
-                vehicleTimeMs = 0L,
-                walkingTimeMs = 0L,
-                stationaryTimeMs = 0L,
-                vehiclePercentage = 0f,
-                lastActivity = MotionState.UNKNOWN,
-                confidence = 0
-            )
-        }
-
-        val firstEvent = recentEvents.first()
-        val totalTimeMs = lastEvent.timestamp - firstEvent.timestamp
-
-        // Вычисляем время для всех состояний сразу
-        // Один проход по данным, группируем по состояниям
-        val timeByState = recentEvents.zipWithNext { current, next ->
-            val intervalMs = next.timestamp - current.timestamp
-            val weightedTime = (intervalMs * (current.confidence / 100f)).toLong()
-            current.motionState to weightedTime
-        }.groupBy({ it.first }, { it.second })
-            .mapValues { it.value.sum() }
-
-        val vehicleTimeMs = timeByState[MotionState.IN_VEHICLE] ?: 0L
-        val walkingTimeMs = timeByState[MotionState.WALKING] ?: 0L
-        val stationaryTimeMs = timeByState[MotionState.STATIONARY] ?: 0L
-
-        val vehiclePercentage = if (totalTimeMs > 0) {
-            vehicleTimeMs.toFloat() / totalTimeMs
-        } else {
-            0f
-        }
-
-        val lastActivity = recentEvents.lastOrNull()?.motionState ?: MotionState.UNKNOWN
-        // Усредняем confidence с учетом длительности интервалов между событиями
-        val intervals = recentEvents.zipWithNext { a, b ->
-            val dt = (b.timestamp - a.timestamp).coerceAtLeast(0L)
-            val conf = a.confidence
-            dt to conf
-        }
-        val totalDt = intervals.sumOf { it.first }
-        val weightedConfidence = if (totalDt > 0L) {
-            (intervals.sumOf { it.first * it.second } / totalDt).toInt()
-        } else 0
-
-        return MotionStatistics(
-            totalTimeMs = totalTimeMs,
-            vehicleTimeMs = vehicleTimeMs,
-            walkingTimeMs = walkingTimeMs,
-            stationaryTimeMs = stationaryTimeMs,
-            vehiclePercentage = vehiclePercentage,
-            lastActivity = lastActivity,
-            confidence = weightedConfidence
-        )
-    }
-
-    /**
-     * Определяет, находится ли пользователь в транспорте на основе статистики
-     */
-    private fun isInVehicle(statistics: MotionStatistics): Boolean {
-        // Логика определения «в транспорте» основывается на:
-        // 1) доле времени в IN_VEHICLE (vehiclePercentage) за окно analysisWindowMs,
-        // 2) усредненном confidence, рассчитанном с учетом времени между событиями,
-        // 3) минимальной длительности накопленных данных (minAnalysisDurationMs).
-        val isVehicleTimeSufficient = statistics.vehiclePercentage >= vehicleTimeThreshold
-        val isConfidenceSufficient = statistics.confidence >= confidenceThreshold
-        val isDurationSufficient = statistics.totalTimeMs >= minAnalysisDurationMs
-
-        val result = isVehicleTimeSufficient && isConfidenceSufficient && isDurationSufficient
-
-        logger.debug(LogCategory.LOCATION, "$TAG: Vehicle detection analysis:")
-        logger.debug(
-            LogCategory.LOCATION,
-            "  - Vehicle time: ${(statistics.vehiclePercentage * 100).toInt()}% (threshold: ${(vehicleTimeThreshold * 100).toInt()}%)"
-        )
-        logger.debug(LogCategory.LOCATION, "  - Confidence: ${statistics.confidence}% (threshold: $confidenceThreshold%)")
-        logger.debug(LogCategory.LOCATION, "  - Duration: ${statistics.totalTimeMs}ms (threshold: ${minAnalysisDurationMs}ms)")
-        logger.debug(LogCategory.LOCATION, "  - Result: $result")
-
-        return result
     }
 }

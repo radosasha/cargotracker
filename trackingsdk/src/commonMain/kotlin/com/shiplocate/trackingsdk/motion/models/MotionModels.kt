@@ -30,16 +30,3 @@ data class MotionAnalysisEvent(
     val timestamp: Long,
     val isInVehicle: Boolean = motionState == MotionState.IN_VEHICLE
 )
-
-/**
- * Статистика движения за период
- */
-data class MotionStatistics(
-    val totalTimeMs: Long,
-    val vehicleTimeMs: Long,
-    val walkingTimeMs: Long,
-    val stationaryTimeMs: Long,
-    val vehiclePercentage: Float,
-    val lastActivity: MotionState,
-    val confidence: Int
-)
