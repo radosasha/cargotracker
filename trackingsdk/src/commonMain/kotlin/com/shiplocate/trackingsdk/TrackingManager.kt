@@ -26,9 +26,9 @@ class TrackingManager(
     private var currentState = TrackingState.TRIP_RECORDING
     private val trackingState = MutableSharedFlow<LocationProcessResult>(replay = 0)
 
-    private var parkingStateJob: Job? = null
-    private var tripCoordinatedJob: Job? = null
-    private var motionTrackingJob: Job? = null
+    private var parkingStatusJob: Job? = null
+    private var tripRecorderJob: Job? = null
+    private var motionTrackerJob: Job? = null
 
     fun startTracking(): Flow<LocationProcessResult> {
         scope.launch {
@@ -49,18 +49,18 @@ class TrackingManager(
         when (state) {
             TrackingState.IN_PARKING -> {
                 // Отменяем все jobs связанные с TRIP_RECORDING
-                tripCoordinatedJob?.cancel()
-                parkingStateJob?.cancel()
+                tripRecorderJob?.cancel()
+                parkingStatusJob?.cancel()
                 tripRecorder.stopTracking()
 
                 // Отменяем предыдущий motionTrackingJob, если он существует
-                motionTrackingJob?.cancel()
+                motionTrackerJob?.cancel()
 
                 // Запускаем MotionTracker ПЕРЕД подпиской на события
                 motionTracker.startTracking()
 
                 // Подписываемся на события движения в транспорте ПОСЛЕ запуска трекера
-                motionTrackingJob = motionTracker.observeMotionTrigger().onEach {
+                motionTrackerJob = motionTracker.observeMotionTrigger().onEach {
                     logger.info(LogCategory.LOCATION, "TrackingManager: Vehicle motion detected, switching to TRIP_RECORDING")
                     // Вызываем switchToState через scope для избежания рекурсии
                     switchToState(TrackingState.TRIP_RECORDING)
@@ -73,17 +73,17 @@ class TrackingManager(
             TrackingState.TRIP_RECORDING -> {
                 // Сначала останавливаем MotionTracker, потом отменяем job
                 motionTracker.stopTracking()
-                motionTrackingJob?.cancel()
-                motionTrackingJob = null
+                motionTrackerJob?.cancel()
+                motionTrackerJob = null
 
                 // Запускаем TripRecorder и подписываемся на координаты
-                tripCoordinatedJob = tripRecorder.startTracking().onEach {
+                tripRecorderJob = tripRecorder.startTracking().onEach {
                     addToParkingTracker(it)
                     trackingState.emit(it)
                 }.launchIn(scope)
 
                 // Подписываемся на статус парковки
-                parkingStateJob = parkingTracker.observeParkingStatus().onEach {
+                parkingStatusJob = parkingTracker.observeParkingStatus().onEach {
                     logger.info(LogCategory.LOCATION, "TrackingManager: User entered parking, stopping tracking, reason: $it")
                     // Вызываем switchToState через scope для избежания рекурсии
                     switchToState(TrackingState.IN_PARKING)
@@ -115,9 +115,9 @@ class TrackingManager(
 
     suspend fun stopTracking(): Result<Unit> {
         // Отменяем все jobs перед остановкой сервисов
-        parkingStateJob?.cancel()
-        tripCoordinatedJob?.cancel()
-        motionTrackingJob?.cancel()
+        parkingStatusJob?.cancel()
+        tripRecorderJob?.cancel()
+        motionTrackerJob?.cancel()
 
         // Останавливаем сервисы
         locationSyncService.stopSync()
@@ -125,9 +125,9 @@ class TrackingManager(
         motionTracker.destroy()
 
         // Очищаем ссылки на jobs
-        parkingStateJob = null
-        tripCoordinatedJob = null
-        motionTrackingJob = null
+        parkingStatusJob = null
+        tripRecorderJob = null
+        motionTrackerJob = null
 
         return tripRecorder.stopTracking()
     }
