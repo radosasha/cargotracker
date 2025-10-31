@@ -6,20 +6,20 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Intent
 import android.os.Binder
-import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.coroutineScope
 import com.shiplocate.domain.util.DateFormatter
-import com.shiplocate.trackingsdk.TrackingManager
+import com.shiplocate.trackingsdk.motion.models.MotionAnalysisResult
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.datetime.Instant
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
@@ -62,20 +62,17 @@ class AndroidTrackingService : LifecycleService(), KoinComponent {
     }
 
     private fun createNotificationChannel() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel =
-                NotificationChannel(
-                    CHANNEL_ID,
-                    CHANNEL_NAME,
-                    NotificationManager.IMPORTANCE_LOW,
-                ).apply {
-                    description = "Уведомления о трекинге GPS"
-                    setShowBadge(false)
-                }
-
-            val notificationManager = getSystemService(NotificationManager::class.java)
-            notificationManager.createNotificationChannel(channel)
+        val channel = NotificationChannel(
+            CHANNEL_ID,
+            CHANNEL_NAME,
+            NotificationManager.IMPORTANCE_LOW,
+        ).apply {
+            description = "Уведомления о трекинге GPS"
+            setShowBadge(false)
         }
+
+        val notificationManager = getSystemService(NotificationManager::class.java)
+        notificationManager.createNotificationChannel(channel)
     }
 
     private fun createNotification(): Notification {
@@ -123,20 +120,36 @@ class AndroidTrackingService : LifecycleService(), KoinComponent {
 
         lifecycle.coroutineScope.launch {
             try {
-                println("LocationTrackingService: Starting GPS tracking through StartProcessLocationsUseCase")
+                println("LocationTrackingService: Starting GPS tracking through TrackingManager")
 
                 // Запускаем обработку GPS координат и подписываемся на Flow результатов
                 trackingManager.startTracking()
                     .flowOn(Dispatchers.IO)
-                    .onEach { result ->
-                        // Обновляем уведомление с актуаьной статистикой
-                        updateNotificationWithStats(result.trackingStats)
+                    .onEach { event ->
+                        when (event) {
+                            is TrackingStateEvent.LocationProcessed -> {
+                                // Обновляем уведомление с актуальной статистикой GPS
+                                updateNotificationWithStats(event.result.trackingStats)
 
-                        // Логируем результат обработки
-                        if (result.shouldSend) {
-                            println("AndroidTrackingService: ✅ Location processed successfully: ${result.reason}")
-                        } else {
-                            println("AndroidTrackingService: ⏭️ Location filtered: ${result.reason}")
+                                // Логируем результат обработки
+                                if (event.result.shouldSend) {
+                                    println("AndroidTrackingService: ✅ Location processed successfully: ${event.result.reason}")
+                                } else {
+                                    println("AndroidTrackingService: ⏭️ Location filtered: ${event.result.reason}")
+                                }
+                            }
+
+                            is TrackingStateEvent.MotionAnalysis -> {
+                                // Обновляем уведомление с результатами анализа движения
+                                updateNotificationWithMotionAnalysis(event.analysisResult, event.timestamp)
+
+                                println(
+                                    "AndroidTrackingService: 📊 Motion analysis: " +
+                                        "driving=${event.analysisResult.drivingDetected}, " +
+                                        "vehicleTime=${(event.analysisResult.vehicleTimePercentage * 100).toInt()}%, " +
+                                        "confidence=${event.analysisResult.averageConfidence}%"
+                                )
+                            }
                         }
                     }
                     .launchIn(lifecycle.coroutineScope)
@@ -177,6 +190,56 @@ class AndroidTrackingService : LifecycleService(), KoinComponent {
         } catch (e: Exception) {
             println("LocationTrackingService: ❌ Error stopping GPS tracking: ${e.message}")
             e.printStackTrace()
+        }
+    }
+
+    /**
+     * Обновляет уведомление с результатами анализа движения
+     */
+    private fun updateNotificationWithMotionAnalysis(
+        analysis: MotionAnalysisResult,
+        timestamp: Long,
+    ) {
+        val motionText = buildString {
+            append("Motion Analysis Results:\n\n")
+            append("Driving Detected: ${if (analysis.drivingDetected) "✅ YES" else "❌ NO"}\n")
+            append("Vehicle Time: ${(analysis.vehicleTimePercentage * 100).toInt()}%\n")
+            append("Avg Confidence: ${analysis.averageConfidence}%\n")
+            append("Events Analyzed: ${analysis.eventsAnalyzed}\n")
+            append("Consecutive Driving: ${analysis.consecutiveDrivingCount}\n")
+            append("Consecutive Non-Driving: ${analysis.consecutiveNonDrivingCount}\n")
+
+            analysis.statistics?.let { stats ->
+                append("\nDetailed Stats:\n")
+                append("Total Time: ${stats.totalTimeMs / 1000}s\n")
+                append("Vehicle Time: ${stats.vehicleTimeMs / 1000}s\n")
+                append("Walking Time: ${stats.walkingTimeMs / 1000}s\n")
+                append("Stationary Time: ${stats.stationaryTimeMs / 1000}s\n")
+                append("Last Activity: ${stats.lastActivity}\n")
+            }
+
+            append("\nTime: ${DateFormatter.formatForNotification(Instant.fromEpochMilliseconds(timestamp))}")
+        }
+
+        val notification = NotificationCompat.Builder(this, CHANNEL_ID)
+            .setContentTitle("Motion Analysis")
+            .setContentText(
+                "Driving: ${if (analysis.drivingDetected) "YES" else "NO"} | " +
+                    "Vehicle: ${(analysis.vehicleTimePercentage * 100).toInt()}%"
+            )
+            .setStyle(
+                NotificationCompat.BigTextStyle()
+                    .bigText(motionText),
+            )
+            .setSmallIcon(android.R.drawable.ic_menu_mylocation)
+            .setOngoing(true)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setCategory(NotificationCompat.CATEGORY_SERVICE)
+            .build()
+
+        val notificationManager = NotificationManagerCompat.from(this)
+        if (notificationManager.areNotificationsEnabled()) {
+            notificationManager.notify(NOTIFICATION_ID, notification)
         }
     }
 

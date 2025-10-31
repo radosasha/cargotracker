@@ -3,10 +3,12 @@ package com.shiplocate.trackingsdk.motion
 import com.shiplocate.core.logging.Logger
 import com.shiplocate.trackingsdk.motion.models.MotionEvent
 import com.shiplocate.trackingsdk.motion.models.MotionState
+import com.shiplocate.trackingsdk.motion.models.MotionTrackerEvent
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -117,8 +119,12 @@ class MotionTrackerTest {
 			// Отслеживаем индекс события, после которого сработал триггер
 			var triggerEventIndex: Int? = null
 			
+			// Ожидаем InVehicle событие (триггер вождения)
 			val triggerCollector = async { 
-				tracker.observeMotionTrigger().take(1).first()
+				tracker.observeMotionTrigger()
+					.filter { it is MotionTrackerEvent.InVehicle }
+					.take(1)
+					.first()
 			}
 
 			// Эмитим события последовательно и отслеживаем момент срабатывания триггера
@@ -168,14 +174,21 @@ class MotionTrackerTest {
 				}
 			} else {
 				// Для случая, когда не ожидается вождение, ждем завершения эмита
-				// и проверяем, что триггер не сработал
+				// и проверяем, что триггер InVehicle не сработал
+				// (CheckingMotion события могут прийти, но это нормально)
 				emitJob.await()
 				var triggered = false
 				try {
-					withTimeout(2_000) { triggerCollector.await() }
+					withTimeout(2_000) { 
+						// Ждем только InVehicle события
+						tracker.observeMotionTrigger()
+							.filter { it is MotionTrackerEvent.InVehicle }
+							.take(1)
+							.first()
+					}
 					triggered = true
 				} catch (_: Exception) {
-					// Expected timeout - триггер не сработал, это правильно
+					// Expected timeout - триггер InVehicle не сработал, это правильно
 				}
 				if (triggered) {
 					val actualEventIndex = triggerEventIndex ?: -1

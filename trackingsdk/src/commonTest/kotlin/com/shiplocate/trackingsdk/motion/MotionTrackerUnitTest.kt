@@ -3,6 +3,7 @@ package com.shiplocate.trackingsdk.motion
 import com.shiplocate.core.logging.Logger
 import com.shiplocate.trackingsdk.motion.models.MotionEvent
 import com.shiplocate.trackingsdk.motion.models.MotionState
+import com.shiplocate.trackingsdk.motion.models.MotionTrackerEvent
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -11,6 +12,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.test.TestScope
@@ -144,7 +146,9 @@ class MotionTrackerUnitTest {
 			var triggered = false
 			try {
 				withTimeout(500) {
-					tracker.observeMotionTrigger().first()
+					tracker.observeMotionTrigger()
+						.filter { it is MotionTrackerEvent.InVehicle }
+						.first()
 					triggered = true
 				}
 			} catch (e: Exception) {
@@ -182,7 +186,10 @@ class MotionTrackerUnitTest {
 		val triggerCollector = async {
 			var triggered = false
 			try {
-				tracker.observeMotionTrigger().take(1).first()
+				tracker.observeMotionTrigger()
+					.filter { it is MotionTrackerEvent.InVehicle }
+					.take(1)
+					.first()
 				triggerCount++
 				triggered = true
 			} catch (e: Exception) {
@@ -239,7 +246,9 @@ class MotionTrackerUnitTest {
 		advanceUntilIdle()
 
 		val triggerCollector = async {
-			tracker.observeMotionTrigger().first()
+			tracker.observeMotionTrigger()
+				.filter { it is MotionTrackerEvent.InVehicle }
+				.first()
 		}
 
 		// Используем advanceTimeBy для виртуального времени вместо withTimeout
@@ -288,7 +297,9 @@ class MotionTrackerUnitTest {
 			var triggered = false
 			try {
 				withTimeout(1000) {
-					tracker.observeMotionTrigger().first()
+					tracker.observeMotionTrigger()
+						.filter { it is MotionTrackerEvent.InVehicle }
+						.first()
 					triggered = true
 				}
 			} catch (e: Exception) {
@@ -319,7 +330,9 @@ class MotionTrackerUnitTest {
 		advanceUntilIdle()
 
 		val triggerCollector1 = async {
-			tracker.observeMotionTrigger().first()
+			tracker.observeMotionTrigger()
+				.filter { it is MotionTrackerEvent.InVehicle }
+				.first()
 		}
 
 		try {
@@ -343,7 +356,9 @@ class MotionTrackerUnitTest {
 			var triggered = false
 			try {
 				withTimeout(2000) {
-					tracker.observeMotionTrigger().first()
+					tracker.observeMotionTrigger()
+						.filter { it is MotionTrackerEvent.InVehicle }
+						.first()
 					triggered = true
 				}
 			} catch (e: Exception) {
@@ -472,7 +487,9 @@ class MotionTrackerUnitTest {
 		advanceUntilIdle()
 
 		val triggerCollector = async {
-			tracker.observeMotionTrigger().first()
+			tracker.observeMotionTrigger()
+				.filter { it is MotionTrackerEvent.InVehicle }
+				.first()
 		}
 
 		// Используем advanceTimeBy для виртуального времени
@@ -522,7 +539,9 @@ class MotionTrackerUnitTest {
 			var triggered = false
 			try {
 				withTimeout(1000) {
-					tracker.observeMotionTrigger().first()
+					tracker.observeMotionTrigger()
+						.filter { it is MotionTrackerEvent.InVehicle }
+						.first()
 					triggered = true
 				}
 			} catch (e: Exception) {
@@ -557,7 +576,9 @@ class MotionTrackerUnitTest {
 			var triggered = false
 			try {
 				withTimeout(1000) {
-					tracker.observeMotionTrigger().first()
+					tracker.observeMotionTrigger()
+						.filter { it is MotionTrackerEvent.InVehicle }
+						.first()
 					triggered = true
 				}
 			} catch (e: Exception) {
@@ -594,7 +615,9 @@ class MotionTrackerUnitTest {
 			var triggered = false
 			try {
 				withTimeout(2000) {
-					tracker.observeMotionTrigger().first()
+					tracker.observeMotionTrigger()
+						.filter { it is MotionTrackerEvent.InVehicle }
+						.first()
 					triggered = true
 				}
 			} catch (e: Exception) {
@@ -620,7 +643,9 @@ class MotionTrackerUnitTest {
 			var triggered = false
 			try {
 				withTimeout(500) {
-					tracker.observeMotionTrigger().first()
+					tracker.observeMotionTrigger()
+						.filter { it is MotionTrackerEvent.InVehicle }
+						.first()
 					triggered = true
 				}
 			} catch (e: Exception) {
@@ -719,7 +744,9 @@ class MotionTrackerUnitTest {
 		advanceUntilIdle()
 
 		val triggerCollector = async {
-			tracker.observeMotionTrigger().first()
+			tracker.observeMotionTrigger()
+				.filter { it is MotionTrackerEvent.InVehicle }
+				.first()
 		}
 
 		// Используем advanceTimeBy для виртуального времени
@@ -773,7 +800,9 @@ class MotionTrackerUnitTest {
 		advanceUntilIdle()
 
 		val triggerCollector = async {
-			tracker.observeMotionTrigger().first()
+			tracker.observeMotionTrigger()
+				.filter { it is MotionTrackerEvent.InVehicle }
+				.first()
 		}
 
 		advanceTimeBy(5000L)
@@ -830,7 +859,9 @@ class MotionTrackerUnitTest {
 		advanceUntilIdle()
 
 		val triggerCollector1 = async {
-			tracker.observeMotionTrigger().first()
+			tracker.observeMotionTrigger()
+				.filter { it is MotionTrackerEvent.InVehicle }
+				.first()
 		}
 
 		advanceTimeBy(5000L)
@@ -862,7 +893,9 @@ class MotionTrackerUnitTest {
 		advanceUntilIdle()
 
 		val triggerCollector2 = async {
-			tracker.observeMotionTrigger().first()
+			tracker.observeMotionTrigger()
+				.filter { it is MotionTrackerEvent.InVehicle }
+				.first()
 		}
 
 		advanceTimeBy(5000L)

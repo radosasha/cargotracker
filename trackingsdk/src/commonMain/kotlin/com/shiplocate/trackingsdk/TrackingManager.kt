@@ -5,6 +5,7 @@ import com.shiplocate.core.logging.Logger
 import com.shiplocate.domain.service.LocationProcessResult
 import com.shiplocate.domain.service.LocationSyncService
 import com.shiplocate.trackingsdk.motion.MotionTracker
+import com.shiplocate.trackingsdk.motion.models.MotionTrackerEvent
 import com.shiplocate.trackingsdk.parking.ParkingTracker
 import com.shiplocate.trackingsdk.parking.models.ParkingLocation
 import kotlinx.coroutines.CoroutineScope
@@ -24,13 +25,13 @@ class TrackingManager(
     private val scope: CoroutineScope,
 ) {
     private var currentState = TrackingState.TRIP_RECORDING
-    private val trackingState = MutableSharedFlow<LocationProcessResult>(replay = 0)
+    private val trackingState = MutableSharedFlow<TrackingStateEvent>(replay = 0)
 
     private var parkingStatusJob: Job? = null
     private var tripRecorderJob: Job? = null
     private var motionTrackerJob: Job? = null
 
-    fun startTracking(): Flow<LocationProcessResult> {
+    fun startTracking(): Flow<TrackingStateEvent> {
         scope.launch {
             locationSyncService.startSync()
             switchToState(currentState)
@@ -60,10 +61,23 @@ class TrackingManager(
                 motionTracker.startTracking()
 
                 // Подписываемся на события движения в транспорте ПОСЛЕ запуска трекера
-                motionTrackerJob = motionTracker.observeMotionTrigger().onEach {
-                    logger.info(LogCategory.LOCATION, "TrackingManager: Vehicle motion detected, switching to TRIP_RECORDING")
-                    // Вызываем switchToState через scope для избежания рекурсии
-                    switchToState(TrackingState.TRIP_RECORDING)
+                motionTrackerJob = motionTracker.observeMotionTrigger().onEach { event ->
+                    when (event) {
+                        is MotionTrackerEvent.InVehicle -> {
+                            // Обнаружено движение в транспорте - переключаемся в TRIP_RECORDING
+                            logger.info(LogCategory.LOCATION, "TrackingManager: Vehicle motion detected, switching to TRIP_RECORDING")
+                            switchToState(TrackingState.TRIP_RECORDING)
+                        }
+                        is MotionTrackerEvent.CheckingMotion -> {
+                            // Результаты анализа движения - передаем в trackingState
+                            trackingState.emit(
+                                TrackingStateEvent.MotionAnalysis(
+                                    analysisResult = event.statistics,
+                                    timestamp = event.timestamp,
+                                )
+                            )
+                        }
+                    }
                 }.launchIn(scope)
 
                 currentState = TrackingState.IN_PARKING
@@ -77,9 +91,9 @@ class TrackingManager(
                 motionTrackerJob = null
 
                 // Запускаем TripRecorder и подписываемся на координаты
-                tripRecorderJob = tripRecorder.startTracking().onEach {
-                    addToParkingTracker(it)
-                    trackingState.emit(it)
+                tripRecorderJob = tripRecorder.startTracking().onEach { result ->
+                    addToParkingTracker(result)
+                    trackingState.emit(TrackingStateEvent.LocationProcessed(result = result))
                 }.launchIn(scope)
 
                 // Подписываемся на статус парковки

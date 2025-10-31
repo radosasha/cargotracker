@@ -3,7 +3,10 @@ package com.shiplocate.trackingsdk.motion
 import com.shiplocate.core.logging.LogCategory
 import com.shiplocate.core.logging.Logger
 import com.shiplocate.trackingsdk.motion.models.MotionAnalysisEvent
+import com.shiplocate.trackingsdk.motion.models.MotionAnalysisResult
 import com.shiplocate.trackingsdk.motion.models.MotionState
+import com.shiplocate.trackingsdk.motion.models.MotionStatistics
+import com.shiplocate.trackingsdk.motion.models.MotionTrackerEvent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -54,8 +57,8 @@ class MotionTracker(
     // Буфер событий движения за текущее аналитическое окно (analysisWindowMs)
     private val motionHistory = mutableListOf<MotionAnalysisEvent>()
 
-    // Flow для уведомления о движении в транспорте
-    private val observeMotionTrigger = MutableSharedFlow<Unit>(replay = 0)
+    // Flow для уведомления о движении в транспорте и результатах анализа
+    private val observeMotionTrigger = MutableSharedFlow<MotionTrackerEvent>(replay = 0)
 
     companion object {
         private val TAG = MotionTracker::class.simpleName
@@ -125,7 +128,7 @@ class MotionTracker(
         logger.debug(LogCategory.LOCATION, "$TAG: Cleared motion history")
     }
 
-    fun observeMotionTrigger(): Flow<Unit> = observeMotionTrigger
+    fun observeMotionTrigger(): Flow<MotionTrackerEvent> = observeMotionTrigger
 
     /**
      * Проверяет, нужно ли начать анализ на основе накопленных данных
@@ -186,11 +189,37 @@ class MotionTracker(
             confThreshold = confidenceThreshold
         )
 
+        // Вычисляем статистику для передачи (даже если вождение не обнаружено)
+        val statistics = calculateMotionStatistics()
+        val vehicleTimePct = if (statistics.totalTimeMs > 0) {
+            statistics.vehicleTimeMs.toFloat() / statistics.totalTimeMs
+        } else 0f
+
+        // Эмитим результаты анализа (CHECKING_MOTION) - всегда, независимо от результата
+        observeMotionTrigger.emit(
+            MotionTrackerEvent.CheckingMotion(
+                statistics = MotionAnalysisResult(
+                    drivingDetected = drivingDetected,
+                    statistics = statistics,
+                    vehicleTimePercentage = vehicleTimePct,
+                    averageConfidence = statistics.confidence,
+                    eventsAnalyzed = recent.size,
+                    analysisWindowMs = statistics.totalTimeMs,
+                    consecutiveDrivingCount = consecutiveDrivingCount,
+                    consecutiveNonDrivingCount = consecutiveNonDrivingCount,
+                ),
+                timestamp = nowTs,
+            )
+        )
+
         if (drivingDetected) {
             consecutiveDrivingCount += 1
             consecutiveNonDrivingCount = 0
             logger.info(LogCategory.LOCATION, "$TAG: Vehicle motion detected (consecutive=$consecutiveDrivingCount)")
-            observeMotionTrigger.emit(Unit)
+            
+            // Эмитим триггер вождения (IN_VEHICLE)
+            observeMotionTrigger.emit(MotionTrackerEvent.InVehicle)
+            
             // После триггера — полная очистка, чтобы исключить повторные срабатывания
             clear()
             // Ускоряем следующий анализ ненадолго (быстрый режим подтверждения)
@@ -204,6 +233,85 @@ class MotionTracker(
             // Увеличиваем интервал анализа для экономии батареи, если долго не едем
             updateAnalysisInterval()
         }
+    }
+
+    /**
+     * Вычисляет статистику движения на основе истории событий
+     */
+    private fun calculateMotionStatistics(): MotionStatistics {
+        if (motionHistory.isEmpty()) {
+            return MotionStatistics(
+                totalTimeMs = 0L,
+                vehicleTimeMs = 0L,
+                walkingTimeMs = 0L,
+                stationaryTimeMs = 0L,
+                vehiclePercentage = 0f,
+                lastActivity = MotionState.UNKNOWN,
+                confidence = 0
+            )
+        }
+
+        val lastEvent = motionHistory.last()
+        val cutoffTime = lastEvent.timestamp - analysisWindowMs
+        
+        // Анализируем только последние analysisWindowMs данных
+        val recentEvents = motionHistory.filter { it.timestamp >= cutoffTime }
+        
+        if (recentEvents.size < 2) {
+            return MotionStatistics(
+                totalTimeMs = 0L,
+                vehicleTimeMs = 0L,
+                walkingTimeMs = 0L,
+                stationaryTimeMs = 0L,
+                vehiclePercentage = 0f,
+                lastActivity = MotionState.UNKNOWN,
+                confidence = 0
+            )
+        }
+
+        val firstEvent = recentEvents.first()
+        val totalTimeMs = lastEvent.timestamp - firstEvent.timestamp
+
+        // Вычисляем время для всех состояний сразу
+        // Один проход по данным, группируем по состояниям
+        val timeByState = recentEvents.zipWithNext { current, next ->
+            val intervalMs = next.timestamp - current.timestamp
+            current.motionState to intervalMs
+        }.groupBy({ it.first }, { it.second })
+            .mapValues { it.value.sum() }
+
+        val vehicleTimeMs = timeByState[MotionState.IN_VEHICLE] ?: 0L
+        val walkingTimeMs = timeByState[MotionState.WALKING] ?: 0L
+        val stationaryTimeMs = timeByState[MotionState.STATIONARY] ?: 0L
+
+        val vehiclePercentage = if (totalTimeMs > 0) {
+            vehicleTimeMs.toFloat() / totalTimeMs
+        } else {
+            0f
+        }
+
+        val lastActivity = recentEvents.lastOrNull()?.motionState ?: MotionState.UNKNOWN
+        
+        // Усредняем confidence с учетом длительности интервалов между событиями
+        val intervals = recentEvents.zipWithNext { a, b ->
+            val dt = (b.timestamp - a.timestamp).coerceAtLeast(0L)
+            val conf = a.confidence
+            dt to conf
+        }
+        val totalDt = intervals.sumOf { it.first }
+        val weightedConfidence = if (totalDt > 0L) {
+            (intervals.sumOf { it.first * it.second } / totalDt).toInt()
+        } else 0
+
+        return MotionStatistics(
+            totalTimeMs = totalTimeMs,
+            vehicleTimeMs = vehicleTimeMs,
+            walkingTimeMs = walkingTimeMs,
+            stationaryTimeMs = stationaryTimeMs,
+            vehiclePercentage = vehiclePercentage,
+            lastActivity = lastActivity,
+            confidence = weightedConfidence
+        )
     }
 
     /**
