@@ -12,6 +12,7 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
@@ -131,6 +132,18 @@ fun TrackerNavigation() {
             val viewModel: LoadsViewModel = viewModel(
                 factory = loadsViewModelFactory,
             )
+            
+            // Отслеживаем текущий backStackEntry для обновления данных при возврате
+            val currentBackStackEntry by navController.currentBackStackEntryAsState()
+            
+            // Обновляем данные из кеша когда текущий экран - LoadsScreen
+            // Это сработает при первом открытии и при возврате на экран
+            LaunchedEffect(currentBackStackEntry?.destination?.route) {
+                if (currentBackStackEntry?.destination?.route == Screen.LOADS) {
+                    viewModel.fetchLoadsFromCache()
+                }
+            }
+            
             LoadsScreen(
                 viewModel = viewModel,
                 onLoadClick = { loadId ->
