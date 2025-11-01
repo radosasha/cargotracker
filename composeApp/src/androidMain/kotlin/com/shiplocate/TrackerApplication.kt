@@ -5,13 +5,13 @@ import android.os.Build
 import android.os.StrictMode
 import android.os.StrictMode.ThreadPolicy
 import android.os.StrictMode.VmPolicy
+import com.shiplocate.core.logging.CrashHandler
 import com.shiplocate.core.logging.LogCategory
 import com.shiplocate.core.logging.Logger
 import com.shiplocate.di.AndroidKoinApp
 import com.shiplocate.domain.usecase.ManageFirebaseTokensUseCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
@@ -23,7 +23,7 @@ import org.koin.core.component.inject
  */
 class TrackerApplication : Application(), KoinComponent {
     // Application-scoped CoroutineScope
-    private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+    private val applicationScope = CoroutineScope(Dispatchers.Main)
 
     override fun onCreate() {
         super.onCreate()
@@ -33,6 +33,9 @@ class TrackerApplication : Application(), KoinComponent {
 
         // Инициализируем Koin с Application-scoped зависимостями
         AndroidKoinApp.initApplicationScope(this)
+
+        val crashHandler: CrashHandler by inject()
+        crashHandler.register()
 
         val logger: Logger by inject()
         logger.info(LogCategory.GENERAL, "AndroidKoinApp: Application scope initialized successfully")

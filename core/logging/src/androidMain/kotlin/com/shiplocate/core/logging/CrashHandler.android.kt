@@ -11,15 +11,6 @@ actual class CrashHandler(
 ) {
     private var defaultHandler: Thread.UncaughtExceptionHandler? = null
 
-    init {
-        this.defaultHandler = Thread.getDefaultUncaughtExceptionHandler()
-
-        // Устанавливаем наш обработчик
-        Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
-            handleUncaughtException(thread.name, thread.id, throwable)
-        }
-    }
-
     actual fun handleUncaughtException(
         threadName: String,
         threadId: Long,
@@ -37,5 +28,14 @@ actual class CrashHandler(
 
         // Передаем управление системному обработчику
         defaultHandler?.uncaughtException(Thread.currentThread(), throwable)
+    }
+
+    actual fun register() {
+        this.defaultHandler = Thread.getDefaultUncaughtExceptionHandler()
+
+        // Устанавливаем наш обработчик
+        Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
+            handleUncaughtException(thread.name, thread.id, throwable)
+        }
     }
 }

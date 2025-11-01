@@ -26,4 +26,8 @@ actual class CrashHandler(
             ),
         )
     }
+
+    actual fun register() {
+        // TODO
+    }
 }

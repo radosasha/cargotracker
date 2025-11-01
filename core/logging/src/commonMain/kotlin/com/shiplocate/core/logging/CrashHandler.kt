@@ -12,5 +12,7 @@ expect class CrashHandler{
         threadId: Long,
         throwable: Throwable,
     )
+
+    fun register()
 }
 
