@@ -7,15 +7,10 @@ import com.shiplocate.domain.repository.DeviceRepository
 import com.shiplocate.domain.repository.GpsRepository
 import com.shiplocate.domain.repository.LoadRepository
 import com.shiplocate.domain.repository.LocationRepository
-import com.shiplocate.domain.repository.PermissionRepository
-import com.shiplocate.domain.repository.PrefsRepository
-import com.shiplocate.domain.repository.TrackingRepository
 import com.shiplocate.domain.service.LocationProcessResult
 import com.shiplocate.domain.service.LocationProcessor
-import com.shiplocate.domain.service.LocationSyncService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 
@@ -40,49 +35,28 @@ class TripRecorder(
         logger.info(LogCategory.LOCATION, "TripRecorder: Starting GPS location processing")
 
         // Запускаем GPS трекинг и конвертируем Flow<Location> в Flow<LocationProcessResult>
-        val connectedLoad =
-            withContext(Dispatchers.Default) {
-                loadRepository.getConnectedLoad()
-            } ?: throw IllegalStateException("Connected Load not found")
-        
+        val connectedLoad = withContext(Dispatchers.Default) {
+            loadRepository.getConnectedLoad()
+        } ?: throw IllegalStateException("Connected Load not found")
+
         return gpsRepository.startGpsTracking()
             .map { location ->
-                try {
-                    logger.debug(LogCategory.LOCATION, "TripRecorder: 🔥 RECEIVED GPS location: Lat=${location.latitude}, Lon=${location.longitude}")
+                logger.info(
+                    LogCategory.LOCATION,
+                    "TripRecorder: 🔥 RECEIVED GPS location: Lat=${location.latitude}, Lon=${location.longitude}"
+                )
 
-                    // Обрабатываем координату
-                    val result = processLocation(connectedLoad.loadId, location)
+                // Обрабатываем координату
+                val result = processLocation(connectedLoad.loadId, location)
 
-                    if (result.shouldSend) {
-                        logger.debug(LogCategory.LOCATION, "TripRecorder: ✅ Successfully processed location")
-                        logger.debug(LogCategory.LOCATION, "TripRecorder: Reason: ${result.reason}")
-                    } else {
-                        logger.debug(LogCategory.LOCATION, "TripRecorder: ⏭️ Location filtered out")
-                        logger.debug(LogCategory.LOCATION, "TripRecorder: Reason: ${result.reason}")
-                    }
-
-                    result
-                } catch (e: Exception) {
-                    logger.error(LogCategory.LOCATION, "TripRecorder: ❌ Error processing location: ${e.message}", e)
-
-                    // Возвращаем ошибку как результат обработки
-                    LocationProcessResult(
-                        shouldSend = false,
-                        reason = "Failed to process location: ${e.message}",
-                        totalReceived = 0,
-                        totalSent = 0,
-                        lastSentTime = 0,
-                        trackingStats = locationProcessor.createCurrentTrackingStats(),
-                        lastCoordinateLat = location.latitude,
-                        lastCoordinateLon = location.longitude,
-                        lastCoordinateTime = location.timestamp.toEpochMilliseconds(),
-                        coordinateErrorMeters = location.accuracy.toInt(),
-                    )
+                if (result.shouldSend) {
+                    logger.info(LogCategory.LOCATION, "TripRecorder: ✅ Successfully processed location")
+                    logger.info(LogCategory.LOCATION, "TripRecorder: Reason: ${result.reason}")
+                } else {
+                    logger.info(LogCategory.LOCATION, "TripRecorder: ⏭️ Location filtered out")
+                    logger.info(LogCategory.LOCATION, "TripRecorder: Reason: ${result.reason}")
                 }
-            }
-            .catch { e ->
-                logger.error(LogCategory.LOCATION, "TripRecorder: Error in GPS flow: ${e.message}", e)
-                // Пропускаем ошибку в потоке, но логируем её
+                result
             }
     }
 

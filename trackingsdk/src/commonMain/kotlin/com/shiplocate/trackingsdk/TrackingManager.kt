@@ -48,9 +48,6 @@ class TrackingManager(
                 parkingStatusJob?.cancel()
                 tripRecorder.stopTracking()
 
-                // Отменяем предыдущий motionTrackingJob, если он существует
-                motionTrackerJob?.cancel()
-
                 // Запускаем MotionTracker ПЕРЕД подпиской на события
                 motionTracker.startTracking()
 
@@ -82,7 +79,6 @@ class TrackingManager(
                 // Сначала останавливаем MotionTracker, потом отменяем job
                 motionTracker.stopTracking()
                 motionTrackerJob?.cancel()
-                motionTrackerJob = null
 
                 // Запускаем TripRecorder и подписываемся на координаты
                 tripRecorderJob = tripRecorder.startTracking().onEach { result ->
