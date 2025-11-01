@@ -11,7 +11,7 @@ class GpsRepositoryImpl(
     private val gpsLocationDataSource: GpsLocationDataSource,
 ): GpsRepository {
 
-    override fun startGpsTracking(): Flow<Location> {
+    override suspend fun startGpsTracking(): Flow<Location> {
         return gpsLocationDataSource.startGpsTracking().map { gpsLocation ->
             GpsLocationMapper.toDomain(gpsLocation)
         }

@@ -12,7 +12,7 @@ interface GpsLocationDataSource {
      * Запускает GPS трекинг и возвращает поток координат
      * @return Flow<GpsLocation> - поток GPS координат
      */
-    fun startGpsTracking(): Flow<GpsLocation>
+    suspend fun startGpsTracking(): Flow<GpsLocation>
 
     /**
      * Останавливает GPS трекинг

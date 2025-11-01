@@ -9,8 +9,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import platform.CoreLocation.CLLocation
@@ -92,7 +90,7 @@ class IOSGpsManager : GpsManager {
         }
     }
 
-    override suspend fun startGpsTracking(): Result<Unit> {
+    override suspend fun startGpsTracking(): Flow<GpsLocation> {
         println("IOSGpsManager: startGpsTracking() called")
         return try {
             // Запускаем трекинг
@@ -101,10 +99,10 @@ class IOSGpsManager : GpsManager {
             dispatch_async(dispatch_get_main_queue()) {
                 startActualTracking()
             }
-            Result.success(Unit)
+            gpsLocationFlow
         } catch (e: Exception) {
             println("IOSGpsManager: Error starting GPS tracking: ${e.message}")
-            Result.failure(e)
+            throw e
         }
     }
 
@@ -128,16 +126,6 @@ class IOSGpsManager : GpsManager {
         val isActive = locationManager.location != null
         println("IOSGpsManager: isGpsTrackingActive() = $isActive")
         return isActive
-    }
-
-    override fun observeGpsLocations(): Flow<GpsLocation> {
-        return gpsLocationFlow.asSharedFlow()
-            .onStart {
-                // Автоматически запускаем GPS трекинг при подписке
-                if (!isTracking) {
-                    startGpsTracking()
-                }
-            }
     }
 
     /**

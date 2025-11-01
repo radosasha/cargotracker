@@ -12,7 +12,7 @@ interface GpsManager {
      * Запускает GPS трекинг
      * @return Result<Unit> - результат операции
      */
-    suspend fun startGpsTracking(): Result<Unit>
+    suspend fun startGpsTracking(): Flow<GpsLocation>
 
     /**
      * Останавливает GPS трекинг
@@ -25,10 +25,4 @@ interface GpsManager {
      * @return Boolean - true если трекинг активен
      */
     fun isGpsTrackingActive(): Boolean
-
-    /**
-     * Наблюдает за GPS координатами
-     * @return Flow<GpsLocation> - поток GPS координат
-     */
-    fun observeGpsLocations(): Flow<GpsLocation>
 }
