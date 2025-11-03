@@ -4,7 +4,6 @@ import com.shiplocate.core.logging.LogCategory
 import com.shiplocate.core.logging.Logger
 import com.shiplocate.domain.repository.PrefsRepository
 import com.shiplocate.domain.repository.TrackingRepository
-import com.shiplocate.domain.service.LocationSyncService
 
 /**
  * Use Case для остановки GPS трекинга
@@ -13,7 +12,6 @@ import com.shiplocate.domain.service.LocationSyncService
 class StopTrackingUseCase(
     private val trackingRepository: TrackingRepository,
     private val prefsRepository: PrefsRepository,
-    private val locationSyncManager: LocationSyncService,
     private val logger: Logger,
 ) {
     suspend operator fun invoke(): Result<Unit> {
@@ -26,8 +24,6 @@ class StopTrackingUseCase(
             return Result.success(Unit)
         }
 
-        // Останавливаем синхронизацию
-        locationSyncManager.stopSync()
         logger.info(LogCategory.LOCATION, "StopTrackingUseCase: Location sync stopped")
 
         // Останавливаем трекинг
