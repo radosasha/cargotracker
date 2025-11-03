@@ -85,7 +85,8 @@ class TrackingManager(
 
                 // Запускаем TripRecorder и подписываемся на координаты
                 tripRecorderJob = tripRecorder.startTracking().onEach { result ->
-                    addToParkingTracker(result)
+                    // TODO отключаем алгоритм парковки
+//                    addToParkingTracker(result)
                     trackingState.emit(TrackingStateEvent.LocationProcessed(result = result))
                 }.launchIn(scope)
 

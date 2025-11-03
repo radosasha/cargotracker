@@ -11,8 +11,6 @@ import com.shiplocate.trackingsdk.utils.models.LatLng
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
 import kotlinx.datetime.Clock
 
 /**
@@ -35,9 +33,10 @@ class ParkingTracker(
 
     init {
         // Подписываемся на события таймера
-        parkingTimeoutTimer.timerEvent
-            .onEach { onTimerEvent() }
-            .launchIn(scope)
+        // TODO пока что отключаем парковку
+//        parkingTimeoutTimer.timerEvent
+//            .onEach { onTimerEvent() }
+//            .launchIn(scope)
     }
 
     companion object {
@@ -59,7 +58,7 @@ class ParkingTracker(
         // Добавляем новую координату
         locationsHistory.add(parkingLocation)
 
-        // Удаляем координаты старше окна анализа (относительно времени последней точки)
+        // Удаляем  старше окна анализа (относительно времени последней точки)
         val lastTime = locationsHistory.last().time
         while (locationsHistory.size > 1 && (lastTime - locationsHistory.first().time) > triggerTimeMs) {
             locationsHistory.removeAt(0)

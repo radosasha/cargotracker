@@ -2,10 +2,10 @@ package com.shiplocate.domain.usecase
 
 import com.shiplocate.core.logging.LogCategory
 import com.shiplocate.core.logging.Logger
+import com.shiplocate.domain.model.TrackingStatus
 import com.shiplocate.domain.repository.PermissionRepository
 import com.shiplocate.domain.repository.PrefsRepository
 import com.shiplocate.domain.repository.TrackingRepository
-import com.shiplocate.domain.service.LocationSyncService
 
 /**
  * Use Case для запуска GPS трекинга
@@ -15,7 +15,6 @@ class StartTrackingUseCase(
     private val permissionRepository: PermissionRepository,
     private val trackingRepository: TrackingRepository,
     private val prefsRepository: PrefsRepository,
-    private val locationSyncService: LocationSyncService,
     private val logger: Logger,
 ) {
     suspend operator fun invoke(): Result<Unit> {
@@ -25,7 +24,7 @@ class StartTrackingUseCase(
         return if (permissionStatus.hasAllPermissions) {
             // Проверяем, не активен ли уже трекинг
             val currentStatus = trackingRepository.getTrackingStatus()
-            if (currentStatus == com.shiplocate.domain.model.TrackingStatus.ACTIVE) {
+            if (currentStatus == TrackingStatus.ACTIVE) {
                 logger.info(LogCategory.LOCATION, "StartTrackingUseCase: Tracking is already active, no need to start")
                 // Убеждаемся, что состояние в DataStore корректное
                 prefsRepository.saveTrackingState(true)
@@ -33,13 +32,6 @@ class StartTrackingUseCase(
             }
 
             val result = trackingRepository.startTracking()
-
-            // Если трекинг успешно запущен, сохраняем состояние в DataStore
-            if (result.isSuccess) {
-                prefsRepository.saveTrackingState(true)
-                locationSyncService.startSync()
-                logger.info(LogCategory.LOCATION, "StartTrackingUseCase: Tracking started and state saved to DataStore")
-            }
 
             result
         } else {
