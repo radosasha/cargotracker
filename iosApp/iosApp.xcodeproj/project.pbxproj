@@ -7,11 +7,16 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		524B3E612EA44B150010CE88 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 524B3E602EA44B150010CE88 /* FirebaseAnalytics */; };
-		524B3E632EA44B150010CE88 /* FirebaseAnalyticsCore in Frameworks */ = {isa = PBXBuildFile; productRef = 524B3E622EA44B150010CE88 /* FirebaseAnalyticsCore */; };
-		524B3E652EA44B150010CE88 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 524B3E642EA44B150010CE88 /* FirebaseCore */; };
-		524B3E672EA44B150010CE88 /* FirebaseCrashlytics in Frameworks */ = {isa = PBXBuildFile; productRef = 524B3E662EA44B150010CE88 /* FirebaseCrashlytics */; };
-		524B3E692EA44B150010CE88 /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = 524B3E682EA44B150010CE88 /* FirebaseMessaging */; };
+		523F8B8B2EB958A700E9C053 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 523F8B8A2EB958A700E9C053 /* FirebaseCore */; };
+		523F8B8D2EB958B400E9C053 /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = 523F8B8C2EB958B400E9C053 /* FirebaseMessaging */; };
+		523F8B8F2EB958B900E9C053 /* FirebaseCrashlytics in Frameworks */ = {isa = PBXBuildFile; productRef = 523F8B8E2EB958B900E9C053 /* FirebaseCrashlytics */; };
+		523F8B912EB958BF00E9C053 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 523F8B902EB958BF00E9C053 /* FirebaseAnalytics */; };
+		523F8B932EB958C300E9C053 /* FirebaseAnalyticsCore in Frameworks */ = {isa = PBXBuildFile; productRef = 523F8B922EB958C300E9C053 /* FirebaseAnalyticsCore */; };
+		524B3E612EA44B150010CE88 /* (null) in Frameworks */ = {isa = PBXBuildFile; };
+		524B3E632EA44B150010CE88 /* (null) in Frameworks */ = {isa = PBXBuildFile; };
+		524B3E652EA44B150010CE88 /* (null) in Frameworks */ = {isa = PBXBuildFile; };
+		524B3E672EA44B150010CE88 /* (null) in Frameworks */ = {isa = PBXBuildFile; };
+		524B3E692EA44B150010CE88 /* (null) in Frameworks */ = {isa = PBXBuildFile; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -49,17 +54,29 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				524B3E612EA44B150010CE88 /* FirebaseAnalytics in Frameworks */,
-				524B3E672EA44B150010CE88 /* FirebaseCrashlytics in Frameworks */,
-				524B3E692EA44B150010CE88 /* FirebaseMessaging in Frameworks */,
-				524B3E652EA44B150010CE88 /* FirebaseCore in Frameworks */,
-				524B3E632EA44B150010CE88 /* FirebaseAnalyticsCore in Frameworks */,
+				524B3E612EA44B150010CE88 /* (null) in Frameworks */,
+				524B3E672EA44B150010CE88 /* (null) in Frameworks */,
+				523F8B8D2EB958B400E9C053 /* FirebaseMessaging in Frameworks */,
+				524B3E692EA44B150010CE88 /* (null) in Frameworks */,
+				524B3E652EA44B150010CE88 /* (null) in Frameworks */,
+				523F8B8F2EB958B900E9C053 /* FirebaseCrashlytics in Frameworks */,
+				523F8B8B2EB958A700E9C053 /* FirebaseCore in Frameworks */,
+				523F8B932EB958C300E9C053 /* FirebaseAnalyticsCore in Frameworks */,
+				524B3E632EA44B150010CE88 /* (null) in Frameworks */,
+				523F8B912EB958BF00E9C053 /* FirebaseAnalytics in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		523F8B892EB958A700E9C053 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		A402C0B4D0A4F34F238B7467 /* Products */ = {
 			isa = PBXGroup;
 			children = (
@@ -73,6 +90,7 @@
 			children = (
 				2B0A3590301F41C2D9999D5A /* Configuration */,
 				236D760A84A37C38CE2D9FD3 /* iosApp */,
+				523F8B892EB958A700E9C053 /* Frameworks */,
 				A402C0B4D0A4F34F238B7467 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -98,11 +116,11 @@
 			);
 			name = iosApp;
 			packageProductDependencies = (
-				524B3E602EA44B150010CE88 /* FirebaseAnalytics */,
-				524B3E622EA44B150010CE88 /* FirebaseAnalyticsCore */,
-				524B3E642EA44B150010CE88 /* FirebaseCore */,
-				524B3E662EA44B150010CE88 /* FirebaseCrashlytics */,
-				524B3E682EA44B150010CE88 /* FirebaseMessaging */,
+				523F8B8A2EB958A700E9C053 /* FirebaseCore */,
+				523F8B8C2EB958B400E9C053 /* FirebaseMessaging */,
+				523F8B8E2EB958B900E9C053 /* FirebaseCrashlytics */,
+				523F8B902EB958BF00E9C053 /* FirebaseAnalytics */,
+				523F8B922EB958C300E9C053 /* FirebaseAnalyticsCore */,
 			);
 			productName = iosApp;
 			productReference = FE8836ABC30B2A30ADCE460C /* ShipLocate.app */;
@@ -133,7 +151,7 @@
 			mainGroup = E35A28A0748969C16A530543;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				524B3E5F2EA44B150010CE88 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+				523F8B882EB9551600E9C053 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = A402C0B4D0A4F34F238B7467 /* Products */;
@@ -252,20 +270,13 @@
 				ARCHS = arm64;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ALLOW_ENTITLEMENTS_MODIFICATION = YES;
-				CODE_SIGN_ENTITLEMENTS = iosApp/iosApp.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_ASSET_PATHS = "\"iosApp/Preview Content\"";
-				DEVELOPMENT_TEAM = 6SQ65RWDV4;
+				DEVELOPMENT_TEAM = FC44DS34WH;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = iosApp/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = ShipLocate;
-				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "Это приложение использует GPS для постоянного отслеживания вашего местоположения, даже когда приложение находится в фоне.";
-				INFOPLIST_KEY_NSLocationAlwaysUsageDescription = "Это приложение использует GPS для постоянного отслеживания вашего местоположения, даже когда приложение находится в фоне.";
-				INFOPLIST_KEY_NSLocationUsageDescription = "Это приложение использует GPS для точного отслеживания местоположения.";
-				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Это приложение использует GPS для отслеживания вашего местоположения во время использования приложения.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -275,7 +286,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.shiplocate;
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -353,20 +364,20 @@
 				ARCHS = arm64;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ALLOW_ENTITLEMENTS_MODIFICATION = YES;
-				CODE_SIGN_ENTITLEMENTS = iosApp/iosApp.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_ASSET_PATHS = "\"iosApp/Preview Content\"";
-				DEVELOPMENT_TEAM = 6SQ65RWDV4;
+				DEVELOPMENT_TEAM = "${TEAM_ID}";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = iosApp/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = ShipLocate;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.navigation";
 				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "Это приложение использует GPS для постоянного отслеживания вашего местоположения, даже когда приложение находится в фоне.";
 				INFOPLIST_KEY_NSLocationAlwaysUsageDescription = "Это приложение использует GPS для постоянного отслеживания вашего местоположения, даже когда приложение находится в фоне.";
 				INFOPLIST_KEY_NSLocationUsageDescription = "Это приложение использует GPS для точного отслеживания местоположения.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Это приложение использует GPS для отслеживания вашего местоположения во время использования приложения.";
+				INFOPLIST_KEY_NSMotionUsageDescription = "Это приложение использует данные о движении для определения режима передвижения (пешком, в транспорте) для улучшения точности GPS трекинга и определения парковки.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -376,6 +387,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				MARKETING_VERSION = 1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.shiplocate;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -407,41 +419,41 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		524B3E5F2EA44B150010CE88 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+		523F8B882EB9551600E9C053 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 12.4.0;
+				minimumVersion = 12.5.0;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		524B3E602EA44B150010CE88 /* FirebaseAnalytics */ = {
+		523F8B8A2EB958A700E9C053 /* FirebaseCore */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 524B3E5F2EA44B150010CE88 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
-			productName = FirebaseAnalytics;
-		};
-		524B3E622EA44B150010CE88 /* FirebaseAnalyticsCore */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 524B3E5F2EA44B150010CE88 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
-			productName = FirebaseAnalyticsCore;
-		};
-		524B3E642EA44B150010CE88 /* FirebaseCore */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 524B3E5F2EA44B150010CE88 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			package = 523F8B882EB9551600E9C053 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseCore;
 		};
-		524B3E662EA44B150010CE88 /* FirebaseCrashlytics */ = {
+		523F8B8C2EB958B400E9C053 /* FirebaseMessaging */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 524B3E5F2EA44B150010CE88 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			package = 523F8B882EB9551600E9C053 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseMessaging;
+		};
+		523F8B8E2EB958B900E9C053 /* FirebaseCrashlytics */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 523F8B882EB9551600E9C053 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseCrashlytics;
 		};
-		524B3E682EA44B150010CE88 /* FirebaseMessaging */ = {
+		523F8B902EB958BF00E9C053 /* FirebaseAnalytics */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 524B3E5F2EA44B150010CE88 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
-			productName = FirebaseMessaging;
+			package = 523F8B882EB9551600E9C053 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAnalytics;
+		};
+		523F8B922EB958C300E9C053 /* FirebaseAnalyticsCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 523F8B882EB9551600E9C053 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAnalyticsCore;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
