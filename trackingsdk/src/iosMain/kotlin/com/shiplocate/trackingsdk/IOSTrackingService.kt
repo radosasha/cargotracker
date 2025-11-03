@@ -2,7 +2,6 @@ package com.shiplocate.trackingsdk
 
 import com.shiplocate.core.logging.LogCategory
 import com.shiplocate.core.logging.Logger
-import com.shiplocate.trackingsdk.TrackingManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -39,12 +38,20 @@ class IOSTrackingService(
 
             // Запускаем обработку GPS координат и подписываемся на Flow результатов
             collectingJob = trackingManager.startTracking()
-                .onEach { result ->
-                    // Логируем результат обработки
-                    if (result.shouldSend) {
-                        logger.debug(LogCategory.LOCATION, "$TAG: ✅ Location processed successfully: ${result.reason}")
-                    } else {
-                        logger.debug(LogCategory.LOCATION, "$TAG: ⏭️ Location filtered: ${result.reason}")
+                .onEach { event ->
+                    when (event) {
+                        is TrackingStateEvent.LocationProcessed -> {
+                            // Логируем результат обработки
+                            if (event.result.shouldSend) {
+                                logger.debug(LogCategory.LOCATION, "$TAG: ✅ Location processed successfully: ${event.result.reason}")
+                            } else {
+                                logger.debug(LogCategory.LOCATION, "$TAG: ⏭️ Location filtered: ${event.result.reason}")
+                            }
+                        }
+
+                        is TrackingStateEvent.MotionAnalysis -> {
+
+                        }
                     }
                 }
                 .launchIn(serviceScope)
