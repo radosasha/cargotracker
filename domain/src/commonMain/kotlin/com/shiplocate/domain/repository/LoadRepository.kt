@@ -50,4 +50,16 @@ interface LoadRepository {
         token: String,
         loadId: String,
     ): Result<List<Load>>
+
+    /**
+     * Ping load to update connection status
+     * Updates connectionStatus to "online" and lastUpdate timestamp
+     * @param token Authentication token
+     * @param loadId Load ID to ping
+     */
+    suspend fun pingLoad(
+        token: String,
+        loadId: String,
+    ): Result<Unit>
+
 }

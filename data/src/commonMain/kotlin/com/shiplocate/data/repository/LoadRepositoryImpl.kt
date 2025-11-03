@@ -117,4 +117,22 @@ class LoadRepositoryImpl(
             Result.failure(e)
         }
     }
+
+    override suspend fun pingLoad(
+        token: String,
+        loadId: String,
+    ): Result<Unit> {
+        logger.info(LogCategory.GENERAL, "🔄 LoadRepositoryImpl: Pinging load $loadId")
+
+        return try {
+            logger.info(LogCategory.GENERAL, "🌐 LoadRepositoryImpl: Sending ping request to server")
+            remoteDataSource.pingLoad(token, loadId)
+
+            logger.info(LogCategory.GENERAL, "✅ LoadRepositoryImpl: Successfully pinged load $loadId")
+            Result.success(Unit)
+        } catch (e: Exception) {
+            logger.info(LogCategory.GENERAL, "❌ LoadRepositoryImpl: Failed to ping load: ${e.message}")
+            Result.failure(e)
+        }
+    }
 }

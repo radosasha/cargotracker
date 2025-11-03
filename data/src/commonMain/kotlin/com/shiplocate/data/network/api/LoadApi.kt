@@ -6,6 +6,7 @@ import com.shiplocate.core.network.bodyOrThrow
 import com.shiplocate.data.network.dto.load.ConnectLoadRequest
 import com.shiplocate.data.network.dto.load.DisconnectLoadRequest
 import com.shiplocate.data.network.dto.load.LoadDto
+import com.shiplocate.data.network.dto.load.PingLoadRequest
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
 import io.ktor.client.request.header
@@ -56,6 +57,19 @@ interface LoadApi {
         token: String,
         loadId: String,
     ): List<LoadDto>
+
+    /**
+     * Ping load to update connection status
+     * Updates connectionStatus to "online" and lastUpdate timestamp
+     *
+     * @param token JWT token for authentication
+     * @param loadId Load ID to ping
+     * @throws Exception if request fails
+     */
+    suspend fun pingLoad(
+        token: String,
+        loadId: String,
+    )
 }
 
 /**
@@ -113,5 +127,26 @@ class LoadApiImpl(
 
         logger.debug(LogCategory.NETWORK, "🌐 LoadApi: Disconnect response status: ${response.status}")
         return response.bodyOrThrow()
+    }
+
+    override suspend fun pingLoad(
+        token: String,
+        loadId: String,
+    ) {
+        logger.debug(LogCategory.NETWORK, "🌐 LoadApi: Pinging load $loadId")
+
+        val request = PingLoadRequest(loadId = loadId)
+        val response =
+            httpClient.post("$baseUrl/api/mobile/loads/ping") {
+                header(HttpHeaders.Authorization, "Bearer $token")
+                contentType(ContentType.Application.Json)
+                setBody(request)
+            }
+
+        logger.debug(LogCategory.NETWORK, "🌐 LoadApi: Ping response status: ${response.status}")
+        // Server returns {status: "ok", message: "Connection status updated"}
+        // bodyOrThrow will throw exception if status is not success
+        // We read body as String to verify request succeeded, but don't need to parse it
+        response.bodyOrThrow<String>() // This verifies status is success
     }
 }

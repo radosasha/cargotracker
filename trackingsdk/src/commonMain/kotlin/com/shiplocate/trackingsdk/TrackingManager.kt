@@ -8,6 +8,7 @@ import com.shiplocate.trackingsdk.motion.MotionTracker
 import com.shiplocate.trackingsdk.motion.models.MotionTrackerEvent
 import com.shiplocate.trackingsdk.parking.ParkingTracker
 import com.shiplocate.trackingsdk.parking.models.ParkingLocation
+import com.shiplocate.trackingsdk.ping.PingService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
@@ -21,6 +22,7 @@ class TrackingManager(
     private val locationSyncService: LocationSyncService,
     private val parkingTracker: ParkingTracker,
     private val motionTracker: MotionTracker,
+    private val pingService: PingService,
     private val logger: Logger,
     private val scope: CoroutineScope,
 ) {
@@ -34,6 +36,7 @@ class TrackingManager(
     fun startTracking(): Flow<TrackingStateEvent> {
         scope.launch {
             locationSyncService.startSync()
+            pingService.start()
             switchToState(currentState)
         }
         return trackingState
@@ -125,6 +128,7 @@ class TrackingManager(
 
         // Останавливаем сервисы
         locationSyncService.stopSync()
+        pingService.stop()
         parkingTracker.clear()
         motionTracker.destroy()
 

@@ -9,6 +9,7 @@ import com.shiplocate.trackingsdk.TripRecorder
 import com.shiplocate.trackingsdk.motion.ActivityRecognitionConnector
 import com.shiplocate.trackingsdk.motion.MotionTracker
 import com.shiplocate.trackingsdk.parking.ParkingTracker
+import com.shiplocate.trackingsdk.ping.PingService
 import com.shiplocate.trackingsdk.utils.ParkingTimeoutTimer
 import org.koin.core.module.Module
 import org.koin.dsl.module
@@ -82,6 +83,17 @@ actual val trackingSDKModule: Module = module {
         )
     }
 
+    // Регистрируем PingService
+    single<PingService> {
+        PingService(
+            pingIntervalMs = 10 * 60 * 1000L,
+            authPreferencesRepository = get(),
+            loadRepository = get(),
+            logger = get(),
+            scope = get()
+        )
+    }
+
     // Регистрируем TrackingManager
     single<TrackingManager> {
         TrackingManager(
@@ -89,6 +101,7 @@ actual val trackingSDKModule: Module = module {
             locationSyncService = get(),
             parkingTracker = get(),
             motionTracker = get(),
+            pingService = get(),
             logger = get(),
             scope = get()
         )

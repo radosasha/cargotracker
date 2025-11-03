@@ -47,4 +47,17 @@ class LoadRemoteDataSource(
         println("📡 LoadRemoteDataSource: Disconnecting from load $loadId")
         return loadApi.disconnectFromLoad(token, loadId)
     }
+
+    /**
+     * Ping load to update connection status
+     * @param token Bearer token for authentication
+     * @param loadId Load ID to ping
+     */
+    suspend fun pingLoad(
+        token: String,
+        loadId: String,
+    ) {
+        println("📡 LoadRemoteDataSource: Pinging load $loadId")
+        loadApi.pingLoad(token, loadId)
+    }
 }
