@@ -26,6 +26,16 @@
 	</dict>
 	<key>NSUserNotificationsUsageDescription</key>
 	<string>Это приложение отправляет уведомления о статусе GPS трекинга.</string>
+	<key>NSMotionUsageDescription</key>
+	<string>Это приложение использует данные о движении для определения режима передвижения (пешком, в транспорте) для улучшения точности GPS трекинга и определения парковки.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Это приложение использует GPS для постоянного отслеживания вашего местоположения, даже когда приложение находится в фоне.</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>Это приложение использует GPS для постоянного отслеживания вашего местоположения, даже когда приложение находится в фоне.</string>
+	<key>NSLocationUsageDescription</key>
+	<string>Это приложение использует GPS для точного отслеживания местоположения.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Это приложение использует GPS для отслеживания вашего местоположения во время использования приложения.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>location</string>
