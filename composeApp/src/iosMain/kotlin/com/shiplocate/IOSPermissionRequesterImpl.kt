@@ -1,6 +1,7 @@
 package com.shiplocate
 
 import com.shiplocate.data.datasource.PermissionRequester
+import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.suspendCancellableCoroutine
 import platform.CoreLocation.CLLocationManager
 import platform.CoreLocation.CLLocationManagerDelegateProtocol
@@ -9,11 +10,13 @@ import platform.CoreLocation.kCLAuthorizationStatusAuthorizedWhenInUse
 import platform.CoreLocation.kCLAuthorizationStatusDenied
 import platform.CoreLocation.kCLAuthorizationStatusNotDetermined
 import platform.CoreLocation.kCLAuthorizationStatusRestricted
+import platform.CoreMotion.CMAuthorizationStatusAuthorized
+import platform.CoreMotion.CMAuthorizationStatusDenied
+import platform.CoreMotion.CMAuthorizationStatusNotDetermined
+import platform.CoreMotion.CMAuthorizationStatusRestricted
 import platform.CoreMotion.CMMotionActivityManager
-import platform.Foundation.NSDate
 import platform.Foundation.NSOperationQueue
 import platform.Foundation.NSURL
-import platform.Foundation.dateWithTimeIntervalSinceNow
 import platform.UIKit.UIApplication
 import platform.UIKit.UIApplicationOpenSettingsURLString
 import platform.UserNotifications.UNAuthorizationOptionAlert
@@ -21,10 +24,15 @@ import platform.UserNotifications.UNAuthorizationOptionBadge
 import platform.UserNotifications.UNAuthorizationOptionSound
 import platform.UserNotifications.UNAuthorizationStatusAuthorized
 import platform.UserNotifications.UNUserNotificationCenter
+import platform.darwin.DISPATCH_TIME_NOW
 import platform.darwin.NSObject
+import platform.darwin.dispatch_after
 import platform.darwin.dispatch_async
 import platform.darwin.dispatch_get_main_queue
+import platform.darwin.dispatch_time
+import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * iOS реализация PermissionRequester
@@ -37,6 +45,10 @@ class IOSPermissionRequesterImpl : PermissionRequester {
         manager
     }
     private val locationDelegate = LocationManagerDelegate()
+
+    // Флаг для отслеживания, было ли Motion разрешение запрошено
+    private var motionPermissionRequested = false
+    private var motionPermissionGranted = false
 
     // Делегат для отслеживания изменений статуса разрешений
     private class LocationManagerDelegate : NSObject(), CLLocationManagerDelegateProtocol {
@@ -57,11 +69,13 @@ class IOSPermissionRequesterImpl : PermissionRequester {
                     when (status) {
                         kCLAuthorizationStatusAuthorizedWhenInUse,
                         kCLAuthorizationStatusAuthorizedAlways,
-                        -> true
+                            -> true
+
                         kCLAuthorizationStatusNotDetermined,
                         kCLAuthorizationStatusDenied,
                         kCLAuthorizationStatusRestricted,
-                        -> false
+                            -> false
+
                         else -> false
                     }
                 continuation.resumeWith(Result.success(hasPermission))
@@ -95,23 +109,19 @@ class IOSPermissionRequesterImpl : PermissionRequester {
         return suspendCoroutine { continuation ->
             dispatch_async(dispatch_get_main_queue()) {
                 try {
-                    val motionManager = CMMotionActivityManager()
-                    
-                    // Проверяем разрешение через queryActivityStartingFromDate
-                    val now = NSDate()
-                    val oneDayAgo = NSDate.dateWithTimeIntervalSinceNow(-86400.0)
-                    
-                    motionManager.queryActivityStartingFromDate(
-                        start = oneDayAgo,
-                        toDate = now,
-                        toQueue = NSOperationQueue.mainQueue
-                    ) { activities, error ->
-                        val hasPermission = error == null || 
-                            !(error.localizedDescription.contains("denied") || error.localizedDescription.contains("permission"))
-                        continuation.resumeWith(Result.success(hasPermission))
+                    // Используем authorizationStatus для проверки статуса без запроса разрешения
+                    val status = CMMotionActivityManager.authorizationStatus()
+                    val hasPermission = when (status) {
+                        CMAuthorizationStatusAuthorized -> true
+                        CMAuthorizationStatusNotDetermined,
+                        CMAuthorizationStatusRestricted,
+                        CMAuthorizationStatusDenied, -> false
+                        else -> false
                     }
+                    println("iOS: Motion permission check - status: $status, hasPermission: $hasPermission")
+                    continuation.resumeWith(Result.success(hasPermission))
                 } catch (e: Exception) {
-                    // При ошибке считаем, что разрешения нет
+                    println("iOS: Motion permission check exception: ${e.message}")
                     continuation.resumeWith(Result.success(false))
                 }
             }
@@ -125,11 +135,35 @@ class IOSPermissionRequesterImpl : PermissionRequester {
     }
 
     override suspend fun requestAllPermissions(): Result<Unit> {
-        return try {
-            requestAllPermissionsSync()
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
+        return suspendCancellableCoroutine { continuation ->
+            dispatch_async(dispatch_get_main_queue()) {
+                val status = locationManager.authorizationStatus
+                println("iOS: requestAllPermissions - location status: $status")
+
+                when (status) {
+                    kCLAuthorizationStatusNotDetermined -> {
+                        requestLocationPermissionSuspend(continuation)
+                    }
+
+                    kCLAuthorizationStatusAuthorizedWhenInUse -> {
+                        requestBackgroundLocationPermissionSuspend(continuation)
+                    }
+
+                    kCLAuthorizationStatusAuthorizedAlways -> {
+                        requestMotionAndNotificationPermissionsSuspend(continuation)
+                    }
+
+                    kCLAuthorizationStatusDenied, kCLAuthorizationStatusRestricted -> {
+                        println("iOS: Location permission denied or restricted")
+                        continuation.resume(Result.failure(Exception("Location permission denied")))
+                    }
+
+                    else -> {
+                        println("iOS: Unknown authorization status: $status")
+                        continuation.resume(Result.failure(Exception("Unknown authorization status")))
+                    }
+                }
+            }
         }
     }
 
@@ -151,80 +185,129 @@ class IOSPermissionRequesterImpl : PermissionRequester {
         }
     }
 
-    private fun requestAllPermissionsSync() {
-        dispatch_async(dispatch_get_main_queue()) {
-            val status = locationManager.authorizationStatus
-            println("iOS: Current authorization status: $status")
-
-            when (status) {
-                kCLAuthorizationStatusNotDetermined -> {
-                    println("iOS: Requesting location permission...")
-                    locationDelegate.onAuthorizationChange = { newStatus ->
-                        handleLocationAuthorizationChange(newStatus)
-                    }
-                    locationManager.requestWhenInUseAuthorization()
-                }
-                kCLAuthorizationStatusAuthorizedWhenInUse -> {
-                    println("iOS: Requesting background location permission...")
-                    locationDelegate.onAuthorizationChange = { newStatus ->
-                        handleLocationAuthorizationChange(newStatus)
-                    }
-                    locationManager.requestAlwaysAuthorization()
-                }
-                kCLAuthorizationStatusAuthorizedAlways -> {
-                    println("iOS: Location permission already granted, requesting notifications...")
-                    requestNotificationPermissions()
-                }
-                kCLAuthorizationStatusDenied, kCLAuthorizationStatusRestricted -> {
-                    println("iOS: Location permission denied or restricted, stopping permission flow")
-                }
-                else -> {
-                    println("iOS: Unknown authorization status: $status")
-                }
-            }
-        }
-    }
-
-    private fun handleLocationAuthorizationChange(newStatus: Int) {
-        dispatch_async(dispatch_get_main_queue()) {
-            println("iOS: Handling authorization change: $newStatus")
-
+    private fun requestLocationPermissionSuspend(continuation: CancellableContinuation<Result<Unit>>) {
+        println("iOS: Requesting location permission...")
+        locationDelegate.onAuthorizationChange = { newStatus ->
             when (newStatus) {
                 kCLAuthorizationStatusAuthorizedWhenInUse.toInt() -> {
-                    println("iOS: Location permission granted, requesting background permission...")
-                    locationManager.requestAlwaysAuthorization()
-                }
-                kCLAuthorizationStatusAuthorizedAlways.toInt() -> {
-                    println("iOS: Background location permission granted, requesting notifications...")
                     locationDelegate.onAuthorizationChange = null
-                    requestNotificationPermissions()
+                    requestBackgroundLocationPermissionSuspend(continuation)
                 }
+
                 kCLAuthorizationStatusDenied.toInt(), kCLAuthorizationStatusRestricted.toInt() -> {
-                    println("iOS: Location permission denied, stopping permission flow")
                     locationDelegate.onAuthorizationChange = null
+                    continuation.resume(Result.failure(Exception("Location permission denied")))
                 }
+
                 else -> {
-                    println("iOS: Unexpected authorization status: $newStatus")
+                    // Ожидаем дальнейшего ответа
                 }
+            }
+        }
+        locationManager.requestWhenInUseAuthorization()
+    }
+
+    private fun requestBackgroundLocationPermissionSuspend(continuation: CancellableContinuation<Result<Unit>>) {
+        println("iOS: Requesting background location permission...")
+        locationDelegate.onAuthorizationChange = { newStatus ->
+            when (newStatus) {
+                kCLAuthorizationStatusAuthorizedAlways.toInt() -> {
+                    locationDelegate.onAuthorizationChange = null
+                    requestMotionAndNotificationPermissionsSuspend(continuation)
+                }
+
+                kCLAuthorizationStatusDenied.toInt(), kCLAuthorizationStatusRestricted.toInt() -> {
+                    locationDelegate.onAuthorizationChange = null
+                    continuation.resume(Result.failure(Exception("Background location permission denied")))
+                }
+
+                else -> {
+                    // Ожидаем дальнейшего ответа
+                }
+            }
+        }
+        locationManager.requestAlwaysAuthorization()
+    }
+
+    private fun requestMotionAndNotificationPermissionsSuspend(continuation: CancellableContinuation<Result<Unit>>) {
+        println("iOS: Requesting motion permission...")
+        requestMotionPermissionSuspend { motionGranted ->
+            if (motionGranted) {
+                println("iOS: Motion permission granted, requesting notifications...")
+                requestNotificationPermissionsSuspend(continuation)
+            } else {
+                println("iOS: Motion permission denied")
+                continuation.resume(Result.failure(Exception("Motion permission denied")))
             }
         }
     }
 
-    private fun requestNotificationPermissions() {
+    private fun requestMotionPermissionSuspend(onComplete: (Boolean) -> Unit) {
         dispatch_async(dispatch_get_main_queue()) {
-            println("iOS: Requesting notification permission...")
-            val center = UNUserNotificationCenter.currentNotificationCenter()
-            center.requestAuthorizationWithOptions(
-                options = UNAuthorizationOptionAlert or UNAuthorizationOptionBadge or UNAuthorizationOptionSound,
-                completionHandler = { granted, error ->
-                    if (granted) {
-                        println("iOS: Notification permission granted")
-                    } else {
-                        println("iOS: Notification permission denied: ${error?.localizedDescription}")
+            try {
+                val motionManager = CMMotionActivityManager()
+                var callbackCalled = false
+
+                println("iOS: Requesting motion permission via startActivityUpdates...")
+
+                // Таймаут на случай, если пользователь не ответил на диалог или разрешение отклонено
+                val timeoutDelay = 10.seconds
+                val timeoutTime = dispatch_time(DISPATCH_TIME_NOW, timeoutDelay.inWholeNanoseconds.toLong())
+
+                dispatch_after(timeoutTime, dispatch_get_main_queue()) {
+                    if (!callbackCalled) {
+                        callbackCalled = true
+                        println("iOS: Motion permission request timeout - user did not respond or permission denied")
+                        motionManager.stopActivityUpdates()
+                        motionPermissionRequested = true
+                        motionPermissionGranted = false
+                        onComplete(false)
                     }
-                },
-            )
+                }
+
+                // Запускаем обновления напрямую - это покажет диалог при первом обращении
+                // Если разрешение уже есть, callback сработает сразу
+                motionManager.startActivityUpdatesToQueue(
+                    queue = NSOperationQueue.mainQueue
+                ) { activity ->
+                    if (!callbackCalled) {
+                        callbackCalled = true
+
+                        // Останавливаем обновления сразу после первого callback
+                        motionManager.stopActivityUpdates()
+
+                        println("iOS: Motion permission granted or already had permission")
+                        motionPermissionRequested = true
+                        motionPermissionGranted = true
+                        onComplete(true)
+                    }else{
+                        println("fdfd")
+                    }
+                }
+            } catch (e: Exception) {
+                println("iOS: Error requesting motion permission: ${e.message}")
+                motionPermissionRequested = true
+                motionPermissionGranted = false
+                onComplete(false)
+            }
         }
+    }
+
+    private fun requestNotificationPermissionsSuspend(continuation: CancellableContinuation<Result<Unit>>) {
+        println("iOS: Requesting notification permission...")
+        val center = UNUserNotificationCenter.currentNotificationCenter()
+        center.requestAuthorizationWithOptions(
+            options = UNAuthorizationOptionAlert or UNAuthorizationOptionBadge or UNAuthorizationOptionSound,
+            completionHandler = { granted, error ->
+                if (granted) {
+                    println("iOS: All permissions granted")
+                    continuation.resume(Result.success(Unit))
+                } else {
+                    println("iOS: Notification permission denied: ${error?.localizedDescription}")
+                    continuation.resume(Result.failure(Exception("Notification permission denied: ${error?.localizedDescription}")))
+                }
+            },
+        )
     }
 
     private suspend fun requestNotificationPermissionsSync() {

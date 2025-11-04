@@ -1,38 +1,35 @@
 package com.shiplocate.data.datasource.impl
 
-import com.shiplocate.data.datasource.PermissionChecker
 import com.shiplocate.data.datasource.PermissionDataSource
+import com.shiplocate.data.datasource.PermissionRequester
 import com.shiplocate.data.model.PermissionDataModel
-import platform.Foundation.NSURL
-import platform.UIKit.UIApplication
-import platform.UIKit.UIApplicationOpenSettingsURLString
 
 /**
  * iOS реализация PermissionDataSource
  */
 class IOSPermissionDataSource(
-    private val permissionChecker: PermissionChecker,
+    private val permissionRequester: PermissionRequester,
 ) : PermissionDataSource {
     override suspend fun getPermissionStatus(): PermissionDataModel {
         return PermissionDataModel(
-            hasLocationPermission = permissionChecker.hasLocationPermissions(),
-            hasBackgroundLocationPermission = permissionChecker.hasBackgroundLocationPermission(),
-            hasNotificationPermission = permissionChecker.hasNotificationPermission(),
-            hasActivityRecognitionPermission = permissionChecker.hasActivityRecognitionPermission(),
-            isBatteryOptimizationDisabled = true, // В iOS нет понятия оптимизации батареи
+            hasLocationPermission = permissionRequester.hasLocationPermissions(),
+            hasBackgroundLocationPermission = permissionRequester.hasBackgroundLocationPermission(),
+            hasNotificationPermission = permissionRequester.hasNotificationPermission(),
+            hasActivityRecognitionPermission = permissionRequester.hasActivityRecognitionPermission(),
+            isBatteryOptimizationDisabled = permissionRequester.isBatteryOptimizationDisabled(),
         )
     }
 
     override suspend fun requestAllPermissions(): Result<PermissionDataModel> {
         return try {
-            // Запрашиваем все разрешения
-            permissionChecker.requestAllPermissions()
+            // Используем suspend версию, которая ждет результата через callbacks
+            val result = permissionRequester.requestAllPermissions()
+            if (result.isFailure) {
+                return Result.failure(result.exceptionOrNull() ?: Exception("Failed to request permissions"))
+            }
 
-            // Ждем немного, чтобы разрешения успели обновиться
-            kotlinx.coroutines.delay(1000)
-
+            // Получаем финальный статус разрешений
             val status = getPermissionStatus()
-            println("IOSPermissionDataSource: Permission status after request: $status")
 
             if (status.hasLocationPermission && status.hasBackgroundLocationPermission && status.hasNotificationPermission && status.hasActivityRecognitionPermission) {
                 Result.success(status)
@@ -46,9 +43,11 @@ class IOSPermissionDataSource(
 
     override suspend fun requestLocationPermissions(): Result<Boolean> {
         return try {
-            permissionChecker.requestAllPermissions()
-            kotlinx.coroutines.delay(1000)
-            Result.success(permissionChecker.hasLocationPermissions())
+            val result = permissionRequester.requestAllPermissions()
+            if (result.isFailure) {
+                return Result.failure(result.exceptionOrNull() ?: Exception("Failed to request permissions"))
+            }
+            Result.success(permissionRequester.hasLocationPermissions())
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -56,9 +55,11 @@ class IOSPermissionDataSource(
 
     override suspend fun requestBackgroundLocationPermission(): Result<Boolean> {
         return try {
-            permissionChecker.requestAllPermissions()
-            kotlinx.coroutines.delay(1000)
-            Result.success(permissionChecker.hasBackgroundLocationPermission())
+            val result = permissionRequester.requestAllPermissions()
+            if (result.isFailure) {
+                return Result.failure(result.exceptionOrNull() ?: Exception("Failed to request permissions"))
+            }
+            Result.success(permissionRequester.hasBackgroundLocationPermission())
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -66,19 +67,18 @@ class IOSPermissionDataSource(
 
     override suspend fun requestNotificationPermission(): Result<Boolean> {
         return try {
-            permissionChecker.requestNotificationPermission()
-            kotlinx.coroutines.delay(1000)
-            Result.success(permissionChecker.hasNotificationPermission())
+            val result = permissionRequester.requestNotificationPermission()
+            if (result.isFailure) {
+                return Result.failure(result.exceptionOrNull() ?: Exception("Failed to request notification permission"))
+            }
+            Result.success(permissionRequester.hasNotificationPermission())
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
 
     override suspend fun openAppSettings() {
-        val settingsUrl = NSURL.URLWithString(UIApplicationOpenSettingsURLString)
-        settingsUrl?.let { url ->
-            UIApplication.sharedApplication.openURL(url)
-        }
+        permissionRequester.openAppSettings()
     }
 
     override suspend fun requestBatteryOptimizationDisable(): Result<Boolean> {
