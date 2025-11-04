@@ -22,23 +22,7 @@ class PermissionRepositoryImpl(
         }
     }
 
-    override suspend fun requestLocationPermissions(): Result<Boolean> {
-        return permissionDataSource.requestLocationPermissions()
-    }
-
-    override suspend fun requestBackgroundLocationPermission(): Result<Boolean> {
-        return permissionDataSource.requestBackgroundLocationPermission()
-    }
-
     override suspend fun requestNotificationPermission(): Result<Boolean> {
         return permissionDataSource.requestNotificationPermission()
-    }
-
-    override suspend fun openAppSettings() {
-        permissionDataSource.openAppSettings()
-    }
-
-    override suspend fun requestBatteryOptimizationDisable(): Result<Boolean> {
-        return permissionDataSource.requestBatteryOptimizationDisable()
     }
 }

@@ -52,13 +52,4 @@ class AndroidPermissionRequesterImpl : PermissionRequester, KoinComponent {
             Result.failure(e)
         }
     }
-
-    override suspend fun openAppSettings(): Result<Unit> {
-        return try {
-            permissionRequester.openAppSettings()
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
 }

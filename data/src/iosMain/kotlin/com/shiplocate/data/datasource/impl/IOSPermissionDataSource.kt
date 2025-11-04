@@ -41,30 +41,6 @@ class IOSPermissionDataSource(
         }
     }
 
-    override suspend fun requestLocationPermissions(): Result<Boolean> {
-        return try {
-            val result = permissionRequester.requestAllPermissions()
-            if (result.isFailure) {
-                return Result.failure(result.exceptionOrNull() ?: Exception("Failed to request permissions"))
-            }
-            Result.success(permissionRequester.hasLocationPermissions())
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    override suspend fun requestBackgroundLocationPermission(): Result<Boolean> {
-        return try {
-            val result = permissionRequester.requestAllPermissions()
-            if (result.isFailure) {
-                return Result.failure(result.exceptionOrNull() ?: Exception("Failed to request permissions"))
-            }
-            Result.success(permissionRequester.hasBackgroundLocationPermission())
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
     override suspend fun requestNotificationPermission(): Result<Boolean> {
         return try {
             val result = permissionRequester.requestNotificationPermission()
@@ -75,14 +51,5 @@ class IOSPermissionDataSource(
         } catch (e: Exception) {
             Result.failure(e)
         }
-    }
-
-    override suspend fun openAppSettings() {
-        permissionRequester.openAppSettings()
-    }
-
-    override suspend fun requestBatteryOptimizationDisable(): Result<Boolean> {
-        // В iOS не применимо
-        return Result.success(true)
     }
 }

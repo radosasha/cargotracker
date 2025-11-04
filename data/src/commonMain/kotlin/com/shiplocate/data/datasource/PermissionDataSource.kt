@@ -16,28 +16,9 @@ interface PermissionDataSource {
      */
     suspend fun requestAllPermissions(): Result<PermissionDataModel>
 
-    /**
-     * Запрашивает разрешения на GPS
-     */
-    suspend fun requestLocationPermissions(): Result<Boolean>
-
-    /**
-     * Запрашивает разрешения на фоновое отслеживание
-     */
-    suspend fun requestBackgroundLocationPermission(): Result<Boolean>
 
     /**
      * Запрашивает разрешения на уведомления
      */
     suspend fun requestNotificationPermission(): Result<Boolean>
-
-    /**
-     * Открывает настройки приложения
-     */
-    suspend fun openAppSettings()
-
-    /**
-     * Запрашивает отключение оптимизации батареи
-     */
-    suspend fun requestBatteryOptimizationDisable(): Result<Boolean>
 }

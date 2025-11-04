@@ -55,41 +55,10 @@ class AndroidPermissionDataSource(
         }
     }
 
-    override suspend fun requestLocationPermissions(): Result<Boolean> {
-        return try {
-            permissionRequester.requestAllPermissions()
-            Result.success(permissionRequester.hasLocationPermissions())
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    override suspend fun requestBackgroundLocationPermission(): Result<Boolean> {
-        return try {
-            permissionRequester.requestAllPermissions()
-            Result.success(permissionRequester.hasBackgroundLocationPermission())
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
     override suspend fun requestNotificationPermission(): Result<Boolean> {
         return try {
             permissionRequester.requestNotificationPermission()
             Result.success(permissionRequester.hasNotificationPermission())
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    override suspend fun openAppSettings() {
-        permissionRequester.openAppSettings()
-    }
-
-    override suspend fun requestBatteryOptimizationDisable(): Result<Boolean> {
-        return try {
-            permissionRequester.openAppSettings()
-            Result.success(true)
         } catch (e: Exception) {
             Result.failure(e)
         }
