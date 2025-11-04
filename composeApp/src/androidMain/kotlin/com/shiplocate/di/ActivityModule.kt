@@ -2,7 +2,6 @@ package com.shiplocate.di
 
 import com.shiplocate.ActivityProvider
 import com.shiplocate.AndroidPermissionRequesterImpl
-import com.shiplocate.PermissionChecker
 import com.shiplocate.data.datasource.PermissionRequester
 import org.koin.dsl.module
 
@@ -14,11 +13,6 @@ val activityModule = module {
     // ActivityContextProvider как singleton в scope Activity
     single<ActivityProvider> {
         ActivityProvider()
-    }
-
-    // PermissionChecker как singleton в scope Activity
-    single<PermissionChecker> {
-        PermissionChecker()
     }
 
     // PermissionRequester для domain слоя
