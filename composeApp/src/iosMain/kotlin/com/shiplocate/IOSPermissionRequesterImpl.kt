@@ -1,7 +1,6 @@
 package com.shiplocate
 
 import com.shiplocate.data.datasource.PermissionRequester
-import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.suspendCancellableCoroutine
 import platform.CoreLocation.CLLocationManager
 import platform.CoreLocation.CLLocationManagerDelegateProtocol
@@ -16,9 +15,6 @@ import platform.CoreMotion.CMAuthorizationStatusNotDetermined
 import platform.CoreMotion.CMAuthorizationStatusRestricted
 import platform.CoreMotion.CMMotionActivityManager
 import platform.Foundation.NSOperationQueue
-import platform.Foundation.NSURL
-import platform.UIKit.UIApplication
-import platform.UIKit.UIApplicationOpenSettingsURLString
 import platform.UserNotifications.UNAuthorizationOptionAlert
 import platform.UserNotifications.UNAuthorizationOptionBadge
 import platform.UserNotifications.UNAuthorizationOptionSound
@@ -115,7 +111,9 @@ class IOSPermissionRequesterImpl : PermissionRequester {
                         CMAuthorizationStatusAuthorized -> true
                         CMAuthorizationStatusNotDetermined,
                         CMAuthorizationStatusRestricted,
-                        CMAuthorizationStatusDenied, -> false
+                        CMAuthorizationStatusDenied,
+                            -> false
+
                         else -> false
                     }
                     println("iOS: Motion permission check - status: $status, hasPermission: $hasPermission")
@@ -135,112 +133,153 @@ class IOSPermissionRequesterImpl : PermissionRequester {
     }
 
     override suspend fun requestAllPermissions(): Result<Unit> {
+        if (!hasLocationPermissions()) {
+            val result = requestLocationPermission()
+            if (result.isFailure) {
+                return result
+            }
+        }
+        if (!hasBackgroundLocationPermission()) {
+            val result = requestBackgroundLocationPermission()
+            if (result.isFailure) {
+                return result
+            }
+        }
+        if (!hasNotificationPermission()) {
+            val result = requestNotificationPermissions()
+            if (result.isFailure) {
+                return result
+            }
+        }
+        if (!hasActivityRecognitionPermission()) {
+            val result = requestMotionPermission()
+            if (result.isFailure) {
+                return result
+            }
+        }
+        return Result.success(Unit)
+    }
+
+    private suspend fun requestLocationPermission(): Result<Unit> {
         return suspendCancellableCoroutine { continuation ->
             dispatch_async(dispatch_get_main_queue()) {
-                val status = locationManager.authorizationStatus
-                println("iOS: requestAllPermissions - location status: $status")
+                locationDelegate.onAuthorizationChange = { newStatus ->
+                    when (newStatus) {
+                        kCLAuthorizationStatusAuthorizedWhenInUse,
+                        kCLAuthorizationStatusAuthorizedAlways,
+                            -> {
+                            locationDelegate.onAuthorizationChange = null
+                            continuation.resume(Result.success(Unit))
+                        }
 
-                when (status) {
-                    kCLAuthorizationStatusNotDetermined -> {
-                        requestLocationPermissionSuspend(continuation)
-                    }
+                        kCLAuthorizationStatusDenied.toInt(), kCLAuthorizationStatusRestricted.toInt() -> {
+                            locationDelegate.onAuthorizationChange = null
+                            continuation.resume(Result.failure(Exception("Location permission denied")))
+                        }
 
-                    kCLAuthorizationStatusAuthorizedWhenInUse -> {
-                        requestBackgroundLocationPermissionSuspend(continuation)
-                    }
-
-                    kCLAuthorizationStatusAuthorizedAlways -> {
-                        requestMotionAndNotificationPermissionsSuspend(continuation)
-                    }
-
-                    kCLAuthorizationStatusDenied, kCLAuthorizationStatusRestricted -> {
-                        println("iOS: Location permission denied or restricted")
-                        continuation.resume(Result.failure(Exception("Location permission denied")))
-                    }
-
-                    else -> {
-                        println("iOS: Unknown authorization status: $status")
-                        continuation.resume(Result.failure(Exception("Unknown authorization status")))
+                        else -> {
+                            continuation.resume(Result.failure(Exception("Location permission status: ${newStatus}")))
+                        }
                     }
                 }
             }
+            locationManager.requestWhenInUseAuthorization()
+        }
+    }
+
+    private suspend fun requestMotionPermission(): Result<Unit> {
+        return suspendCancellableCoroutine { continuation ->
+            dispatch_async(dispatch_get_main_queue()) {
+                // Проверяем статус Motion разрешения
+                val motionStatus = CMMotionActivityManager.authorizationStatus()
+                println("iOS: Motion permission status: $motionStatus")
+
+                when (motionStatus) {
+                    CMAuthorizationStatusAuthorized -> {
+                        // Разрешение уже есть, сразу переходим к уведомлениям
+                        println("iOS: Motion permission already granted, requesting notifications...")
+                        continuation.resume(Result.success(Unit))
+                    }
+
+                    CMAuthorizationStatusNotDetermined -> {
+                        // Разрешение не запрашивалось, запрашиваем
+                        println("iOS: Requesting motion permission...")
+                        requestMotionPermissionSuspend { motionGranted ->
+                            if (motionGranted) {
+                                println("iOS: Motion permission granted, requesting notifications...")
+                                continuation.resume(Result.success(Unit))
+                            } else {
+                                println("iOS: Motion permission denied")
+                                continuation.resume(Result.failure(Exception("Motion permission denied")))
+                            }
+                        }
+                    }
+
+                    CMAuthorizationStatusDenied, CMAuthorizationStatusRestricted -> {
+                        // Разрешение отклонено или ограничено
+                        println("iOS: Motion permission denied or restricted")
+                        continuation.resume(Result.failure(Exception("Motion permission denied")))
+                    }
+
+                    else -> {
+                        println("iOS: Unknown motion authorization status: $motionStatus")
+                        continuation.resume(Result.failure(Exception("Unknown motion authorization status")))
+                    }
+                }
+            }
+        }
+    }
+
+    private suspend fun requestNotificationPermissions(): Result<Unit> {
+        return suspendCancellableCoroutine { continuation ->
+            dispatch_async(dispatch_get_main_queue()) {
+                println("iOS: Requesting notification permission...")
+                val center = UNUserNotificationCenter.currentNotificationCenter()
+                center.requestAuthorizationWithOptions(
+                    options = UNAuthorizationOptionAlert or UNAuthorizationOptionBadge or UNAuthorizationOptionSound,
+                    completionHandler = { granted, error ->
+                        if (granted) {
+                            println("iOS: All permissions granted")
+                            continuation.resume(Result.success(Unit))
+                        } else {
+                            println("iOS: Notification permission denied: ${error?.localizedDescription}")
+                            continuation.resume(Result.failure(Exception("Notification permission denied: ${error?.localizedDescription}")))
+                        }
+                    },
+                )
+            }
+        }
+    }
+
+    private suspend fun requestBackgroundLocationPermission(): Result<Unit> {
+        return suspendCancellableCoroutine { continuation ->
+            dispatch_async(dispatch_get_main_queue()) {
+                locationDelegate.onAuthorizationChange = { newStatus ->
+                    when (newStatus) {
+                        kCLAuthorizationStatusAuthorizedAlways.toInt() -> {
+                            locationDelegate.onAuthorizationChange = null
+                            continuation.resume(Result.success(Unit))
+                        }
+
+                        kCLAuthorizationStatusDenied.toInt(), kCLAuthorizationStatusRestricted.toInt() -> {
+                            locationDelegate.onAuthorizationChange = null
+                            continuation.resume(Result.failure(Exception("Background location permission denied")))
+                        }
+
+                        else -> {
+                            continuation.resume(Result.failure(Exception("Background location permission denied, status: $newStatus")))
+                        }
+                    }
+                }
+            }
+            locationManager.requestAlwaysAuthorization()
         }
     }
 
     override suspend fun requestNotificationPermission(): Result<Unit> {
-        return try {
-            requestNotificationPermissionsSync()
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
+        return requestNotificationPermissions()
     }
 
-    override suspend fun openAppSettings(): Result<Unit> {
-        return try {
-            UIApplication.sharedApplication.openURL(NSURL(string = UIApplicationOpenSettingsURLString))
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    private fun requestLocationPermissionSuspend(continuation: CancellableContinuation<Result<Unit>>) {
-        println("iOS: Requesting location permission...")
-        locationDelegate.onAuthorizationChange = { newStatus ->
-            when (newStatus) {
-                kCLAuthorizationStatusAuthorizedWhenInUse.toInt() -> {
-                    locationDelegate.onAuthorizationChange = null
-                    requestBackgroundLocationPermissionSuspend(continuation)
-                }
-
-                kCLAuthorizationStatusDenied.toInt(), kCLAuthorizationStatusRestricted.toInt() -> {
-                    locationDelegate.onAuthorizationChange = null
-                    continuation.resume(Result.failure(Exception("Location permission denied")))
-                }
-
-                else -> {
-                    // Ожидаем дальнейшего ответа
-                }
-            }
-        }
-        locationManager.requestWhenInUseAuthorization()
-    }
-
-    private fun requestBackgroundLocationPermissionSuspend(continuation: CancellableContinuation<Result<Unit>>) {
-        println("iOS: Requesting background location permission...")
-        locationDelegate.onAuthorizationChange = { newStatus ->
-            when (newStatus) {
-                kCLAuthorizationStatusAuthorizedAlways.toInt() -> {
-                    locationDelegate.onAuthorizationChange = null
-                    requestMotionAndNotificationPermissionsSuspend(continuation)
-                }
-
-                kCLAuthorizationStatusDenied.toInt(), kCLAuthorizationStatusRestricted.toInt() -> {
-                    locationDelegate.onAuthorizationChange = null
-                    continuation.resume(Result.failure(Exception("Background location permission denied")))
-                }
-
-                else -> {
-                    // Ожидаем дальнейшего ответа
-                }
-            }
-        }
-        locationManager.requestAlwaysAuthorization()
-    }
-
-    private fun requestMotionAndNotificationPermissionsSuspend(continuation: CancellableContinuation<Result<Unit>>) {
-        println("iOS: Requesting motion permission...")
-        requestMotionPermissionSuspend { motionGranted ->
-            if (motionGranted) {
-                println("iOS: Motion permission granted, requesting notifications...")
-                requestNotificationPermissionsSuspend(continuation)
-            } else {
-                println("iOS: Motion permission denied")
-                continuation.resume(Result.failure(Exception("Motion permission denied")))
-            }
-        }
-    }
 
     private fun requestMotionPermissionSuspend(onComplete: (Boolean) -> Unit) {
         dispatch_async(dispatch_get_main_queue()) {
@@ -280,7 +319,7 @@ class IOSPermissionRequesterImpl : PermissionRequester {
                         motionPermissionRequested = true
                         motionPermissionGranted = true
                         onComplete(true)
-                    }else{
+                    } else {
                         println("fdfd")
                     }
                 }
@@ -289,43 +328,6 @@ class IOSPermissionRequesterImpl : PermissionRequester {
                 motionPermissionRequested = true
                 motionPermissionGranted = false
                 onComplete(false)
-            }
-        }
-    }
-
-    private fun requestNotificationPermissionsSuspend(continuation: CancellableContinuation<Result<Unit>>) {
-        println("iOS: Requesting notification permission...")
-        val center = UNUserNotificationCenter.currentNotificationCenter()
-        center.requestAuthorizationWithOptions(
-            options = UNAuthorizationOptionAlert or UNAuthorizationOptionBadge or UNAuthorizationOptionSound,
-            completionHandler = { granted, error ->
-                if (granted) {
-                    println("iOS: All permissions granted")
-                    continuation.resume(Result.success(Unit))
-                } else {
-                    println("iOS: Notification permission denied: ${error?.localizedDescription}")
-                    continuation.resume(Result.failure(Exception("Notification permission denied: ${error?.localizedDescription}")))
-                }
-            },
-        )
-    }
-
-    private suspend fun requestNotificationPermissionsSync() {
-        return suspendCancellableCoroutine { continuation ->
-            dispatch_async(dispatch_get_main_queue()) {
-                println("iOS: Requesting notification permission...")
-                val center = UNUserNotificationCenter.currentNotificationCenter()
-                center.requestAuthorizationWithOptions(
-                    options = UNAuthorizationOptionAlert or UNAuthorizationOptionBadge or UNAuthorizationOptionSound,
-                    completionHandler = { granted, error ->
-                        if (granted) {
-                            println("iOS: Notification permission granted")
-                        } else {
-                            println("iOS: Notification permission denied: ${error?.localizedDescription}")
-                        }
-                        continuation.resumeWith(Result.success(Unit))
-                    },
-                )
             }
         }
     }
