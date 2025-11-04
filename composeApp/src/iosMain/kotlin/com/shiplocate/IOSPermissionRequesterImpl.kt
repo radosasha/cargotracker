@@ -14,21 +14,19 @@ import platform.CoreMotion.CMAuthorizationStatusDenied
 import platform.CoreMotion.CMAuthorizationStatusNotDetermined
 import platform.CoreMotion.CMAuthorizationStatusRestricted
 import platform.CoreMotion.CMMotionActivityManager
+import platform.Foundation.NSDate
 import platform.Foundation.NSOperationQueue
+import platform.Foundation.dateWithTimeIntervalSinceNow
 import platform.UserNotifications.UNAuthorizationOptionAlert
 import platform.UserNotifications.UNAuthorizationOptionBadge
 import platform.UserNotifications.UNAuthorizationOptionSound
 import platform.UserNotifications.UNAuthorizationStatusAuthorized
 import platform.UserNotifications.UNUserNotificationCenter
-import platform.darwin.DISPATCH_TIME_NOW
 import platform.darwin.NSObject
-import platform.darwin.dispatch_after
 import platform.darwin.dispatch_async
 import platform.darwin.dispatch_get_main_queue
-import platform.darwin.dispatch_time
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
-import kotlin.time.Duration.Companion.seconds
 
 /**
  * iOS реализация PermissionRequester
@@ -41,10 +39,6 @@ class IOSPermissionRequesterImpl : PermissionRequester {
         manager
     }
     private val locationDelegate = LocationManagerDelegate()
-
-    // Флаг для отслеживания, было ли Motion разрешение запрошено
-    private var motionPermissionRequested = false
-    private var motionPermissionGranted = false
 
     // Делегат для отслеживания изменений статуса разрешений
     private class LocationManagerDelegate : NSObject(), CLLocationManagerDelegateProtocol {
@@ -204,14 +198,27 @@ class IOSPermissionRequesterImpl : PermissionRequester {
                     CMAuthorizationStatusNotDetermined -> {
                         // Разрешение не запрашивалось, запрашиваем
                         println("iOS: Requesting motion permission...")
-                        requestMotionPermissionSuspend { motionGranted ->
-                            if (motionGranted) {
-                                println("iOS: Motion permission granted, requesting notifications...")
-                                continuation.resume(Result.success(Unit))
-                            } else {
-                                println("iOS: Motion permission denied")
-                                continuation.resume(Result.failure(Exception("Motion permission denied")))
-                            }
+                        val motionManager = CMMotionActivityManager()
+
+                        println("iOS: Requesting motion permission via queryActivityStartingFromDate...")
+
+                        // Используем queryActivityStartingFromDate для запроса разрешения
+                        // Это покажет диалог при первом обращении
+                        val now = NSDate()
+                        val oneDayAgo = NSDate.dateWithTimeIntervalSinceNow(-600.0) // 24 часа назад
+
+                        motionManager.queryActivityStartingFromDate(
+                            start = oneDayAgo,
+                            toDate = now,
+                            toQueue = NSOperationQueue.mainQueue
+                        ) { activities, error ->
+                            // Проверяем статус разрешения через authorizationStatus
+                            val status = CMMotionActivityManager.authorizationStatus()
+                            val hasPermission = status == CMAuthorizationStatusAuthorized
+                            continuation.resume(
+                                if (hasPermission) Result.success(Unit)
+                                else Result.failure(Exception("Motion permission denied"))
+                            )
                         }
                     }
 
@@ -278,57 +285,5 @@ class IOSPermissionRequesterImpl : PermissionRequester {
 
     override suspend fun requestNotificationPermission(): Result<Unit> {
         return requestNotificationPermissions()
-    }
-
-
-    private fun requestMotionPermissionSuspend(onComplete: (Boolean) -> Unit) {
-        dispatch_async(dispatch_get_main_queue()) {
-            try {
-                val motionManager = CMMotionActivityManager()
-                var callbackCalled = false
-
-                println("iOS: Requesting motion permission via startActivityUpdates...")
-
-                // Таймаут на случай, если пользователь не ответил на диалог или разрешение отклонено
-                val timeoutDelay = 10.seconds
-                val timeoutTime = dispatch_time(DISPATCH_TIME_NOW, timeoutDelay.inWholeNanoseconds.toLong())
-
-                dispatch_after(timeoutTime, dispatch_get_main_queue()) {
-                    if (!callbackCalled) {
-                        callbackCalled = true
-                        println("iOS: Motion permission request timeout - user did not respond or permission denied")
-                        motionManager.stopActivityUpdates()
-                        motionPermissionRequested = true
-                        motionPermissionGranted = false
-                        onComplete(false)
-                    }
-                }
-
-                // Запускаем обновления напрямую - это покажет диалог при первом обращении
-                // Если разрешение уже есть, callback сработает сразу
-                motionManager.startActivityUpdatesToQueue(
-                    queue = NSOperationQueue.mainQueue
-                ) { activity ->
-                    if (!callbackCalled) {
-                        callbackCalled = true
-
-                        // Останавливаем обновления сразу после первого callback
-                        motionManager.stopActivityUpdates()
-
-                        println("iOS: Motion permission granted or already had permission")
-                        motionPermissionRequested = true
-                        motionPermissionGranted = true
-                        onComplete(true)
-                    } else {
-                        println("fdfd")
-                    }
-                }
-            } catch (e: Exception) {
-                println("iOS: Error requesting motion permission: ${e.message}")
-                motionPermissionRequested = true
-                motionPermissionGranted = false
-                onComplete(false)
-            }
-        }
     }
 }
