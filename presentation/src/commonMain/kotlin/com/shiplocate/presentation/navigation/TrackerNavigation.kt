@@ -1,6 +1,7 @@
 package com.shiplocate.presentation.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -10,6 +11,8 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import androidx.navigation.NavController
+import androidx.navigation.NavDestination
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -40,23 +43,66 @@ import kotlinx.coroutines.launch
  * (Type-safe args не поддерживаются в KMP)
  *
  * Проверяет наличие токена при старте
+ * 
+ * @param onNavControllerReady Callback для передачи navController и currentRoute наружу
  */
 @Suppress("FunctionName")
 @Composable
-fun TrackerNavigation() {
+fun TrackerNavigation(
+    onNavControllerReady: (NavController, String?) -> Unit = { _, _ -> },
+) {
     val navController = rememberNavController()
     val hasAuthSessionUseCase: HasAuthSessionUseCase = koinInject()
     val scope = rememberCoroutineScope()
 
     var isCheckingAuth by remember { mutableStateOf(true) }
     var startDestination by remember { mutableStateOf(Screen.ENTER_PHONE) }
+    
+    // Отслеживаем текущий route для передачи наружу
+    var currentRoute by remember { mutableStateOf<String?>(null) }
+    
+    // Отслеживаем изменения в navigation state через listener для надежности
+    DisposableEffect(navController) {
+        val listener = NavController.OnDestinationChangedListener { _, destination, _ ->
+            val route = destination.route
+            if (route != null) {
+                currentRoute = route
+                onNavControllerReady(navController, route)
+            }
+        }
+        navController.addOnDestinationChangedListener(listener)
+        
+        // Инициализируем текущий route
+        val initialRoute = navController.currentBackStackEntry?.destination?.route
+        if (initialRoute != null) {
+            currentRoute = initialRoute
+            onNavControllerReady(navController, initialRoute)
+        }
+        
+        onDispose {
+            navController.removeOnDestinationChangedListener(listener)
+        }
+    }
+    
+    // Также отслеживаем через state для немедленного обновления UI
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val route = navBackStackEntry?.destination?.route
+    
+    LaunchedEffect(route) {
+        if (route != null && route != currentRoute) {
+            currentRoute = route
+            onNavControllerReady(navController, route)
+        }
+    }
 
     // Check auth session on start
     LaunchedEffect(Unit) {
         scope.launch {
             val hasSession = hasAuthSessionUseCase()
             startDestination = if (hasSession) Screen.LOADS else Screen.ENTER_PHONE
+            currentRoute = startDestination
             isCheckingAuth = false
+            onNavControllerReady(navController, startDestination)
         }
     }
 
