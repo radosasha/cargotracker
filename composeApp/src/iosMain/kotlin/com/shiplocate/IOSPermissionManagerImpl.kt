@@ -1,6 +1,6 @@
 package com.shiplocate
 
-import com.shiplocate.data.datasource.PermissionRequester
+import com.shiplocate.data.datasource.PermissionManager
 import kotlinx.coroutines.suspendCancellableCoroutine
 import platform.CoreLocation.CLLocationManager
 import platform.CoreLocation.CLLocationManagerDelegateProtocol
@@ -31,7 +31,7 @@ import kotlin.coroutines.suspendCoroutine
 /**
  * iOS реализация PermissionRequester
  */
-class IOSPermissionRequesterImpl : PermissionRequester {
+class IOSPermissionManagerImpl : PermissionManager {
     // Lazy инициализация - создается только при первом обращении
     private val locationManager: CLLocationManager by lazy {
         val manager = CLLocationManager()

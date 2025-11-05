@@ -1,13 +1,13 @@
 package com.shiplocate
 
-import com.shiplocate.data.datasource.PermissionRequester
+import com.shiplocate.data.datasource.PermissionManager
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
 /**
  * Android реализация PermissionRequester
  */
-class AndroidPermissionRequesterImpl : PermissionRequester, KoinComponent {
+class AndroidPermissionManagerImpl : PermissionManager, KoinComponent {
     private val activityContextProvider: ActivityProvider by inject()
     
     // Lazy инициализация - создается только при первом обращении

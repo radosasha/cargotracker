@@ -1,29 +1,29 @@
 package com.shiplocate.data.datasource.impl
 
 import com.shiplocate.data.datasource.PermissionDataSource
-import com.shiplocate.data.datasource.PermissionRequester
+import com.shiplocate.data.datasource.PermissionManager
 import com.shiplocate.data.model.PermissionDataModel
 
 /**
  * iOS реализация PermissionDataSource
  */
 class IOSPermissionDataSource(
-    private val permissionRequester: PermissionRequester,
+    private val permissionManager: PermissionManager,
 ) : PermissionDataSource {
     override suspend fun getPermissionStatus(): PermissionDataModel {
         return PermissionDataModel(
-            hasLocationPermission = permissionRequester.hasLocationPermissions(),
-            hasBackgroundLocationPermission = permissionRequester.hasBackgroundLocationPermission(),
-            hasNotificationPermission = permissionRequester.hasNotificationPermission(),
-            hasActivityRecognitionPermission = permissionRequester.hasActivityRecognitionPermission(),
-            isBatteryOptimizationDisabled = permissionRequester.isBatteryOptimizationDisabled(),
+            hasLocationPermission = permissionManager.hasLocationPermissions(),
+            hasBackgroundLocationPermission = permissionManager.hasBackgroundLocationPermission(),
+            hasNotificationPermission = permissionManager.hasNotificationPermission(),
+            hasActivityRecognitionPermission = permissionManager.hasActivityRecognitionPermission(),
+            isBatteryOptimizationDisabled = permissionManager.isBatteryOptimizationDisabled(),
         )
     }
 
     override suspend fun requestAllPermissions(): Result<PermissionDataModel> {
         return try {
             // Используем suspend версию, которая ждет результата через callbacks
-            val result = permissionRequester.requestAllPermissions()
+            val result = permissionManager.requestAllPermissions()
             if (result.isFailure) {
                 return Result.failure(result.exceptionOrNull() ?: Exception("Failed to request permissions"))
             }
@@ -43,11 +43,11 @@ class IOSPermissionDataSource(
 
     override suspend fun requestNotificationPermission(): Result<Boolean> {
         return try {
-            val result = permissionRequester.requestNotificationPermission()
+            val result = permissionManager.requestNotificationPermission()
             if (result.isFailure) {
                 return Result.failure(result.exceptionOrNull() ?: Exception("Failed to request notification permission"))
             }
-            Result.success(permissionRequester.hasNotificationPermission())
+            Result.success(permissionManager.hasNotificationPermission())
         } catch (e: Exception) {
             Result.failure(e)
         }

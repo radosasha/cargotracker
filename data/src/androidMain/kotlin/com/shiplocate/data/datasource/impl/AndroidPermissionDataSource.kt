@@ -3,30 +3,30 @@ package com.shiplocate.data.datasource.impl
 import com.shiplocate.core.logging.LogCategory
 import com.shiplocate.core.logging.Logger
 import com.shiplocate.data.datasource.PermissionDataSource
-import com.shiplocate.data.datasource.PermissionRequester
+import com.shiplocate.data.datasource.PermissionManager
 import com.shiplocate.data.model.PermissionDataModel
 
 /**
  * Android реализация PermissionDataSource
  */
 class AndroidPermissionDataSource(
-    private val permissionRequester: PermissionRequester,
+    private val permissionManager: PermissionManager,
     private val logger: Logger,
 ) : PermissionDataSource {
     override suspend fun getPermissionStatus(): PermissionDataModel {
         return PermissionDataModel(
-            hasLocationPermission = permissionRequester.hasLocationPermissions(),
-            hasBackgroundLocationPermission = permissionRequester.hasBackgroundLocationPermission(),
-            hasNotificationPermission = permissionRequester.hasNotificationPermission(),
-            hasActivityRecognitionPermission = permissionRequester.hasActivityRecognitionPermission(),
-            isBatteryOptimizationDisabled = permissionRequester.isBatteryOptimizationDisabled(),
+            hasLocationPermission = permissionManager.hasLocationPermissions(),
+            hasBackgroundLocationPermission = permissionManager.hasBackgroundLocationPermission(),
+            hasNotificationPermission = permissionManager.hasNotificationPermission(),
+            hasActivityRecognitionPermission = permissionManager.hasActivityRecognitionPermission(),
+            isBatteryOptimizationDisabled = permissionManager.isBatteryOptimizationDisabled(),
         )
     }
 
     override suspend fun requestAllPermissions(): Result<PermissionDataModel> {
         return try {
             logger.debug(LogCategory.PERMISSIONS, "AndroidPermissionDataSource.requestAllPermissions() called")
-            permissionRequester.requestAllPermissions()
+            permissionManager.requestAllPermissions()
 
             val status = getPermissionStatus()
             logger.debug(
@@ -57,8 +57,8 @@ class AndroidPermissionDataSource(
 
     override suspend fun requestNotificationPermission(): Result<Boolean> {
         return try {
-            permissionRequester.requestNotificationPermission()
-            Result.success(permissionRequester.hasNotificationPermission())
+            permissionManager.requestNotificationPermission()
+            Result.success(permissionManager.hasNotificationPermission())
         } catch (e: Exception) {
             Result.failure(e)
         }

@@ -1,8 +1,8 @@
 package com.shiplocate.di
 
 import com.shiplocate.ActivityProvider
-import com.shiplocate.AndroidPermissionRequesterImpl
-import com.shiplocate.data.datasource.PermissionRequester
+import com.shiplocate.AndroidPermissionManagerImpl
+import com.shiplocate.data.datasource.PermissionManager
 import org.koin.dsl.module
 
 /**
@@ -16,7 +16,7 @@ val activityModule = module {
     }
 
     // PermissionRequester для domain слоя
-    single<PermissionRequester> {
-        AndroidPermissionRequesterImpl()
+    single<PermissionManager> {
+        AndroidPermissionManagerImpl()
     }
 }

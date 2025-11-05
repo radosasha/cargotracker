@@ -1,7 +1,7 @@
 package com.shiplocate.di
 
-import com.shiplocate.IOSPermissionRequesterImpl
-import com.shiplocate.data.datasource.PermissionRequester
+import com.shiplocate.IOSPermissionManagerImpl
+import com.shiplocate.data.datasource.PermissionManager
 import org.koin.dsl.module
 
 /**
@@ -11,5 +11,5 @@ val iosModule =
     module {
 
         // iOS Permission Requester для domain слоя
-        single<PermissionRequester> { IOSPermissionRequesterImpl() }
+        single<PermissionManager> { IOSPermissionManagerImpl() }
     }
