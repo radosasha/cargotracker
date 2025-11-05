@@ -85,40 +85,6 @@ class AndroidPermissionRequester(private val context: Activity) {
         return result
     }
 
-    fun hasAllRequiredPermissions(): Boolean {
-        return hasLocationPermissions() &&
-            hasBackgroundLocationPermission() &&
-            hasNotificationPermission() &&
-            hasActivityRecognitionPermission() &&
-            isBatteryOptimizationDisabled()
-    }
-
-    fun getPermissionStatusMessage(): String {
-        val missingPermissions = mutableListOf<String>()
-
-        if (!hasLocationPermissions()) {
-            missingPermissions.add("Location access")
-        }
-        if (!hasBackgroundLocationPermission()) {
-            missingPermissions.add("Background location")
-        }
-        if (!hasNotificationPermission()) {
-            missingPermissions.add("Notifications")
-        }
-        if (!hasActivityRecognitionPermission()) {
-            missingPermissions.add("Activity Recognition")
-        }
-        if (!isBatteryOptimizationDisabled()) {
-            missingPermissions.add("Battery optimization")
-        }
-
-        return if (missingPermissions.isEmpty()) {
-            "All permissions granted"
-        } else {
-            "Missing: ${missingPermissions.joinToString(", ")}"
-        }
-    }
-
     fun shouldShowLocationPermissionRationale(): Boolean {
         return ActivityCompat.shouldShowRequestPermissionRationale(
             context,

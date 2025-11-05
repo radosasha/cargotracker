@@ -22,6 +22,7 @@ import com.shiplocate.domain.usecase.load.ConnectToLoadUseCase
 import com.shiplocate.domain.usecase.load.DisconnectFromLoadUseCase
 import com.shiplocate.domain.usecase.load.GetCachedLoadsUseCase
 import com.shiplocate.domain.usecase.load.GetLoadsUseCase
+import com.shiplocate.domain.usecase.load.HasConnectedLoadUseCase
 import com.shiplocate.domain.usecase.logs.GetLogsClientIdUseCase
 import com.shiplocate.domain.usecase.logs.GetLogsUseCase
 import org.koin.core.module.dsl.factoryOf
@@ -65,6 +66,7 @@ val useCasesModule =
         factoryOf(::GetCachedLoadsUseCase)
         factoryOf(::ConnectToLoadUseCase)
         factoryOf(::DisconnectFromLoadUseCase)
+        factoryOf(::HasConnectedLoadUseCase)
 
         // Firebase Token Use Cases
         factoryOf(::HandleFirebaseTokenUseCase)
