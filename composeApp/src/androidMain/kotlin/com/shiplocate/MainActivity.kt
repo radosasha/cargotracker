@@ -4,7 +4,6 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import com.shiplocate.core.logging.LogCategory
@@ -15,42 +14,6 @@ import org.koin.core.component.inject
 
 class MainActivity : ComponentActivity(), KoinComponent {
     private val logger: Logger by inject()
-    private val locationPermissionLauncher =
-        registerForActivityResult(
-            ActivityResultContracts.RequestMultiplePermissions(),
-        ) { permissions ->
-            // Обработка результатов запроса разрешений
-            val allGranted = permissions.values.all { it }
-            if (allGranted) {
-                // Все разрешения предоставлены, можно продолжить
-                logger.info(LogCategory.PERMISSIONS, "All permissions granted")
-            } else {
-                // Некоторые разрешения отклонены
-                logger.warn(LogCategory.PERMISSIONS, "Some permissions denied: $permissions")
-            }
-        }
-
-    private val backgroundLocationPermissionLauncher =
-        registerForActivityResult(
-            ActivityResultContracts.RequestPermission(),
-        ) { isGranted ->
-            if (isGranted) {
-                logger.info(LogCategory.PERMISSIONS, "Background location permission granted")
-            } else {
-                logger.warn(LogCategory.PERMISSIONS, "Background location permission denied")
-            }
-        }
-
-    private val notificationPermissionLauncher =
-        registerForActivityResult(
-            ActivityResultContracts.RequestPermission(),
-        ) { isGranted ->
-            if (isGranted) {
-                logger.info(LogCategory.PERMISSIONS, "Notification permission granted")
-            } else {
-                logger.warn(LogCategory.PERMISSIONS, "Notification permission denied")
-            }
-        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()

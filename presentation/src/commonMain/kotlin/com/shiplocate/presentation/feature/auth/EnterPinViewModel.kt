@@ -67,15 +67,31 @@ class EnterPinViewModel(
         }
     }
 
-    fun onPinDigitCleared(index: Int) {
-        val newPinDigits = _uiState.value.pinDigits.toMutableList()
-        newPinDigits[index] = ""
+    fun onPinValueChanged(pin: String) {
+        // Фильтруем только цифры и ограничиваем длину до 6 символов
+        val filtered = pin.filter { it.isDigit() }.take(6)
+        
+        // Преобразуем строку в список символов
+        val newPinDigits = filtered.map { it.toString() }.toMutableList()
+        // Дополняем до 6 элементов пустыми строками
+        while (newPinDigits.size < 6) {
+            newPinDigits.add("")
+        }
+
+        logger.debug(LogCategory.AUTH, "EnterPinViewModel: PIN changed: '$filtered'")
 
         _uiState.update {
             it.copy(
                 pinDigits = newPinDigits,
                 errorMessage = null,
+                remainingAttempts = null,
             )
+        }
+
+        // Auto-submit when all 6 digits are entered
+        if (filtered.length == 6) {
+            logger.info(LogCategory.AUTH, "EnterPinViewModel: PIN complete: $filtered - auto-submitting")
+            verifyPin()
         }
     }
 
