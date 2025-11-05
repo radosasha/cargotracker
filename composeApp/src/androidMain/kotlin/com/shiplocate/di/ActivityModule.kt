@@ -17,6 +17,6 @@ val activityModule = module {
 
     // PermissionRequester для domain слоя
     single<PermissionManager> {
-        AndroidPermissionManagerImpl()
+        AndroidPermissionManagerImpl(get())
     }
 }

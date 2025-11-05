@@ -56,8 +56,8 @@ class MainActivity : ComponentActivity(), KoinComponent {
 
         // Передаем результат в AndroidPermissionRequester для обработки
         try {
-            val permissionRequester = AndroidPermissionRequester(this)
-            permissionRequester.handlePermissionResult(requestCode, grantResults)
+            val permissionManager: AndroidPermissionManagerImpl by inject()
+            permissionManager.handlePermissionResult(requestCode, grantResults)
         } catch (e: Exception) {
             logger.debug(LogCategory.PERMISSIONS, "Permission result: requestCode=$requestCode, permissions=${permissions.joinToString()}, grantResults=${grantResults.joinToString()}")
         }
