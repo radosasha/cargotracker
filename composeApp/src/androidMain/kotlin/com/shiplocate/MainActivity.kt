@@ -59,7 +59,10 @@ class MainActivity : ComponentActivity(), KoinComponent {
             val permissionManager: AndroidPermissionManagerImpl by inject()
             permissionManager.handlePermissionResult(requestCode, grantResults)
         } catch (e: Exception) {
-            logger.debug(LogCategory.PERMISSIONS, "Permission result: requestCode=$requestCode, permissions=${permissions.joinToString()}, grantResults=${grantResults.joinToString()}")
+            logger.debug(
+                LogCategory.PERMISSIONS,
+                "Permission result: requestCode=$requestCode, permissions=${permissions.joinToString()}, grantResults=${grantResults.joinToString()}"
+            )
         }
     }
 

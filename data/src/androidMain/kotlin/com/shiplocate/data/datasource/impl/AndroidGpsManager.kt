@@ -38,7 +38,7 @@ class AndroidGpsManager(
     companion object {
         // Интервалы обновления GPS (в миллисекундах)
         private const val MIN_TIME_MS = 60 * 1000L // 1 минута
-        private const val MIN_DISTANCE_M = 500f // 500 метров
+        private const val MIN_DISTANCE_M = 200f // 200 метров
     }
 
     @SuppressLint("MissingPermission")
