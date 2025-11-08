@@ -8,8 +8,10 @@ import androidx.room.PrimaryKey
  */
 @Entity(tableName = "loads")
 data class LoadEntity(
-    @PrimaryKey
-    val loadId: String,
+    @PrimaryKey(autoGenerate = true)
+    val id: Long,
+    val loadName: String,
+    val serverId: Long,
     val description: String?,
     val lastUpdated: Long?,
     val createdAt: Long,

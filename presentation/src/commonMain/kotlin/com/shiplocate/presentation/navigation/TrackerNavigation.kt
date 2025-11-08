@@ -205,7 +205,7 @@ fun TrackerNavigation(
             route = Screen.HOME,
             arguments =
                 listOf(
-                    navArgument("loadId") { type = NavType.StringType },
+                    navArgument("loadId") { type = NavType.LongType },
                 ),
         ) { backStackEntry ->
             val homeViewModelFactory = viewModelFactory {
@@ -213,7 +213,7 @@ fun TrackerNavigation(
                         koinHomeViewModel()
                     }
                 }
-            val loadId = backStackEntry.getStringArgument("loadId") ?: ""
+            val loadId = backStackEntry.getLongArgument("loadId") ?: 0L
             val viewModel: HomeViewModel = viewModel(
                     factory = homeViewModelFactory,
                 )

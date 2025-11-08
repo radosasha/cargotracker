@@ -30,13 +30,13 @@ class OsmAndLocationApi(
      * @return результат отправки
      */
     suspend fun sendLocation(
-        loadId: String,
+        serverLoadId: Long,
         location: LocationDataModel,
     ): Result<Unit> {
         return try {
             val url = "$serverUrl/api/osmand"
             logger.debug(LogCategory.NETWORK, "LocationApi.sendLocation() - URL: $url")
-            logger.debug(LogCategory.NETWORK, "LocationApi.sendLocation() - Load ID: $loadId")
+            logger.debug(LogCategory.NETWORK, "LocationApi.sendLocation() - Load ID: $serverLoadId")
             logger.debug(LogCategory.NETWORK, "LocationApi.sendLocation() - Location: lat=${location.latitude}, lon=${location.longitude}")
             logger.debug(LogCategory.NETWORK, "LocationApi.sendLocation() - Timestamp: ${location.timestamp}")
 
@@ -45,7 +45,7 @@ class OsmAndLocationApi(
                     url = url,
                     formParameters =
                         Parameters.build {
-                            append("id", loadId)
+                            append("id", serverLoadId.toString())
                             append("lat", location.latitude.toString())
                             append("lon", location.longitude.toString())
                             append("timestamp", location.timestamp.toEpochMilliseconds().toString())

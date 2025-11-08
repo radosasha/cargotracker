@@ -35,13 +35,13 @@ interface LoadApi {
      * Sets loadstatus=1 for the specified load and loadstatus=2 for all other loads with loadstatus=1
      *
      * @param token JWT token for authentication
-     * @param loadId Load ID to connect to
+     * @param serverLoadId Load ID to connect to
      * @return Updated list of LoadDto
      * @throws Exception if request fails
      */
     suspend fun connectToLoad(
         token: String,
-        loadId: String,
+        serverLoadId: Long,
     ): List<LoadDto>
 
     /**
@@ -49,13 +49,13 @@ interface LoadApi {
      * Sets loadstatus=2 for the specified load
      *
      * @param token JWT token for authentication
-     * @param loadId Load ID to disconnect from
+     * @param serverLoadId Load ID to disconnect from
      * @return Updated list of LoadDto
      * @throws Exception if request fails
      */
     suspend fun disconnectFromLoad(
         token: String,
-        loadId: String,
+        serverLoadId: Long,
     ): List<LoadDto>
 
     /**
@@ -68,7 +68,7 @@ interface LoadApi {
      */
     suspend fun pingLoad(
         token: String,
-        loadId: String,
+        loadId: Long,
     )
 }
 
@@ -95,11 +95,11 @@ class LoadApiImpl(
 
     override suspend fun connectToLoad(
         token: String,
-        loadId: String,
+        serverLoadId: Long,
     ): List<LoadDto> {
-        logger.debug(LogCategory.NETWORK, "🌐 LoadApi: Connecting to load $loadId")
+        logger.debug(LogCategory.NETWORK, "🌐 LoadApi: Connecting to load $serverLoadId")
 
-        val request = ConnectLoadRequest(loadId = loadId)
+        val request = ConnectLoadRequest(serverLoadId = serverLoadId)
         val response =
             httpClient.post("$baseUrl/api/mobile/loads/connect") {
                 header(HttpHeaders.Authorization, "Bearer $token")
@@ -113,11 +113,11 @@ class LoadApiImpl(
 
     override suspend fun disconnectFromLoad(
         token: String,
-        loadId: String,
+        serverLoadId: Long,
     ): List<LoadDto> {
-        logger.debug(LogCategory.NETWORK, "🌐 LoadApi: Disconnecting from load $loadId")
+        logger.debug(LogCategory.NETWORK, "🌐 LoadApi: Disconnecting from load $serverLoadId")
 
-        val request = DisconnectLoadRequest(loadId = loadId)
+        val request = DisconnectLoadRequest(serverLoadId = serverLoadId)
         val response =
             httpClient.post("$baseUrl/api/mobile/loads/disconnect") {
                 header(HttpHeaders.Authorization, "Bearer $token")
@@ -131,7 +131,7 @@ class LoadApiImpl(
 
     override suspend fun pingLoad(
         token: String,
-        loadId: String,
+        loadId: Long,
     ) {
         logger.debug(LogCategory.NETWORK, "🌐 LoadApi: Pinging load $loadId")
 

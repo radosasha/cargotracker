@@ -15,11 +15,11 @@ class DisconnectFromLoadUseCase(
     /**
      * Disconnect from load
      * Automatically retrieves auth token from preferences
-     * @param loadId Load ID to disconnect from
+     * @param loadId Internal ID of the load to disconnect from
      * @return Result with updated list of loads
      */
-    suspend operator fun invoke(loadId: String): Result<List<Load>> {
-        println("🔌 DisconnectFromLoadUseCase: Disconnecting from load $loadId")
+    suspend operator fun invoke(loadId: Long): Result<List<Load>> {
+        println("🔌 DisconnectFromLoadUseCase: Disconnecting from load with id: $loadId")
 
         // Get auth token
         val authSession = authPreferencesRepository.getSession()
@@ -30,6 +30,15 @@ class DisconnectFromLoadUseCase(
             return Result.failure(Exception("Not authenticated"))
         }
 
-        return loadRepository.disconnectFromLoad(token, loadId)
+        // Find the load by id to get its serverId
+        val loads = loadRepository.getCachedLoads()
+        val load = loads.find { it.id == loadId }
+
+        if (load == null) {
+            println("❌ DisconnectFromLoadUseCase: Load not found with id: $loadId")
+            return Result.failure(Exception("Load not found"))
+        }
+
+        return loadRepository.disconnectFromLoad(token, load.serverId)
     }
 }

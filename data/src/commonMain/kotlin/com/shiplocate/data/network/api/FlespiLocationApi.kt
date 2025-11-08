@@ -46,7 +46,7 @@ class FlespiLocationApi(
      * @return результат отправки
      */
     suspend fun sendLocations(
-        deviceId: String,
+        serverLoadId: Long,
         locations: List<LocationDataModel>,
     ): Result<Unit> {
         return try {
@@ -56,23 +56,23 @@ class FlespiLocationApi(
             }
 
             val flespiPositions = locations.map { location ->
-                    FlespiPosition(
-                        ident = deviceId,
-                        timestamp = location.timestamp.toEpochMilliseconds() / 1000, // Flespi использует Unix timestamp в секундах
-                        latitude = location.latitude,
-                        longitude = location.longitude,
-                        speed = location.speed?.toDouble() ?: 0.0,
-                        direction = location.course?.toDouble() ?: 0.0,
-                        altitude = location.altitude ?: 0.0,
-                        satellites = 0, // Можно добавить если есть данные о спутниках
-                        batteryLevel = location.batteryLevel ?: 0,
-                        valid = location.isValid,
-                        accuracy = location.accuracy?.toDouble() ?: 0.0,
-                    )
-                }
+                FlespiPosition(
+                    ident = serverLoadId.toString(),
+                    timestamp = location.timestamp.toEpochMilliseconds() / 1000, // Flespi использует Unix timestamp в секундах
+                    latitude = location.latitude,
+                    longitude = location.longitude,
+                    speed = location.speed?.toDouble() ?: 0.0,
+                    direction = location.course?.toDouble() ?: 0.0,
+                    altitude = location.altitude ?: 0.0,
+                    satellites = 0, // Можно добавить если есть данные о спутниках
+                    batteryLevel = location.batteryLevel?.toInt() ?: 0,
+                    valid = location.isValid,
+                    accuracy = location.accuracy?.toDouble() ?: 0.0,
+                )
+            }
 
             logger.debug(LogCategory.NETWORK, "FlespiLocationApi: Sending ${locations.size} locations to $serverUrl")
-            logger.debug(LogCategory.NETWORK, "FlespiLocationApi: Device ID: $deviceId")
+            logger.debug(LogCategory.NETWORK, "FlespiLocationApi: Device ID: $serverLoadId")
 
             val response =
                 httpClient.post {
@@ -98,17 +98,5 @@ class FlespiLocationApi(
             logger.debug(LogCategory.NETWORK, "FlespiLocationApi: ❌ Exception: ${e.message}")
             Result.failure(e)
         }
-    }
-
-    /**
-     * Отправляет одну координату на сервер (для совместимости)
-     * @param location координата для отправки
-     * @return результат отправки
-     */
-    suspend fun sendLocation(
-        deviceId: String,
-        location: LocationDataModel,
-    ): Result<Unit> {
-        return sendLocations(deviceId, listOf(location))
     }
 }

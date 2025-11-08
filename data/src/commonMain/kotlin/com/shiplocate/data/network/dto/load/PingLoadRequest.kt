@@ -10,6 +10,6 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class PingLoadRequest(
     @SerialName("loadId")
-    val loadId: String,
+    val loadId: Long,
 )
 

@@ -10,6 +10,7 @@ import com.shiplocate.domain.usecase.RequestAllPermissionsUseCase
 import com.shiplocate.domain.usecase.StartTrackingUseCase
 import com.shiplocate.domain.usecase.StopTrackingUseCase
 import com.shiplocate.domain.usecase.TestServerUseCase
+import com.shiplocate.domain.repository.LoadRepository
 import com.shiplocate.domain.usecase.load.ConnectToLoadUseCase
 import com.shiplocate.domain.usecase.load.DisconnectFromLoadUseCase
 import com.shiplocate.presentation.model.HomeUiState
@@ -33,9 +34,10 @@ class HomeViewModel(
     private val testServerUseCase: TestServerUseCase,
     private val connectToLoadUseCase: ConnectToLoadUseCase,
     private val disconnectFromLoadUseCase: DisconnectFromLoadUseCase,
+    private val loadRepository: LoadRepository,
     private val logger: Logger,
 ) : ViewModel() {
-    private lateinit var loadId: String
+    private var loadId: Long = 0L
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
@@ -43,12 +45,17 @@ class HomeViewModel(
         observePermissionsAndTrackingStatus()
     }
 
-    fun initialize(id: String) {
-        logger.info(LogCategory.UI, "HomeViewModel: Initialized with loadId = $id")
+    fun initialize(loadId: Long) {
+        logger.info(LogCategory.UI, "HomeViewModel: Initialized with loadId = $loadId")
 
-        loadId = id
-        // Set loadId in uiState
-        _uiState.value = _uiState.value.copy(loadId = id)
+        this.loadId = loadId
+        
+        // Find load by id to get loadName for UI display
+        viewModelScope.launch {
+            val loads = loadRepository.getCachedLoads()
+            val load = loads.find { it.id == loadId }
+            _uiState.value = _uiState.value.copy(loadId = load?.loadName)
+        }
     }
 
     private fun observePermissionsAndTrackingStatus() {
@@ -133,14 +140,26 @@ class HomeViewModel(
             _uiState.value = _uiState.value.copy(isLoading = true)
 
             try {
-                // Step 1: Connect to load
-                val currentLoadId = loadId
+                // Step 1: Find load by id
+                val loads = loadRepository.getCachedLoads()
+                val load = loads.find { it.id == loadId }
 
-                logger.info(LogCategory.UI, "HomeViewModel: Connecting to load $currentLoadId before starting tracking")
+                if (load == null) {
+                    logger.error(LogCategory.UI, "HomeViewModel: Load not found with id: $loadId")
+                    _uiState.value =
+                        _uiState.value.copy(
+                            isLoading = false,
+                            message = "Load not found: $loadId",
+                            messageType = MessageType.ERROR,
+                        )
+                    return@launch
+                }
+
+                logger.info(LogCategory.UI, "HomeViewModel: Connecting to load ${load.loadName} (id: $loadId) before starting tracking")
 
                 val connectResult =
                     withContext(Dispatchers.Default) {
-                        connectToLoadUseCase(currentLoadId)
+                        connectToLoadUseCase(loadId)
                     }
                 if (connectResult.isFailure) {
                     logger.error(LogCategory.UI, "HomeViewModel: Failed to connect to load: ${connectResult.exceptionOrNull()?.message}")
@@ -153,7 +172,7 @@ class HomeViewModel(
                     return@launch
                 }
 
-                logger.info(LogCategory.UI, "HomeViewModel: Successfully connected to load $currentLoadId")
+                logger.info(LogCategory.UI, "HomeViewModel: Successfully connected to load ${load.loadName} (id: $loadId)")
 
                 // Step 2: Start tracking
                 val result = startTrackingUseCase()
@@ -191,14 +210,26 @@ class HomeViewModel(
             _uiState.value = _uiState.value.copy(isLoading = true)
 
             try {
-                // Step 1: Disconnect from load
-                val currentLoadId = loadId
+                // Step 1: Find load by id
+                val loads = loadRepository.getCachedLoads()
+                val load = loads.find { it.id == loadId }
 
-                logger.info(LogCategory.UI, "HomeViewModel: Disconnecting from load $currentLoadId before stopping tracking")
+                if (load == null) {
+                    logger.error(LogCategory.UI, "HomeViewModel: Load not found with id: $loadId")
+                    _uiState.value =
+                        _uiState.value.copy(
+                            isLoading = false,
+                            message = "Load not found: $loadId",
+                            messageType = MessageType.ERROR,
+                        )
+                    return@launch
+                }
+
+                logger.info(LogCategory.UI, "HomeViewModel: Disconnecting from load ${load.loadName} (id: $loadId) before stopping tracking")
 
                 val disconnectResult =
                     withContext(Dispatchers.Default) {
-                        disconnectFromLoadUseCase(currentLoadId)
+                        disconnectFromLoadUseCase(loadId)
                     }
                 if (disconnectResult.isFailure) {
                     logger.error(
@@ -214,7 +245,7 @@ class HomeViewModel(
                     return@launch
                 }
 
-                logger.info(LogCategory.UI, "HomeViewModel: Successfully disconnected from load $currentLoadId")
+                logger.info(LogCategory.UI, "HomeViewModel: Successfully disconnected from load ${load.loadName} (id: $loadId)")
 
                 // Step 2: Stop tracking
                 val result = stopTrackingUseCase()

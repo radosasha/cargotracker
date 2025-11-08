@@ -45,12 +45,13 @@ class LocationSyncServiceImpl(
         logger.info(LogCategory.GENERAL, "LocationSyncManager: Starting periodic sync")
 
         syncJob = coroutineScope.launch {
-            val loadId =
-                loadRepository.getConnectedLoad()?.loadId ?: throw IllegalStateException("Connected load not found")
+            val connectedLoad = loadRepository.getConnectedLoad() ?: throw IllegalStateException("Connected load not found")
+            // Используем loadName только для отправки на сервер (OsmAnd протокол ожидает uniqueId)
+            val serverLoadId = connectedLoad.serverId
             while (isActive) {
                 try {
                     // Пытаемся отправить неотправленные координаты
-                    val result = uploadPendingLocations(loadId)
+                    val result = uploadPendingLocations(serverLoadId)
 
                     if (result.isSuccess) {
                         val count = result.getOrNull() ?: 0
@@ -94,9 +95,9 @@ class LocationSyncServiceImpl(
      * Использует пакетную отправку для эффективности
      * Обрабатывает большие списки пакетами для избежания проблем с памятью и сетью
      */
-    private suspend fun uploadPendingLocations(loadId: String): Result<Int> {
+    private suspend fun uploadPendingLocations(serverLoadId: Long): Result<Int> {
         return try {
-            val unsentLocations = locationRepository.getUnsentLocations(loadId)
+            val unsentLocations = locationRepository.getUnsentDeviceLocations()
 
             if (unsentLocations.isEmpty()) {
                 logger.info(LogCategory.GENERAL, "LocationSyncManager: No pending locations to upload")
@@ -112,7 +113,7 @@ class LocationSyncServiceImpl(
             if (unsentLocations.size <= maxBatchSize) {
                 // Небольшой список - отправляем целиком
                 val locations = unsentLocations.map { it.second }
-                val result = locationRepository.sendLocations(loadId, locations)
+                val result = locationRepository.sendLocations(serverLoadId, locations)
 
                 if (result.isSuccess) {
                     val allIds = unsentLocations.map { it.first }
@@ -147,7 +148,7 @@ class LocationSyncServiceImpl(
                     )
 
                     val locations = batch.map { it.second }
-                    val result = locationRepository.sendLocations(loadId, locations)
+                    val result = locationRepository.sendLocations(serverLoadId, locations)
 
                     if (result.isSuccess) {
                         val batchIds = batch.map { it.first }

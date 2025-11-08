@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 4,
-    "identityHash": "f6df2ac8fbf75fa59455264b5fb07937",
+    "identityHash": "462a49ecac4f52df7925965c153b60e2",
     "entities": [
       {
         "tableName": "locations",
@@ -80,12 +80,24 @@
       },
       {
         "tableName": "loads",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`loadId` TEXT NOT NULL, `description` TEXT, `lastUpdated` INTEGER, `createdAt` INTEGER NOT NULL, `loadStatus` INTEGER NOT NULL, PRIMARY KEY(`loadId`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`loadName` TEXT NOT NULL, `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `serverId` INTEGER NOT NULL, `description` TEXT, `lastUpdated` INTEGER, `createdAt` INTEGER NOT NULL, `loadStatus` INTEGER NOT NULL)",
         "fields": [
           {
-            "fieldPath": "loadId",
-            "columnName": "loadId",
+            "fieldPath": "loadName",
+            "columnName": "loadName",
             "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "serverId",
+            "columnName": "serverId",
+            "affinity": "INTEGER",
             "notNull": true
           },
           {
@@ -112,16 +124,16 @@
           }
         ],
         "primaryKey": {
-          "autoGenerate": false,
+          "autoGenerate": true,
           "columnNames": [
-            "loadId"
+            "id"
           ]
         }
       }
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'f6df2ac8fbf75fa59455264b5fb07937')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '462a49ecac4f52df7925965c153b60e2')"
     ]
   }
 }

@@ -10,6 +10,6 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class ConnectLoadRequest(
     @SerialName("loadId")
-    val loadId: String,
+    val serverLoadId: Long,
 )
 

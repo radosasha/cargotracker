@@ -1,6 +1,7 @@
 package com.shiplocate.domain.repository
 
-import com.shiplocate.domain.model.Location
+import com.shiplocate.domain.model.DeviceLocation
+import com.shiplocate.domain.model.GpsLocation
 
 /**
  * Repository для работы с GPS координатами
@@ -10,16 +11,16 @@ interface LocationRepository {
      * Сохраняет GPS координату (отправляет на сервер)
      */
     suspend fun sendLocation(
-        loadId: String,
-        location: Location,
+        serverLoadId: Long,
+        location: GpsLocation,
     ): Result<Unit>
 
     /**
      * Отправляет несколько GPS координат на сервер
      */
     suspend fun sendLocations(
-        loadId: String,
-        locations: List<Location>,
+        serverLoadId: Long,
+        locations: List<DeviceLocation>,
     ): Result<Unit>
 
     /**
@@ -27,7 +28,7 @@ interface LocationRepository {
      * @return ID сохраненной записи
      */
     suspend fun saveLocationToDb(
-        location: Location,
+        location: GpsLocation,
         batteryLevel: Float? = null,
     ): Long
 
@@ -35,7 +36,7 @@ interface LocationRepository {
      * Получает все неотправленные координаты из БД
      * @return Список пар (ID в БД, Location)
      */
-    suspend fun getUnsentLocations(loadId: String): List<Pair<Long, Location>>
+    suspend fun getUnsentDeviceLocations(): List<Pair<Long, DeviceLocation>>
 
     /**
      * Удаляет координату из БД по ID
@@ -50,7 +51,7 @@ interface LocationRepository {
     /**
      * Получает последнюю сохраненную координату из БД
      */
-    suspend fun getLastSavedLocation(loadId: String): Location?
+    suspend fun getLastSavedLocation(): GpsLocation?
 
     /**
      * Получает количество неотправленных координат

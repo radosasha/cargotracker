@@ -46,7 +46,7 @@ import com.shiplocate.presentation.util.DateFormatter
 @Composable
 fun LoadsScreen(
     viewModel: LoadsViewModel,
-    onLoadClick: (String) -> Unit,
+    onLoadClick: (Long) -> Unit,
     onNavigateToLogs: () -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -220,7 +220,7 @@ private fun LoadsListWithRefresh(
     loads: List<Load>,
     isRefreshing: Boolean,
     onRefresh: () -> Unit,
-    onLoadClick: (String) -> Unit,
+    onLoadClick: (Long) -> Unit,
 ) {
     PullToRefreshBox(
         isRefreshing = isRefreshing,
@@ -237,10 +237,10 @@ private fun LoadsListWithRefresh(
                     EmptyStateItem()
                 }
             } else {
-                items(loads, key = { it.loadId }) { load ->
+                items(loads, key = { it.id }) { load ->
                     LoadItem(
                         load = load,
-                        onClick = { onLoadClick(load.loadId) },
+                        onClick = { onLoadClick(load.id) },
                     )
                 }
             }
@@ -284,7 +284,7 @@ private fun LoadItem(
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                 )
                 Text(
-                    text = load.loadId,
+                    text = load.loadName,
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary,

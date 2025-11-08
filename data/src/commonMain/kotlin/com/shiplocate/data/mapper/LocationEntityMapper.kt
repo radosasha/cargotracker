@@ -1,7 +1,8 @@
 package com.shiplocate.data.mapper
 
 import com.shiplocate.core.database.entity.LocationEntity
-import com.shiplocate.domain.model.Location
+import com.shiplocate.domain.model.DeviceLocation
+import com.shiplocate.domain.model.GpsLocation
 import kotlinx.datetime.Instant
 
 /**
@@ -12,7 +13,7 @@ object LocationEntityMapper {
      * Конвертирует Domain Location в LocationEntity для сохранения в БД
      */
     fun toEntity(
-        location: Location,
+        location: GpsLocation,
         batteryLevel: Float? = null,
     ): LocationEntity {
         return LocationEntity(
@@ -34,9 +35,8 @@ object LocationEntityMapper {
      */
     fun toDomain(
         entity: LocationEntity,
-        deviceId: String,
-    ): Location {
-        return Location(
+    ): GpsLocation {
+        return GpsLocation(
             latitude = entity.latitude,
             longitude = entity.longitude,
             accuracy = entity.accuracy,
@@ -47,13 +47,18 @@ object LocationEntityMapper {
         )
     }
 
-    /**
-     * Конвертирует список LocationEntity в список Domain Location
-     */
-    fun toDomainList(
-        entities: List<LocationEntity>,
-        deviceId: String,
-    ): List<Location> {
-        return entities.map { toDomain(it, deviceId) }
+    fun toDomainDeviceLocation(
+        entity: LocationEntity,
+    ): DeviceLocation {
+        return DeviceLocation(
+            latitude = entity.latitude,
+            longitude = entity.longitude,
+            accuracy = entity.accuracy,
+            altitude = entity.altitude,
+            speed = entity.speed,
+            bearing = entity.bearing,
+            timestamp = Instant.fromEpochMilliseconds(entity.timestamp),
+            batteryLevel = entity.batteryLevel
+        )
     }
 }

@@ -72,13 +72,13 @@ class LoadRepositoryImpl(
 
     override suspend fun connectToLoad(
         token: String,
-        loadId: String,
+        serverLoadId: Long,
     ): Result<List<Load>> {
-        logger.info(LogCategory.GENERAL, "🔄 LoadRepositoryImpl: Connecting to load $loadId")
+        logger.info(LogCategory.GENERAL, "🔄 LoadRepositoryImpl: Connecting to load $serverLoadId")
 
         return try {
             logger.info(LogCategory.GENERAL, "🌐 LoadRepositoryImpl: Sending connect request to server")
-            val loadDtos = remoteDataSource.connectToLoad(token, loadId)
+            val loadDtos = remoteDataSource.connectToLoad(token, serverLoadId)
 
             // Cache the updated results
             logger.info(LogCategory.GENERAL, "💾 LoadRepositoryImpl: Updating cache with ${loadDtos.size} loads")
@@ -86,7 +86,7 @@ class LoadRepositoryImpl(
 
             // Return domain models
             val loads = loadDtos.map { it.toDomain() }
-            logger.info(LogCategory.GENERAL, "✅ LoadRepositoryImpl: Successfully connected to load $loadId")
+            logger.info(LogCategory.GENERAL, "✅ LoadRepositoryImpl: Successfully connected to load $serverLoadId")
             Result.success(loads)
         } catch (e: Exception) {
             logger.info(LogCategory.GENERAL, "❌ LoadRepositoryImpl: Failed to connect to load: ${e.message}")
@@ -96,13 +96,13 @@ class LoadRepositoryImpl(
 
     override suspend fun disconnectFromLoad(
         token: String,
-        loadId: String,
+        serverLoadId: Long,
     ): Result<List<Load>> {
-        logger.info(LogCategory.GENERAL, "🔄 LoadRepositoryImpl: Disconnecting from load $loadId")
+        logger.info(LogCategory.GENERAL, "🔄 LoadRepositoryImpl: Disconnecting from load $serverLoadId")
 
         return try {
             logger.info(LogCategory.GENERAL, "🌐 LoadRepositoryImpl: Sending disconnect request to server")
-            val loadDtos = remoteDataSource.disconnectFromLoad(token, loadId)
+            val loadDtos = remoteDataSource.disconnectFromLoad(token, serverLoadId)
 
             // Cache the updated results
             logger.info(LogCategory.GENERAL, "💾 LoadRepositoryImpl: Updating cache with ${loadDtos.size} loads")
@@ -110,7 +110,7 @@ class LoadRepositoryImpl(
 
             // Return domain models
             val loads = loadDtos.map { it.toDomain() }
-            logger.info(LogCategory.GENERAL, "✅ LoadRepositoryImpl: Successfully disconnected from load $loadId")
+            logger.info(LogCategory.GENERAL, "✅ LoadRepositoryImpl: Successfully disconnected from load $serverLoadId")
             Result.success(loads)
         } catch (e: Exception) {
             logger.info(LogCategory.GENERAL, "❌ LoadRepositoryImpl: Failed to disconnect from load: ${e.message}")
@@ -120,15 +120,15 @@ class LoadRepositoryImpl(
 
     override suspend fun pingLoad(
         token: String,
-        loadId: String,
+        serverLoadId: Long,
     ): Result<Unit> {
-        logger.info(LogCategory.GENERAL, "🔄 LoadRepositoryImpl: Pinging load $loadId")
+        logger.info(LogCategory.GENERAL, "🔄 LoadRepositoryImpl: Pinging load $serverLoadId")
 
         return try {
             logger.info(LogCategory.GENERAL, "🌐 LoadRepositoryImpl: Sending ping request to server")
-            remoteDataSource.pingLoad(token, loadId)
+            remoteDataSource.pingLoad(token, serverLoadId)
 
-            logger.info(LogCategory.GENERAL, "✅ LoadRepositoryImpl: Successfully pinged load $loadId")
+            logger.info(LogCategory.GENERAL, "✅ LoadRepositoryImpl: Successfully pinged load $serverLoadId")
             Result.success(Unit)
         } catch (e: Exception) {
             logger.info(LogCategory.GENERAL, "❌ LoadRepositoryImpl: Failed to ping load: ${e.message}")

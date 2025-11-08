@@ -23,7 +23,7 @@ class GetTrackingStatusUseCase(
                 cachedLoads.any { load ->
                     val isActive = load.loadStatus == 1
                     if (isActive) {
-                        println("✅ GetTrackingStatusUseCase: Found active load: ${load.loadId} (status: ${load.loadStatus})")
+                        println("✅ GetTrackingStatusUseCase: Found active load: ${load.loadName} (status: ${load.loadStatus})")
                     }
                     isActive
                 }

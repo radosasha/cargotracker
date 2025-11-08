@@ -10,7 +10,7 @@ interface LocationRemoteDataSource {
      * Отправляет одну GPS координату на сервер
      */
     suspend fun sendLocation(
-        loadId: String,
+        serverLoadId: Long,
         location: LocationDataModel,
     ): Result<Unit>
 
@@ -18,7 +18,7 @@ interface LocationRemoteDataSource {
      * Отправляет GPS координаты на сервер
      */
     suspend fun sendLocations(
-        loadId: String,
+        serverLoadId: Long,
         locations: List<LocationDataModel>,
     ): Result<Unit>
 }

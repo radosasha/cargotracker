@@ -2,7 +2,7 @@ package com.shiplocate.domain.usecase
 
 import com.shiplocate.core.logging.LogCategory
 import com.shiplocate.core.logging.Logger
-import com.shiplocate.domain.model.Location
+import com.shiplocate.domain.model.GpsLocation
 import com.shiplocate.domain.repository.LocationRepository
 import kotlinx.datetime.Clock
 
@@ -17,7 +17,7 @@ class TestServerUseCase(
         return try {
             // Создаем тестовые координаты (Москва)
             val testLocation =
-                Location(
+                GpsLocation(
                     latitude = 55.7558,
                     longitude = 37.6176,
                     timestamp = Clock.System.now(),

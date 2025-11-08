@@ -13,5 +13,5 @@ object Screen {
 
     fun enterPin(phone: String) = "enter_pin/$phone"
 
-    fun home(loadId: String) = "home/$loadId"
+    fun home(loadId: Long) = "home/$loadId"
 }

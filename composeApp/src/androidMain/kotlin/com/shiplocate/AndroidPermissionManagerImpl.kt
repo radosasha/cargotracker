@@ -95,31 +95,22 @@ class AndroidPermissionManagerImpl(private val activityContextProvider: Activity
         // Продолжаем с того места, где остановились
         if (!permissionChecker.hasLocationPermissions()) {
             // Если основные разрешения не получены, начинаем сначала
-            fun requestLocationPermissions() {
-                println("AndroidPermissionRequester.requestLocationPermissions() called")
-                if (!permissionChecker.hasLocationPermissions()) {
-                    if (permissionRequester.shouldShowLocationPermissionRationale()) {
-                        println("Showing location permission rationale")
-                        // Показываем объяснение зачем нужны разрешения
-                    }
-
-                    println("Requesting location permissions")
-                    permissionRequester.requestLocationPermissions()
-                } else {
-                    println("Location permissions already granted")
-                }
+            println("AndroidPermissionRequester.requestLocationPermissions() called")
+            if (permissionRequester.shouldShowLocationPermissionRationale()) {
+                println("Showing location permission rationale")
+                // Показываем объяснение зачем нужны разрешения
             }
+
+            println("Requesting location permissions")
+            permissionRequester.requestLocationPermissions()
+
         } else if (!permissionChecker.hasBackgroundLocationPermission()) {
             // Если основные разрешения есть, но фоновое нет - запрашиваем фоновое
             println("AndroidPermissionRequester.requestBackgroundLocationPermission() called")
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 // API 29+ (Android 10+): запрашиваем отдельное разрешение ACCESS_BACKGROUND_LOCATION
-                if (!permissionChecker.hasBackgroundLocationPermission()) {
-                    println("Requesting background location permission")
-                    permissionRequester.requestBackgroundLocationPermission()
-                } else {
-                    println("Background location permission already granted")
-                }
+                println("Requesting background location permission")
+                permissionRequester.requestBackgroundLocationPermission()
             } else {
                 // API 24-28 (Android 7.0-9): фоновое разрешение не требуется
                 println("Background location permission not required for this Android version (API ${Build.VERSION.SDK_INT})")
@@ -129,12 +120,8 @@ class AndroidPermissionManagerImpl(private val activityContextProvider: Activity
             println("AndroidPermissionRequester.requestActivityRecognitionPermission() called")
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 // API 29+ (Android 10+): запрашиваем разрешение ACTIVITY_RECOGNITION
-                if (!permissionChecker.hasActivityRecognitionPermission()) {
-                    println("Requesting activity recognition permission")
-                    permissionRequester.requestActivityRecognitionPermission()
-                } else {
-                    println("Activity recognition permission already granted")
-                }
+                println("Requesting activity recognition permission")
+                permissionRequester.requestActivityRecognitionPermission()
             } else {
                 // API 24-28 (Android 7.0-9): Activity Recognition доступен через Google Play Services
                 // без необходимости в системном разрешении - пропускаем запрос
@@ -144,17 +131,13 @@ class AndroidPermissionManagerImpl(private val activityContextProvider: Activity
             // Если основные разрешения есть, но уведомления нет - запрашиваем уведомления
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 // API 33+ (Android 13+): запрашиваем разрешение POST_NOTIFICATIONS
-                if (!permissionChecker.hasNotificationPermission()) {
-                    if (permissionRequester.shouldShowNotificationPermissionRationale()) {
-                        println("Showing notification permission rationale")
-                        // Показываем объяснение зачем нужны уведомления
-                    }
-
-                    println("Requesting notification permission")
-                    permissionRequester.requestNotificationPermission()
-                } else {
-                    println("Notification permission already granted")
+                if (permissionRequester.shouldShowNotificationPermissionRationale()) {
+                    println("Showing notification permission rationale")
+                    // Показываем объяснение зачем нужны уведомления
                 }
+
+                println("Requesting notification permission")
+                permissionRequester.requestNotificationPermission()
             } else {
                 // API 24-32 (Android 7.0-12): уведомления работают без разрешения
                 println("Notification permission not required for this Android version (API ${Build.VERSION.SDK_INT})")

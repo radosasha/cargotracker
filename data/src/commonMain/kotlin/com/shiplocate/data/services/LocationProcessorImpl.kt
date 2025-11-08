@@ -1,7 +1,7 @@
 package com.shiplocate.data.services
 
 import com.shiplocate.domain.model.FilteredLocationInfo
-import com.shiplocate.domain.model.Location
+import com.shiplocate.domain.model.GpsLocation
 import com.shiplocate.domain.model.LocationInfo
 import com.shiplocate.domain.model.SendErrorInfo
 import com.shiplocate.domain.model.TrackingStats
@@ -18,7 +18,7 @@ import kotlinx.datetime.Clock
 class LocationProcessorImpl : LocationProcessor {
     // Настройки фильтрации (можно вынести в конфигурацию)
     private var lastLocationSentTime = 0L
-    private var lastLocationSent: Location? = null
+    private var lastLocationSent: GpsLocation? = null
     private var totalLocationsSent = 0
     private var totalLocationsReceived = 0
     private var lastForcedSaveTime = 0L
@@ -46,7 +46,7 @@ class LocationProcessorImpl : LocationProcessor {
      * @param location новая координата
      * @return результат обработки с информацией о том, была ли координата отправлена
      */
-    override fun processLocation(location: Location): LocationProcessResult {
+    override fun processLocation(location: GpsLocation): LocationProcessResult {
         totalLocationsReceived++
 
         val currentTime = Clock.System.now().toEpochMilliseconds()
@@ -122,7 +122,7 @@ class LocationProcessorImpl : LocationProcessor {
      * - Прошло MIN_SEND_INTERVAL_MS ИЛИ
      * - Проехали MIN_DISTANCE_FOR_SEND_M
      */
-    private fun shouldSendLocation(newLocation: Location): Boolean {
+    private fun shouldSendLocation(newLocation: GpsLocation): Boolean {
         val currentTime = Clock.System.now().toEpochMilliseconds()
         val lastSent = lastLocationSent
 
@@ -157,7 +157,7 @@ class LocationProcessorImpl : LocationProcessor {
     /**
      * Получает причину фильтрации координаты
      */
-    private fun getFilterReason(location: Location): String {
+    private fun getFilterReason(location: GpsLocation): String {
         val currentTime = Clock.System.now().toEpochMilliseconds()
         val lastSent = lastLocationSent
 
@@ -252,7 +252,7 @@ class LocationProcessorImpl : LocationProcessor {
      * Обновляет статистику отправки координат
      */
     override fun updateSentLocations(
-        location: Location,
+        location: GpsLocation,
         count: Int,
     ) {
         totalSent += count
@@ -273,7 +273,7 @@ class LocationProcessorImpl : LocationProcessor {
      * Обновляет статистику ошибки отправки координат
      */
     override fun updateSendError(
-        location: Location,
+        location: GpsLocation,
         errorMessage: String,
         errorType: String,
     ) {

@@ -17,6 +17,6 @@ data class LocationDataModel(
     val altitude: Double? = null,
     val speed: Float? = null,
     val course: Float? = null, // bearing переименован в course для совместимости
-    val batteryLevel: Int? = null,
+    val batteryLevel: Float? = null,
     val deviceId: String? = null,
 )

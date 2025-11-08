@@ -22,7 +22,7 @@ class HasConnectedLoadUseCase(
         if (cachedConnectedLoad != null) {
             logger.info(
                 LogCategory.LOCATION,
-                "HasConnectedLoadUseCase: Found connected load in cache: ${cachedConnectedLoad.loadId}",
+                "HasConnectedLoadUseCase: Found connected load in cache: ${cachedConnectedLoad.loadName}",
             )
             return true
         }

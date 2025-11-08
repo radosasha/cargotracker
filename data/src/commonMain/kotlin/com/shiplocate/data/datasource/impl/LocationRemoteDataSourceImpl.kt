@@ -17,16 +17,16 @@ class LocationRemoteDataSourceImpl(
     private val logger: Logger,
 ) : LocationRemoteDataSource {
     override suspend fun sendLocation(
-        loadId: String,
+        serverLoadId: Long,
         location: LocationDataModel,
     ): Result<Unit> {
         logger.debug(LogCategory.NETWORK, "RemoteLocationDataSource: Sending single location to server")
         logger.debug(LogCategory.NETWORK, "RemoteLocationDataSource: Lat: ${location.latitude}, Lon: ${location.longitude}")
-        return osmAndLocationApi.sendLocation(loadId, location)
+        return osmAndLocationApi.sendLocation(serverLoadId, location)
     }
 
     override suspend fun sendLocations(
-        loadId: String,
+        serverLoadId: Long,
         locations: List<LocationDataModel>,
     ): Result<Unit> {
         logger.debug(LogCategory.NETWORK, "RemoteLocationDataSource: Sending ${locations.size} locations to server")
@@ -38,7 +38,7 @@ class LocationRemoteDataSourceImpl(
 
             // Используем Flespi протокол для пакетной отправки
             logger.debug(LogCategory.NETWORK, "RemoteLocationDataSource: Using Flespi protocol for batch sending")
-            val result = flespiLocationApi.sendLocations(loadId, locations)
+            val result = flespiLocationApi.sendLocations(serverLoadId, locations)
 
             if (result.isSuccess) {
                 logger.debug(LogCategory.NETWORK, "RemoteLocationDataSource: ✅ Successfully sent ${locations.size} locations via Flespi protocol")

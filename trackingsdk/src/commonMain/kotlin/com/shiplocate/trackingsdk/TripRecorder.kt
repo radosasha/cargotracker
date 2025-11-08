@@ -2,7 +2,7 @@ package com.shiplocate.trackingsdk
 
 import com.shiplocate.core.logging.LogCategory
 import com.shiplocate.core.logging.Logger
-import com.shiplocate.domain.model.Location
+import com.shiplocate.domain.model.GpsLocation
 import com.shiplocate.domain.repository.DeviceRepository
 import com.shiplocate.domain.repository.GpsRepository
 import com.shiplocate.domain.repository.LoadRepository
@@ -47,7 +47,8 @@ class TripRecorder(
                 )
 
                 // Обрабатываем координату
-                val result = processLocation(connectedLoad.loadId, location)
+                // Используем loadName только для отправки на сервер (OsmAnd протокол ожидает uniqueId)
+                val result = processLocation(connectedLoad.serverId, location)
 
                 if (result.shouldSend) {
                     logger.info(LogCategory.LOCATION, "TripRecorder: ✅ Successfully processed location")
@@ -83,8 +84,8 @@ class TripRecorder(
      * Обрабатывает одну GPS координату
      */
     private suspend fun processLocation(
-        loadId: String,
-        location: Location,
+        serverId: Long,
+        location: GpsLocation,
     ): LocationProcessResult {
         // Обрабатываем координату через LocationProcessor
         val processResult = locationProcessor.processLocation(location)
@@ -103,7 +104,7 @@ class TripRecorder(
                 locationProcessor.updateSavedLocation()
 
                 // Получаем все неотправленные координаты из БД
-                val unsentLocations = locationRepository.getUnsentLocations(loadId)
+                val unsentLocations = locationRepository.getUnsentDeviceLocations()
                 logger.debug(LogCategory.LOCATION, "TripRecorder: Found ${unsentLocations.size} unsent locations in DB")
 
                 // Определяем стратегию отправки
@@ -111,12 +112,12 @@ class TripRecorder(
                     if (unsentLocations.size == 1) {
                         // Если только одна координата - отправляем через OsmAnd протокол
                         logger.debug(LogCategory.LOCATION, "TripRecorder: Sending single location via OsmAnd protocol")
-                        locationRepository.sendLocation(loadId, location)
+                        locationRepository.sendLocation(serverId, location)
                     } else {
                         // Если несколько координат - отправляем все через Flespi протокол
                         logger.debug(LogCategory.LOCATION, "TripRecorder: Sending ${unsentLocations.size} locations via Flespi protocol")
                         val locations = unsentLocations.map { it.second }
-                        locationRepository.sendLocations(loadId, locations)
+                        locationRepository.sendLocations(serverId, locations)
                     }
 
                 if (uploadResult.isSuccess) {

@@ -80,12 +80,12 @@ class PingService(
             return
         }
 
-        logger.debug(LogCategory.NETWORK, "PingService: Sending ping for load ${connectedLoad.loadId}")
+        logger.debug(LogCategory.NETWORK, "PingService: Sending ping for load ${connectedLoad.loadName} (serverId: ${connectedLoad.serverId})")
 
         try {
-            val result = loadRepository.pingLoad(token, connectedLoad.loadId)
+            val result = loadRepository.pingLoad(token, connectedLoad.serverId)
             result.getOrThrow()
-            logger.info(LogCategory.NETWORK, "PingService: ✅ Ping sent successfully for load ${connectedLoad.loadId}")
+            logger.info(LogCategory.NETWORK, "PingService: ✅ Ping sent successfully for load ${connectedLoad.loadName} (serverId: ${connectedLoad.serverId})")
         } catch (e: Exception) {
             logger.error(LogCategory.NETWORK, "PingService: ❌ Failed to send ping: ${e.message}", e)
             throw e

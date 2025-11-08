@@ -30,7 +30,7 @@ import com.shiplocate.presentation.component.MessageCard
 @Suppress("FunctionName")
 @Composable
 fun HomeScreen(
-    loadId: String,
+    loadId: Long,
     viewModel: HomeViewModel,
     onNavigateToLogs: () -> Unit = {},
 ) {

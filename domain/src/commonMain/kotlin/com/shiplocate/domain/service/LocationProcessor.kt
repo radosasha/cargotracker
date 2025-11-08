@@ -1,6 +1,6 @@
 package com.shiplocate.domain.service
 
-import com.shiplocate.domain.model.Location
+import com.shiplocate.domain.model.GpsLocation
 import com.shiplocate.domain.model.TrackingStats
 
 /**
@@ -13,7 +13,7 @@ interface LocationProcessor {
      * @param location новая координата
      * @return результат обработки с информацией о том, была ли координата отправлена
      */
-    fun processLocation(location: Location): LocationProcessResult
+    fun processLocation(location: GpsLocation): LocationProcessResult
 
     /**
      * Обновляет статистику сохранения координаты
@@ -24,7 +24,7 @@ interface LocationProcessor {
      * Обновляет статистику отправки координат
      */
     fun updateSentLocations(
-        location: Location,
+        location: GpsLocation,
         count: Int,
     )
 
@@ -32,7 +32,7 @@ interface LocationProcessor {
      * Обновляет статистику ошибки отправки координат
      */
     fun updateSendError(
-        location: Location,
+        location: GpsLocation,
         errorMessage: String,
         errorType: String = "Network Error",
     )

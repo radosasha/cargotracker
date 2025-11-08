@@ -23,29 +23,29 @@ class LoadRemoteDataSource(
     /**
      * Connect to load
      * @param token Bearer token for authentication
-     * @param loadId Load ID to connect to
+     * @param serverLoadId Load ID to connect to
      * @return Updated list of LoadDto
      */
     suspend fun connectToLoad(
         token: String,
-        loadId: String,
+        serverLoadId: Long,
     ): List<LoadDto> {
-        println("📡 LoadRemoteDataSource: Connecting to load $loadId")
-        return loadApi.connectToLoad(token, loadId)
+        println("📡 LoadRemoteDataSource: Connecting to load $serverLoadId")
+        return loadApi.connectToLoad(token, serverLoadId)
     }
 
     /**
      * Disconnect from load
      * @param token Bearer token for authentication
-     * @param loadId Load ID to disconnect from
+     * @param serverLoadId Load ID to disconnect from
      * @return Updated list of LoadDto
      */
     suspend fun disconnectFromLoad(
         token: String,
-        loadId: String,
+        serverLoadId: Long,
     ): List<LoadDto> {
-        println("📡 LoadRemoteDataSource: Disconnecting from load $loadId")
-        return loadApi.disconnectFromLoad(token, loadId)
+        println("📡 LoadRemoteDataSource: Disconnecting from load $serverLoadId")
+        return loadApi.disconnectFromLoad(token, serverLoadId)
     }
 
     /**
@@ -55,7 +55,7 @@ class LoadRemoteDataSource(
      */
     suspend fun pingLoad(
         token: String,
-        loadId: String,
+        loadId: Long,
     ) {
         println("📡 LoadRemoteDataSource: Pinging load $loadId")
         loadApi.pingLoad(token, loadId)

@@ -6,7 +6,9 @@ import com.shiplocate.domain.model.load.Load
 
 fun LoadDto.toDomain(): Load {
     return Load(
-        loadId = loadId,
+        id = id, // Internal ID for application operations
+        serverId = id, // serverId используется для API вызовов (must match server's ID)
+        loadName = loadName, // Name for UI display
         description = description,
         lastUpdated = lastUpdated,
         createdAt = createdAt,
@@ -16,7 +18,9 @@ fun LoadDto.toDomain(): Load {
 
 fun LoadDto.toEntity(): LoadEntity {
     return LoadEntity(
-        loadId = loadId,
+        loadName = loadName, // Name for UI display
+        id = id, // Internal ID for application operations
+        serverId = id, // serverId используется для API вызовов (must match server's ID)
         description = description,
         lastUpdated = lastUpdated,
         createdAt = createdAt,
@@ -26,7 +30,9 @@ fun LoadDto.toEntity(): LoadEntity {
 
 fun LoadEntity.toDomain(): Load {
     return Load(
-        loadId = loadId,
+        id = id,
+        serverId = serverId,
+        loadName = loadName,
         description = description,
         lastUpdated = lastUpdated,
         createdAt = createdAt,

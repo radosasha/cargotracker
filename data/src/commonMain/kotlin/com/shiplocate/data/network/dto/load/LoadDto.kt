@@ -9,8 +9,10 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 data class LoadDto(
+    @SerialName("id")
+    val id: Long,
     @SerialName("loadId")
-    val loadId: String,
+    val loadName: String,
     @SerialName("description")
     val description: String? = null,
     @SerialName("lastUpdated")

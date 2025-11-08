@@ -80,12 +80,18 @@
       },
       {
         "tableName": "loads",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`loadId` TEXT NOT NULL, `description` TEXT, `lastUpdated` INTEGER, `createdAt` INTEGER NOT NULL, `loadStatus` INTEGER NOT NULL, PRIMARY KEY(`loadId`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`loadName` TEXT NOT NULL, `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `description` TEXT, `lastUpdated` INTEGER, `createdAt` INTEGER NOT NULL, `loadStatus` INTEGER NOT NULL)",
         "fields": [
           {
-            "fieldPath": "loadId",
-            "columnName": "loadId",
+            "fieldPath": "loadName",
+            "columnName": "loadName",
             "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
             "notNull": true
           },
           {
@@ -112,9 +118,9 @@
           }
         ],
         "primaryKey": {
-          "autoGenerate": false,
+          "autoGenerate": true,
           "columnNames": [
-            "loadId"
+            "id"
           ]
         }
       }
