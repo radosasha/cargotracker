@@ -9,8 +9,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -64,52 +62,6 @@ fun HomeScreen(
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.primary,
             )
-        }
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        // Статус трекинга
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors =
-                CardDefaults.cardColors(
-                    containerColor =
-                        if (uiState.trackingStatus == com.shiplocate.domain.model.TrackingStatus.ACTIVE) {
-                            MaterialTheme.colorScheme.primaryContainer
-                        } else {
-                            MaterialTheme.colorScheme.surfaceVariant
-                        },
-                ),
-        ) {
-            Column(
-                modifier = Modifier.padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Text(
-                    text =
-                        if (uiState.trackingStatus == com.shiplocate.domain.model.TrackingStatus.ACTIVE) {
-                            "Tracking Active"
-                        } else {
-                            "Tracking Stopped"
-                        },
-                    style = MaterialTheme.typography.titleMedium,
-                    color =
-                        if (uiState.trackingStatus == com.shiplocate.domain.model.TrackingStatus.ACTIVE) {
-                            MaterialTheme.colorScheme.onPrimaryContainer
-                        } else {
-                            MaterialTheme.colorScheme.onSurfaceVariant
-                        },
-                )
-
-                if (uiState.trackingStatus == com.shiplocate.domain.model.TrackingStatus.ACTIVE) {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = "GPS coordinates are being tracked",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
-                    )
-                }
-            }
         }
 
         Spacer(modifier = Modifier.height(24.dp))

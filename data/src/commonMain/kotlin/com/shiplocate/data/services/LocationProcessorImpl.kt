@@ -15,7 +15,13 @@ import kotlinx.datetime.Clock
  *
  * Находится в data слое, так как содержит mutable state
  */
-class LocationProcessorImpl : LocationProcessor {
+class LocationProcessorImpl(
+    val minSendIntervalMs: Long,  // 1 минута между отправками
+    val minDistanceForSendM: Float, // 500 метров для отправки
+    val maxAccuracyM: Float, // 70 метров максимальная точность
+    // Принудительное сохранение каждые 30 минут
+    val forceSaveIntervalMs: Long, // 30 минут
+) : LocationProcessor {
     // Настройки фильтрации (можно вынести в конфигурацию)
     private var lastLocationSentTime = 0L
     private var lastLocationSent: GpsLocation? = null
@@ -30,16 +36,6 @@ class LocationProcessorImpl : LocationProcessor {
     private var lastFilteredLocation: FilteredLocationInfo? = null
     private var lastSentLocation: LocationInfo? = null
     private var lastSendError: SendErrorInfo? = null
-
-    companion object {
-        // Настройки отправки на сервер
-        private const val MIN_SEND_INTERVAL_MS = 60 * 1000L // 1 минута между отправками
-        private const val MIN_DISTANCE_FOR_SEND_M = 500f // 500 метров для отправки
-        private const val MAX_ACCURACY_M = 70f // 70 метров максимальная точность
-
-        // Принудительное сохранение каждые 30 минут
-        private const val FORCE_SAVE_INTERVAL_MS = 30 * 60 * 1000L // 30 минут
-    }
 
     /**
      * Обрабатывает новую GPS координату
@@ -127,12 +123,12 @@ class LocationProcessorImpl : LocationProcessor {
         val lastSent = lastLocationSent
 
         // Проверяем точность (это обязательное условие)
-        if (newLocation.accuracy > MAX_ACCURACY_M) {
+        if (newLocation.accuracy > maxAccuracyM) {
             return false
         }
 
         // Проверяем интервал времени
-        val timeIntervalPassed = (currentTime - lastLocationSentTime) >= MIN_SEND_INTERVAL_MS
+        val timeIntervalPassed = (currentTime - lastLocationSentTime) >= minSendIntervalMs
 
         // Проверяем расстояние от последней отправленной координаты
         val distancePassed =
@@ -144,7 +140,7 @@ class LocationProcessorImpl : LocationProcessor {
                         newLocation.latitude,
                         newLocation.longitude,
                     )
-                distance >= MIN_DISTANCE_FOR_SEND_M
+                distance >= minDistanceForSendM
             } else {
                 // Если это первая координата, считаем что расстояние прошли
                 true
@@ -162,12 +158,12 @@ class LocationProcessorImpl : LocationProcessor {
         val lastSent = lastLocationSent
 
         // Проверяем точность (обязательное условие)
-        if (location.accuracy > MAX_ACCURACY_M) {
-            return "Accuracy too low (${location.accuracy}m > ${MAX_ACCURACY_M}m)"
+        if (location.accuracy > maxAccuracyM) {
+            return "Accuracy too low (${location.accuracy}m > ${maxAccuracyM}m)"
         }
 
         // Проверяем интервал времени
-        val timeIntervalPassed = (currentTime - lastLocationSentTime) >= MIN_SEND_INTERVAL_MS
+        val timeIntervalPassed = (currentTime - lastLocationSentTime) >= minSendIntervalMs
 
         // Проверяем расстояние
         val distancePassed =
@@ -179,7 +175,7 @@ class LocationProcessorImpl : LocationProcessor {
                         location.latitude,
                         location.longitude,
                     )
-                distance >= MIN_DISTANCE_FOR_SEND_M
+                distance >= minDistanceForSendM
             } else {
                 true
             }
@@ -187,7 +183,7 @@ class LocationProcessorImpl : LocationProcessor {
         // Если ни одно условие не выполнено, объясняем почему
         return when {
             !timeIntervalPassed && !distancePassed -> {
-                val timeLeft = MIN_SEND_INTERVAL_MS - (currentTime - lastLocationSentTime)
+                val timeLeft = minSendIntervalMs - (currentTime - lastLocationSentTime)
                 val distance =
                     if (lastSent != null) {
                         calculateDistance(
@@ -199,9 +195,10 @@ class LocationProcessorImpl : LocationProcessor {
                     } else {
                         0f
                     }
-                val distanceLeft = MIN_DISTANCE_FOR_SEND_M - distance
+                val distanceLeft = minDistanceForSendM - distance
                 "Too soon (${timeLeft}ms left) AND too close (${distanceLeft}m left)"
             }
+
             else -> "Unknown reason"
         }
     }
@@ -218,7 +215,7 @@ class LocationProcessorImpl : LocationProcessor {
         }
 
         // Проверяем, прошло ли 30 минут
-        return (currentTime - lastForcedSaveTime) >= FORCE_SAVE_INTERVAL_MS
+        return (currentTime - lastForcedSaveTime) >= forceSaveIntervalMs
     }
 
     /**

@@ -50,6 +50,9 @@ kotlin {
 
         androidMain.dependencies {
             implementation(libs.koin.android)
+            
+            // Google Play Services for FusedLocationProviderClient
+            implementation(libs.play.services.location)
         }
 
         iosMain.dependencies {

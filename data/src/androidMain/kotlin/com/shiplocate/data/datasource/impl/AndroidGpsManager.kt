@@ -3,9 +3,14 @@ package com.shiplocate.data.datasource.impl
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
-import android.location.LocationListener
 import android.os.Looper
 import androidx.core.app.ActivityCompat
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationCallback
+import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.location.LocationResult
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
 import com.shiplocate.core.logging.LogCategory
 import com.shiplocate.core.logging.Logger
 import com.shiplocate.data.datasource.GpsManager
@@ -18,17 +23,18 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Instant
 import android.location.Location as AndroidLocation
-import android.location.LocationManager as AndroidLocationManager
 
 /**
  * Android-специфичная реализация GpsManager
- * Отвечает за получение GPS координат через Android LocationManager
+ * Отвечает за получение GPS координат через FusedLocationProviderClient
  */
 class AndroidGpsManager(
     private val context: Context,
     private val logger: Logger,
 ) : GpsManager {
-    private val androidLocationManager = context.getSystemService(Context.LOCATION_SERVICE) as AndroidLocationManager
+    private val fusedLocationClient: FusedLocationProviderClient =
+        LocationServices.getFusedLocationProviderClient(context)
+
     private val gpsLocationFlow = MutableSharedFlow<GpsLocation>(replay = 1)
     private var isTracking = false
 
@@ -37,8 +43,9 @@ class AndroidGpsManager(
 
     companion object {
         // Интервалы обновления GPS (в миллисекундах)
-        private const val MIN_TIME_MS = 60 * 1000L // 1 минута
-        private const val MIN_DISTANCE_M = 200f // 200 метров
+        private const val INTERVAL_MS = 5 * 60 * 1000L // 1 минута
+        private const val MIN_UPDATE_MS = 4 * 60 * 1000L // 1 минута
+        private const val MIN_DISTANCE_M = 20f // 20 метров
     }
 
     @SuppressLint("MissingPermission")
@@ -59,23 +66,22 @@ class AndroidGpsManager(
         }
 
         try {
-            logger.info(LogCategory.LOCATION, "AndroidGpsManager: Starting GPS tracking")
+            logger.info(LogCategory.LOCATION, "AndroidGpsManager: Starting GPS tracking with FusedLocationProviderClient")
 
-            // Запрашиваем обновления GPS
-            androidLocationManager.requestLocationUpdates(
-                AndroidLocationManager.GPS_PROVIDER,
-                MIN_TIME_MS,
-                MIN_DISTANCE_M,
-                locationListener,
-                Looper.getMainLooper(),
+            // Создаем LocationRequest с настройками
+            val locationRequest = LocationRequest.Builder(
+                Priority.PRIORITY_HIGH_ACCURACY,
+                INTERVAL_MS,
             )
+                .setMinUpdateDistanceMeters(MIN_DISTANCE_M)
+                .setMaxUpdateDelayMillis(INTERVAL_MS)
+                .setMinUpdateIntervalMillis(MIN_UPDATE_MS)
+                .build()
 
-            // Также используем Network Provider как резерв
-            androidLocationManager.requestLocationUpdates(
-                AndroidLocationManager.NETWORK_PROVIDER,
-                MIN_TIME_MS,
-                MIN_DISTANCE_M,
-                locationListener,
+            // Запрашиваем обновления местоположения
+            fusedLocationClient.requestLocationUpdates(
+                locationRequest,
+                locationCallback,
                 Looper.getMainLooper(),
             )
 
@@ -98,7 +104,7 @@ class AndroidGpsManager(
         }
 
         try {
-            androidLocationManager.removeUpdates(locationListener)
+            fusedLocationClient.removeLocationUpdates(locationCallback)
             isTracking = false
             logger.info(LogCategory.LOCATION, "AndroidGpsManager: GPS tracking stopped")
             return Result.success(Unit)
@@ -112,29 +118,43 @@ class AndroidGpsManager(
         return isTracking
     }
 
-    private val locationListener =
-        LocationListener { androidLocation ->
-            logger.info(LogCategory.LOCATION, "AndroidGpsManager: GPS Location received")
-            logger.info(LogCategory.LOCATION, "AndroidGpsManager: Lat: ${androidLocation.latitude}, Lon: ${androidLocation.longitude}")
-            logger.info(LogCategory.LOCATION, "AndroidGpsManager: Accuracy: ${androidLocation.accuracy}m, Time: ${androidLocation.time}")
-            logger.info(
-                LogCategory.LOCATION,
-                "AndroidGpsManager: Speed: ${if (androidLocation.hasSpeed()) androidLocation.speed else "N/A"} m/s"
-            )
-            logger.info(
-                LogCategory.LOCATION,
-                "AndroidGpsManager: Bearing: ${if (androidLocation.hasBearing()) androidLocation.bearing else "N/A"}°"
-            )
+    private val locationCallback = object : LocationCallback() {
+        override fun onLocationResult(locationResult: LocationResult) {
+            val locations = locationResult.locations
+            if (locations.isEmpty()) {
+                logger.error(LogCategory.LOCATION, "AndroidGpsManager: Received empty list of locations")
+            } else {
+                locations.forEach { androidLocation ->
+                    logger.info(LogCategory.LOCATION, "AndroidGpsManager: GPS Location received")
+                    logger.info(
+                        LogCategory.LOCATION,
+                        "AndroidGpsManager: Lat: ${androidLocation.latitude}, Lon: ${androidLocation.longitude}"
+                    )
+                    logger.info(
+                        LogCategory.LOCATION,
+                        "AndroidGpsManager: Accuracy: ${androidLocation.accuracy}m, Time: ${androidLocation.time}"
+                    )
+                    logger.info(
+                        LogCategory.LOCATION,
+                        "AndroidGpsManager: Speed: ${if (androidLocation.hasSpeed()) androidLocation.speed else "N/A"} m/s"
+                    )
+                    logger.info(
+                        LogCategory.LOCATION,
+                        "AndroidGpsManager: Bearing: ${if (androidLocation.hasBearing()) androidLocation.bearing else "N/A"}°"
+                    )
 
-            // Конвертируем Android Location в GpsLocation
-            val gpsLocation = convertToGpsLocation(androidLocation)
+                    // Конвертируем Android Location в GpsLocation
+                    val gpsLocation = convertToGpsLocation(androidLocation)
 
-            // Эмитим в flow
-            scope.launch {
-                gpsLocationFlow.emit(gpsLocation)
-                logger.info(LogCategory.LOCATION, "AndroidGpsManager: Location emitted to flow")
+                    // Эмитим в flow
+                    scope.launch {
+                        gpsLocationFlow.emit(gpsLocation)
+                        logger.info(LogCategory.LOCATION, "AndroidGpsManager: Location emitted to flow")
+                    }
+                }
             }
         }
+    }
 
     private fun convertToGpsLocation(androidLocation: AndroidLocation): GpsLocation {
         return GpsLocation(
@@ -145,7 +165,7 @@ class AndroidGpsManager(
             speed = if (androidLocation.hasSpeed()) androidLocation.speed else null,
             bearing = if (androidLocation.hasBearing()) androidLocation.bearing else null,
             timestamp = Instant.fromEpochMilliseconds(androidLocation.time),
-            provider = androidLocation.provider ?: "unknown",
+            provider = androidLocation.provider ?: "fused",
         )
     }
 }

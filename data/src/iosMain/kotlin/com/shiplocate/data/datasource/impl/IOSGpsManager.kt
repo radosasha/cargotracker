@@ -33,7 +33,6 @@ class IOSGpsManager : GpsManager {
     private val gpsLocationFlow = MutableSharedFlow<GpsLocation>(replay = 1)
     private val locationManager = CLLocationManager()
     private val delegate = LocationDelegate()
-    private var isTracking = false
 
     // Coroutine scope for emitting to flow
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)

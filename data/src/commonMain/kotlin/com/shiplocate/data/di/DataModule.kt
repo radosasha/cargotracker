@@ -165,7 +165,14 @@ val dataModule =
             single<NotificationRepository> { NotificationRepositoryImpl(get(), get(), get(), get()) }
 
             // Domain Services - реализации в data слое
-            single<LocationProcessor> { LocationProcessorImpl() }
+            single<LocationProcessor> {
+                LocationProcessorImpl(
+                    minSendIntervalMs = 60 * 1000L,
+                    minDistanceForSendM = 50f,
+                    maxAccuracyM = 70f,
+                    forceSaveIntervalMs = 30 * 60 * 1000L
+                )
+            }
             single<LocationSyncService> { LocationSyncServiceImpl(get(), get(), get(), get()) }
 
             // CoroutineScope для LocationSyncService
