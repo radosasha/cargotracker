@@ -2,12 +2,13 @@ package com.shiplocate.presentation.model
 
 import com.shiplocate.domain.model.PermissionStatus
 import com.shiplocate.domain.model.TrackingStatus
+import com.shiplocate.domain.model.load.Load
 
 /**
  * Presentation модель для состояния главного экрана
  */
 data class HomeUiState(
-    val loadId: String? = null,
+    val load: Load? = null,
     val permissionStatus: PermissionStatus? = null,
     val trackingStatus: TrackingStatus = TrackingStatus.STOPPED,
     val isLoading: Boolean = true,

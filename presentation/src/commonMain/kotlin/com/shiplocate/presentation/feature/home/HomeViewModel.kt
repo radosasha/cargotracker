@@ -50,11 +50,11 @@ class HomeViewModel(
 
         this.loadId = loadId
         
-        // Find load by id to get loadName for UI display
+        // Find load by id to get full load with stops for UI display
         viewModelScope.launch {
             val loads = loadRepository.getCachedLoads()
             val load = loads.find { it.id == loadId }
-            _uiState.value = _uiState.value.copy(loadId = load?.loadName)
+            _uiState.value = _uiState.value.copy(load = load)
         }
     }
 

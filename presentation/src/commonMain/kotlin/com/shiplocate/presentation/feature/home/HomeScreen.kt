@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -21,9 +23,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.shiplocate.presentation.component.MessageCard
+import com.shiplocate.presentation.component.StopsTimeline
 
 /**
- * Главный экран приложения - только кнопка Start
+ * Главный экран приложения
  */
 @Suppress("FunctionName")
 @Composable
@@ -42,29 +45,27 @@ fun HomeScreen(
         modifier =
             Modifier
                 .fillMaxSize()
+                .verticalScroll(rememberScrollState())
                 .padding(16.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Top,
+        horizontalAlignment = Alignment.Start,
     ) {
-        /*  // Заголовок
-          Text(
-              text = "GPS Tracker",
-              style = MaterialTheme.typography.headlineLarge,
-              fontWeight = FontWeight.Bold
-          )
-
-          Spacer(modifier = Modifier.height(8.dp))*/
-
-        // Load ID
-        uiState.loadId?.let { loadId ->
+        // Заголовок Load вверху
+        uiState.load?.let { load ->
             Text(
-                text = "Load: $loadId",
-                style = MaterialTheme.typography.titleMedium,
+                text = "Load: ${load.loadName}",
+                style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.primary,
             )
-        }
 
-        Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Stops Timeline
+            if (load.stops.isNotEmpty()) {
+                StopsTimeline(stops = load.stops)
+                Spacer(modifier = Modifier.height(24.dp))
+            }
+        }
 
         // Кнопка Start
         Button(
