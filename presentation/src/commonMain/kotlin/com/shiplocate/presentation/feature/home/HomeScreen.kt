@@ -3,6 +3,7 @@ package com.shiplocate.presentation.feature.home
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -31,6 +32,7 @@ import com.shiplocate.presentation.component.StopsTimeline
 @Suppress("FunctionName")
 @Composable
 fun HomeScreen(
+    paddingValues: PaddingValues,
     loadId: Long,
     viewModel: HomeViewModel,
     onNavigateToLogs: () -> Unit = {},
@@ -45,6 +47,7 @@ fun HomeScreen(
         modifier =
             Modifier
                 .fillMaxSize()
+                .padding(paddingValues)
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp),
         verticalArrangement = Arrangement.Top,

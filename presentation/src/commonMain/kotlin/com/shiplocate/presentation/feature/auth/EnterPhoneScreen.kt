@@ -7,6 +7,7 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -47,6 +48,7 @@ import com.shiplocate.domain.model.auth.Country
 @Suppress("FunctionName")
 @Composable
 fun EnterPhoneScreen(
+    paddingValues: PaddingValues,
     onNavigateToPin: (String) -> Unit,
     onNavigateToLogs: () -> Unit = {},
     viewModel: EnterPhoneViewModel,
@@ -93,6 +95,7 @@ fun EnterPhoneScreen(
         modifier =
             Modifier
                 .fillMaxSize()
+                .padding(paddingValues)
                 .padding(24.dp)
                 .pointerInput(Unit) {
                     detectTapGestures(

@@ -1,5 +1,6 @@
 package com.shiplocate.presentation.navigation
 
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -12,11 +13,10 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.navigation.NavController
-import androidx.navigation.NavDestination
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.shiplocate.domain.usecase.auth.HasAuthSessionUseCase
@@ -44,11 +44,13 @@ import kotlinx.coroutines.launch
  *
  * Проверяет наличие токена при старте
  * 
+ * @param paddingValues PaddingValues из Scaffold для передачи в экраны
  * @param onNavControllerReady Callback для передачи navController и currentRoute наружу
  */
 @Suppress("FunctionName")
 @Composable
 fun TrackerNavigation(
+    paddingValues: PaddingValues,
     onNavControllerReady: (NavController, String?) -> Unit = { _, _ -> },
 ) {
     val navController = rememberNavController()
@@ -126,6 +128,7 @@ fun TrackerNavigation(
                 factory = enterPhoneViewModelFactory,
             )
             EnterPhoneScreen(
+                paddingValues = paddingValues,
                 onNavigateToPin = { phone ->
                     navController.navigate(Screen.enterPin(phone))
                 },
@@ -154,6 +157,7 @@ fun TrackerNavigation(
             )
 
             EnterPinScreen(
+                paddingValues = paddingValues,
                 phone = phone,
                 onNavigateToHome = {
                     // Clear back stack and navigate to loads
@@ -191,6 +195,7 @@ fun TrackerNavigation(
             }
             
             LoadsScreen(
+                paddingValues = paddingValues,
                 viewModel = viewModel,
                 onLoadClick = { loadId ->
                     navController.navigate(Screen.home(loadId))
@@ -218,6 +223,7 @@ fun TrackerNavigation(
                     factory = homeViewModelFactory,
                 )
             HomeScreen(
+                paddingValues = paddingValues,
                 loadId = loadId,
                 viewModel = viewModel,
                 onNavigateToLogs = {
@@ -239,6 +245,7 @@ fun TrackerNavigation(
                     factory = logsViewModelFactory,
                 )
             LogsScreen(
+                paddingValues = paddingValues,
                 viewModel = viewModel,
             )
         }

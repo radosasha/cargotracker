@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -54,6 +55,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun EnterPinScreen(
+    paddingValues: PaddingValues,
     phone: String,
     onNavigateToHome: () -> Unit,
     onNavigateBack: (String?) -> Unit,
@@ -110,6 +112,7 @@ fun EnterPinScreen(
         modifier =
             Modifier
                 .fillMaxSize()
+                .padding(paddingValues)
                 .imePadding(), // Adjust for keyboard
     ) {
         Column(

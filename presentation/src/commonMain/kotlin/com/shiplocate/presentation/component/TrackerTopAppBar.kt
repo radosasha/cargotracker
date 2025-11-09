@@ -17,6 +17,7 @@ import com.shiplocate.presentation.navigation.Screen
 /**
  * Динамический TopAppBar для приложения
  * Обновляет заголовок и действия в зависимости от текущего экрана
+ * Скрывается на auth экранах (ENTER_PHONE, ENTER_PIN)
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -26,20 +27,28 @@ fun TrackerTopAppBar(
     modifier: Modifier = Modifier,
     onLongPressTitle: (() -> Unit)? = null,
 ) {
+    // Скрываем TopAppBar на auth экранах
+    val shouldShowTopBar = when {
+        currentRoute == Screen.ENTER_PHONE -> false
+        currentRoute?.startsWith(Screen.ENTER_PIN) == true -> false
+        else -> true
+    }
+
+    if (!shouldShowTopBar) {
+        return
+    }
+
     // Определяем заголовок в зависимости от текущего маршрута
     val title = when {
-        currentRoute?.startsWith(Screen.HOME) == true -> "GPS Tracker"
+        currentRoute?.startsWith(Screen.HOME) == true -> "Manage load"
         currentRoute == Screen.LOADS -> "Loads"
         currentRoute == Screen.LOGS -> "Logs"
-        currentRoute?.startsWith(Screen.ENTER_PIN) == true -> "Enter PIN"
-        currentRoute == Screen.ENTER_PHONE -> "Enter Phone"
         else -> "ShipLocate"
     }
 
     // Показываем кнопку назад, если это не стартовый экран
     // В KMP Navigation previousBackStackEntry может работать нестабильно
     val canNavigateBack = when {
-        currentRoute == Screen.ENTER_PHONE -> false
         currentRoute == Screen.LOADS -> false // Если это стартовый экран после авторизации
         else -> true
     }

@@ -16,6 +16,7 @@ import com.shiplocate.presentation.navigation.TrackerNavigation
 
 /**
  * Главный экран приложения с навигацией
+ * Единый Scaffold для всех экранов с динамическим TopAppBar
  */
 @Suppress("FunctionName")
 @Composable
@@ -43,6 +44,7 @@ fun MainScreen() {
             },
         ) { paddingValues ->
             TrackerNavigation(
+                paddingValues = paddingValues,
                 onNavControllerReady = { controller, route ->
                     navController = controller
                     currentRoute = route

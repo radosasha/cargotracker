@@ -1,6 +1,5 @@
 package com.shiplocate.presentation.feature.loads
 
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,10 +18,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -45,6 +41,7 @@ import com.shiplocate.presentation.util.DateFormatter
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoadsScreen(
+    paddingValues: PaddingValues,
     viewModel: LoadsViewModel,
     onLoadClick: (Long) -> Unit,
     onNavigateToLogs: () -> Unit = {},
@@ -52,53 +49,28 @@ fun LoadsScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                modifier =
-                    Modifier.pointerInput(Unit) {
-                        detectTapGestures(
-                            onLongPress = {
-                                onNavigateToLogs()
-                            },
-                        )
-                    },
-                title = {
-                    Text(
-                        "Loads",
-                    )
-                },
-                colors =
-                    TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer,
-                        titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                    ),
-            )
-        },
-    ) { paddingValues ->
-        Box(
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
-        ) {
-            when (val state = uiState) {
-                is LoadsUiState.Loading -> LoadingContent()
-                is LoadsUiState.Error ->
-                    ErrorContentWithRefresh(
-                        message = state.message,
-                        isRefreshing = isRefreshing,
-                        onRetry = { viewModel.retry() },
-                        onRefresh = { viewModel.refresh() },
-                    )
-                is LoadsUiState.Success ->
-                    LoadsListWithRefresh(
-                        loads = state.loads,
-                        isRefreshing = isRefreshing,
-                        onRefresh = { viewModel.refresh() },
-                        onLoadClick = onLoadClick,
-                    )
-            }
+    Box(
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .padding(paddingValues),
+    ) {
+        when (val state = uiState) {
+            is LoadsUiState.Loading -> LoadingContent()
+            is LoadsUiState.Error ->
+                ErrorContentWithRefresh(
+                    message = state.message,
+                    isRefreshing = isRefreshing,
+                    onRetry = { viewModel.retry() },
+                    onRefresh = { viewModel.refresh() },
+                )
+            is LoadsUiState.Success ->
+                LoadsListWithRefresh(
+                    loads = state.loads,
+                    isRefreshing = isRefreshing,
+                    onRefresh = { viewModel.refresh() },
+                    onLoadClick = onLoadClick,
+                )
         }
     }
 }

@@ -3,6 +3,7 @@ package com.shiplocate.presentation.feature.logs
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,7 +20,6 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -39,7 +39,10 @@ import com.shiplocate.presentation.model.MessageType
  * Экран для управления лог-файлами
  */
 @Composable
-fun LogsScreen(viewModel: LogsViewModel) {
+fun LogsScreen(
+    paddingValues: PaddingValues,
+    viewModel: LogsViewModel,
+) {
     val uiState by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -59,9 +62,7 @@ fun LogsScreen(viewModel: LogsViewModel) {
         }
     }
 
-    Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) },
-    ) { paddingValues ->
+    Box(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier =
                 Modifier
@@ -158,6 +159,12 @@ fun LogsScreen(viewModel: LogsViewModel) {
                 Text("Send logs (${uiState.selectedCount})")
             }
         }
+        
+        // SnackbarHost для отображения сообщений
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier.padding(paddingValues),
+        )
     }
 }
 
