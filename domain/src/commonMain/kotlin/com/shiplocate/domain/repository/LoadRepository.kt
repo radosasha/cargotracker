@@ -23,11 +23,6 @@ interface LoadRepository {
     suspend fun getConnectedLoad(): Load?
 
     /**
-     * Clear all cached loads
-     */
-    suspend fun clearCache()
-
-    /**
      * Connect to load
      * Sets loadstatus=1 for the specified load and loadstatus=2 for all other loads with loadstatus=1
      * @param token Authentication token

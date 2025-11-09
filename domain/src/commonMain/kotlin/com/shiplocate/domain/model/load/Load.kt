@@ -17,4 +17,5 @@ data class Load(
     val lastUpdated: Long?,
     val createdAt: Long,
     val loadStatus: Int,
+    val stops: List<Stop> = emptyList(),
 )

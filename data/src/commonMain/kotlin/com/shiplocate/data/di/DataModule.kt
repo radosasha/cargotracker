@@ -20,8 +20,9 @@ import com.shiplocate.data.datasource.impl.LocationRemoteDataSourceImpl
 import com.shiplocate.data.datasource.impl.LogsRemoteDataSourceImpl
 import com.shiplocate.data.datasource.impl.PrefsDataSourceImpl
 import com.shiplocate.data.datasource.impl.TrackingDataSourceImpl
-import com.shiplocate.data.datasource.load.LoadLocalDataSource
-import com.shiplocate.data.datasource.load.LoadRemoteDataSource
+import com.shiplocate.data.datasource.load.LoadsLocalDataSource
+import com.shiplocate.data.datasource.load.LoadsRemoteDataSource
+import com.shiplocate.data.datasource.load.StopsLocalDataSource
 import com.shiplocate.data.datasource.remote.AuthRemoteDataSource
 import com.shiplocate.data.network.api.AuthApi
 import com.shiplocate.data.network.api.AuthApiImpl
@@ -142,8 +143,9 @@ val dataModule =
             single<TrackingDataSource> { TrackingDataSourceImpl(get()) }
             single<PrefsDataSource> { PrefsDataSourceImpl(get()) }
             single<AuthRemoteDataSource> { AuthRemoteDataSource(get(), get()) }
-            single { LoadRemoteDataSource(get()) }
-            single { LoadLocalDataSource(get()) }
+            single { LoadsRemoteDataSource(get()) }
+            single { LoadsLocalDataSource(get()) }
+            single { StopsLocalDataSource(get()) }
             single<LogsRemoteDataSource> { LogsRemoteDataSourceImpl(get(), get()) }
 
             // Firebase Token Data Sources
@@ -160,7 +162,7 @@ val dataModule =
             single<TrackingRepository> { TrackingRepositoryImpl(get()) }
             single<AuthRepository> { AuthRepositoryImpl(get()) }
             single<AuthPreferencesRepository> { AuthPreferencesRepositoryImpl(get(), get()) }
-            single<LoadRepository> { LoadRepositoryImpl(get(), get(), get()) }
+            single<LoadRepository> { LoadRepositoryImpl(get(), get(), get(), get()) }
             single<LogsRepository> { LogsRepositoryImpl(get(), get(), get()) }
             single<NotificationRepository> { NotificationRepositoryImpl(get(), get(), get(), get()) }
 

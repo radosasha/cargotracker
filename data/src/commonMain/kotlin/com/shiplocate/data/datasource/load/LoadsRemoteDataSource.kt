@@ -7,7 +7,7 @@ import com.shiplocate.data.network.dto.load.LoadDto
  * Remote data source for Load operations
  * Handles API calls through LoadApi
  */
-class LoadRemoteDataSource(
+class LoadsRemoteDataSource(
     private val loadApi: LoadApi,
 ) {
     /**

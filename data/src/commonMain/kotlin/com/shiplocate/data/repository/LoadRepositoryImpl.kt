@@ -2,10 +2,12 @@ package com.shiplocate.data.repository
 
 import com.shiplocate.core.logging.LogCategory
 import com.shiplocate.core.logging.Logger
-import com.shiplocate.data.datasource.load.LoadLocalDataSource
-import com.shiplocate.data.datasource.load.LoadRemoteDataSource
+import com.shiplocate.data.datasource.load.LoadsLocalDataSource
+import com.shiplocate.data.datasource.load.LoadsRemoteDataSource
+import com.shiplocate.data.datasource.load.StopsLocalDataSource
 import com.shiplocate.data.mapper.toDomain
 import com.shiplocate.data.mapper.toEntity
+import com.shiplocate.data.mapper.toStopEntities
 import com.shiplocate.domain.model.load.Load
 import com.shiplocate.domain.repository.LoadRepository
 
@@ -14,8 +16,9 @@ import com.shiplocate.domain.repository.LoadRepository
  * Handles fetching loads from server with automatic caching fallback
  */
 class LoadRepositoryImpl(
-    private val remoteDataSource: LoadRemoteDataSource,
-    private val localDataSource: LoadLocalDataSource,
+    private val loadsRemoteDataSource: LoadsRemoteDataSource,
+    private val loadsLocalDataSource: LoadsLocalDataSource,
+    private val stopsLocalDataSource: StopsLocalDataSource,
     private val logger: Logger,
 ) : LoadRepository {
     override suspend fun getLoads(token: String): Result<List<Load>> {
@@ -24,13 +27,25 @@ class LoadRepositoryImpl(
         return try {
             // Try to fetch from server
             logger.info(LogCategory.GENERAL, "🌐 LoadRepositoryImpl: Fetching from server")
-            val loadDtos = remoteDataSource.getLoads(token)
+            val loadDtos = loadsRemoteDataSource.getLoads(token)
 
             // Cache the results
             logger.info(LogCategory.GENERAL, "💾 LoadRepositoryImpl: Remove previous cached loads")
-            clearCache()
+
+            // Delete Loads and cascade delete stops
+            loadsLocalDataSource.removeLoads()
+
             logger.info(LogCategory.GENERAL, "💾 LoadRepositoryImpl: Caching ${loadDtos.size} loads")
-            localDataSource.cacheLoads(loadDtos.map { it.toEntity() })
+            loadsLocalDataSource.saveLoads(loadDtos.map { it.toEntity() })
+
+            // Cache stops for each load
+            loadDtos.forEach { loadDto ->
+                val stops = loadDto.toStopEntities(loadDto.id)
+                if (stops.isNotEmpty()) {
+                    logger.info(LogCategory.GENERAL, "💾 LoadRepositoryImpl: Caching ${stops.size} stops for load ${loadDto.id}")
+                    stopsLocalDataSource.saveStops(stops)
+                }
+            }
 
             // Return domain models
             val loads = loadDtos.map { it.toDomain() }
@@ -41,10 +56,14 @@ class LoadRepositoryImpl(
             logger.info(LogCategory.GENERAL, "⚠️ LoadRepositoryImpl: Server request failed, falling back to cache: ${e.message}")
 
             try {
-                val cachedLoads = localDataSource.getCachedLoads().map { it.toDomain() }
-                if (cachedLoads.isNotEmpty()) {
-                    logger.info(LogCategory.GENERAL, "✅ LoadRepositoryImpl: Loaded ${cachedLoads.size} loads from cache")
-                    Result.success(cachedLoads)
+                val loads = loadsLocalDataSource.getLoads().map { loadEntity ->
+                    val stops = stopsLocalDataSource.getStopsByLoadServerId(loadEntity.serverId)
+                        .map { it.toDomain() }
+                    loadEntity.toDomain().copy(stops = stops)
+                }
+                if (loads.isNotEmpty()) {
+                    logger.info(LogCategory.GENERAL, "✅ LoadRepositoryImpl: Loaded ${loads.size} loads from cache")
+                    Result.success(loads)
                 } else {
                     logger.info(LogCategory.GENERAL, "❌ LoadRepositoryImpl: No cached loads available")
                     Result.failure(Exception("No cached data available. Please check your connection."))
@@ -58,16 +77,15 @@ class LoadRepositoryImpl(
 
     override suspend fun getCachedLoads(): List<Load> {
         logger.info(LogCategory.GENERAL, "💾 LoadRepositoryImpl: Getting cached loads only")
-        return localDataSource.getCachedLoads().map { it.toDomain() }
+        return loadsLocalDataSource.getLoads().map { loadEntity ->
+            val stops = stopsLocalDataSource.getStopsByLoadServerId(loadEntity.serverId)
+                .map { it.toDomain() }
+            loadEntity.toDomain().copy(stops = stops)
+        }
     }
 
     override suspend fun getConnectedLoad(): Load? {
         return getCachedLoads().find { it.loadStatus == 1 }
-    }
-
-    override suspend fun clearCache() {
-        logger.info(LogCategory.GENERAL, "🗑️ LoadRepositoryImpl: Clearing cache")
-        localDataSource.clearCache()
     }
 
     override suspend fun connectToLoad(
@@ -78,11 +96,19 @@ class LoadRepositoryImpl(
 
         return try {
             logger.info(LogCategory.GENERAL, "🌐 LoadRepositoryImpl: Sending connect request to server")
-            val loadDtos = remoteDataSource.connectToLoad(token, serverLoadId)
+            val loadDtos = loadsRemoteDataSource.connectToLoad(token, serverLoadId)
 
             // Cache the updated results
             logger.info(LogCategory.GENERAL, "💾 LoadRepositoryImpl: Updating cache with ${loadDtos.size} loads")
-            localDataSource.cacheLoads(loadDtos.map { it.toEntity() })
+            loadsLocalDataSource.saveLoads(loadDtos.map { it.toEntity() })
+
+            // Cache stops for each load
+            loadDtos.forEach { loadDto ->
+                val stops = loadDto.toStopEntities(loadDto.id)
+                if (stops.isNotEmpty()) {
+                    stopsLocalDataSource.saveStops(stops)
+                }
+            }
 
             // Return domain models
             val loads = loadDtos.map { it.toDomain() }
@@ -102,11 +128,19 @@ class LoadRepositoryImpl(
 
         return try {
             logger.info(LogCategory.GENERAL, "🌐 LoadRepositoryImpl: Sending disconnect request to server")
-            val loadDtos = remoteDataSource.disconnectFromLoad(token, serverLoadId)
+            val loadDtos = loadsRemoteDataSource.disconnectFromLoad(token, serverLoadId)
 
             // Cache the updated results
             logger.info(LogCategory.GENERAL, "💾 LoadRepositoryImpl: Updating cache with ${loadDtos.size} loads")
-            localDataSource.cacheLoads(loadDtos.map { it.toEntity() })
+            loadsLocalDataSource.saveLoads(loadDtos.map { it.toEntity() })
+
+            // Cache stops for each load
+            loadDtos.forEach { loadDto ->
+                val stops = loadDto.toStopEntities(loadDto.id)
+                if (stops.isNotEmpty()) {
+                    stopsLocalDataSource.saveStops(stops)
+                }
+            }
 
             // Return domain models
             val loads = loadDtos.map { it.toDomain() }
@@ -126,7 +160,7 @@ class LoadRepositoryImpl(
 
         return try {
             logger.info(LogCategory.GENERAL, "🌐 LoadRepositoryImpl: Sending ping request to server")
-            remoteDataSource.pingLoad(token, serverLoadId)
+            loadsRemoteDataSource.pingLoad(token, serverLoadId)
 
             logger.info(LogCategory.GENERAL, "✅ LoadRepositoryImpl: Successfully pinged load $serverLoadId")
             Result.success(Unit)

@@ -6,15 +6,17 @@ import androidx.room.RoomDatabase
 import androidx.room.RoomDatabaseConstructor
 import com.shiplocate.core.database.dao.LoadDao
 import com.shiplocate.core.database.dao.LocationDao
+import com.shiplocate.core.database.dao.StopDao
 import com.shiplocate.core.database.entity.LoadEntity
 import com.shiplocate.core.database.entity.LocationEntity
+import com.shiplocate.core.database.entity.StopEntity
 
 /**
  * Room Database для хранения GPS координат и loads
  */
 @Database(
-    entities = [LocationEntity::class, LoadEntity::class],
-    version = 4,
+    entities = [LocationEntity::class, LoadEntity::class, StopEntity::class],
+    version = 5,
     exportSchema = true,
 )
 @ConstructedBy(TrackerDatabaseConstructor::class)
@@ -22,6 +24,8 @@ abstract class TrackerDatabase : RoomDatabase() {
     abstract fun locationDao(): LocationDao
 
     abstract fun loadDao(): LoadDao
+
+    abstract fun stopDao(): StopDao
 
     companion object {
         const val DATABASE_NAME = "shiplocate.db"

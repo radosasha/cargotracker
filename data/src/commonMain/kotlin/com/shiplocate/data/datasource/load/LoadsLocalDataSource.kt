@@ -7,7 +7,7 @@ import com.shiplocate.core.database.entity.LoadEntity
  * Local data source for Load caching
  * Handles database operations through Room
  */
-class LoadLocalDataSource(
+class LoadsLocalDataSource(
     private val database: TrackerDatabase,
 ) {
     private val loadDao = database.loadDao()
@@ -15,7 +15,7 @@ class LoadLocalDataSource(
     /**
      * Get all cached loads
      */
-    suspend fun getCachedLoads(): List<LoadEntity> {
+    suspend fun getLoads(): List<LoadEntity> {
         println("💾 LoadLocalDataSource: Getting cached loads")
         return loadDao.getAllLoads()
     }
@@ -23,7 +23,7 @@ class LoadLocalDataSource(
     /**
      * Cache loads to database
      */
-    suspend fun cacheLoads(loads: List<LoadEntity>) {
+    suspend fun saveLoads(loads: List<LoadEntity>) {
         println("💾 LoadLocalDataSource: Caching ${loads.size} loads")
         loadDao.insertLoads(loads)
     }
@@ -31,7 +31,7 @@ class LoadLocalDataSource(
     /**
      * Clear all cached loads
      */
-    suspend fun clearCache() {
+    suspend fun removeLoads() {
         println("💾 LoadLocalDataSource: Clearing cache")
         loadDao.deleteAll()
     }

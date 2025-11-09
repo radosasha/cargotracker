@@ -1,8 +1,11 @@
 package com.shiplocate.data.mapper
 
 import com.shiplocate.core.database.entity.LoadEntity
+import com.shiplocate.core.database.entity.StopEntity
 import com.shiplocate.data.network.dto.load.LoadDto
+import com.shiplocate.data.network.dto.load.StopDto
 import com.shiplocate.domain.model.load.Load
+import com.shiplocate.domain.model.load.Stop
 
 fun LoadDto.toDomain(): Load {
     return Load(
@@ -13,6 +16,7 @@ fun LoadDto.toDomain(): Load {
         lastUpdated = lastUpdated,
         createdAt = createdAt,
         loadStatus = loadStatus,
+        stops = stops.map { it.toDomain() },
     )
 }
 
@@ -28,6 +32,42 @@ fun LoadDto.toEntity(): LoadEntity {
     )
 }
 
+fun LoadDto.toStopEntities(loadServerId: Long): List<StopEntity> {
+    return stops.map { stopDto ->
+        StopEntity(
+            loadServerId = loadServerId,
+            serverId = stopDto.id,
+            type = stopDto.type,
+            locationAddress = stopDto.locationAddress,
+            date = stopDto.date,
+            geofenceRadius = stopDto.geofenceRadius,
+            stopIndex = stopDto.index,
+        )
+    }
+}
+
+fun StopDto.toDomain(): Stop {
+    return Stop(
+        id = id,
+        type = type,
+        locationAddress = locationAddress,
+        date = date,
+        geofenceRadius = geofenceRadius,
+        index = index,
+    )
+}
+
+fun StopEntity.toDomain(): Stop {
+    return Stop(
+        id = serverId,
+        type = type,
+        locationAddress = locationAddress,
+        date = date,
+        geofenceRadius = geofenceRadius,
+        index = stopIndex,
+    )
+}
+
 fun LoadEntity.toDomain(): Load {
     return Load(
         id = id,
@@ -37,5 +77,6 @@ fun LoadEntity.toDomain(): Load {
         lastUpdated = lastUpdated,
         createdAt = createdAt,
         loadStatus = loadStatus,
+        stops = emptyList(), // Stops загружаются отдельно через StopsLocalDataSource
     )
 }
