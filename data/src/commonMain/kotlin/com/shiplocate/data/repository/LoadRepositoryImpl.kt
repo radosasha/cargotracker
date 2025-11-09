@@ -102,6 +102,7 @@ class LoadRepositoryImpl(
             // Cache the updated results
             logger.info(LogCategory.GENERAL, "💾 LoadRepositoryImpl: Updating cache with ${loadDtos.size} loads")
             val loadEntities = loadDtos.map { it.toEntity() }
+            loadsLocalDataSource.removeLoads()
             loadsLocalDataSource.saveLoads(loadEntities)
 
             // Cache stops for each load - используем loadEntity.id для связи
@@ -135,6 +136,7 @@ class LoadRepositoryImpl(
             // Cache the updated results
             logger.info(LogCategory.GENERAL, "💾 LoadRepositoryImpl: Updating cache with ${loadDtos.size} loads")
             val loadEntities = loadDtos.map { it.toEntity() }
+            loadsLocalDataSource.removeLoads()
             loadsLocalDataSource.saveLoads(loadEntities)
 
             // Cache stops for each load - используем loadEntity.id для связи
