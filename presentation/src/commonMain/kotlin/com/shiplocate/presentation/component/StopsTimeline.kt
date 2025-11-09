@@ -1,6 +1,5 @@
 package com.shiplocate.presentation.component
 
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -41,11 +40,13 @@ fun StopsTimeline(
         return
     }
 
-    Column(modifier = modifier) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(0.dp), // Убираем spacing между элементами
+    ) {
         stops.sortedBy { it.index }.forEachIndexed { index, stop ->
             StopTimelineItem(
-                stop = stop,
-                isLast = index == stops.size - 1,
+                stop = stop
             )
         }
     }
@@ -54,7 +55,6 @@ fun StopsTimeline(
 @Composable
 private fun StopTimelineItem(
     stop: Stop,
-    isLast: Boolean,
 ) {
     val (backgroundColor, iconColor) = when (stop.type) {
         StopType.TYPE_PICKUP -> Color(0xFFFF9800) to Color.White // Orange background, white icon
@@ -77,7 +77,7 @@ private fun StopTimelineItem(
         horizontalArrangement = Arrangement.Start,
         verticalAlignment = Alignment.Top,
     ) {
-        // Иконка и линия
+        // Иконка
         Column(
             modifier = Modifier.width(48.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -89,23 +89,6 @@ private fun StopTimelineItem(
                 iconColor = iconColor,
                 modifier = Modifier.size(32.dp),
             )
-
-            // Вертикальная линия (если не последний элемент)
-            if (!isLast) {
-                Spacer(modifier = Modifier.height(4.dp))
-                Canvas(
-                    modifier = Modifier
-                        .width(2.dp)
-                        .height(40.dp),
-                ) {
-                    drawLine(
-                        color = backgroundColor.copy(alpha = 0.5f),
-                        start = androidx.compose.ui.geometry.Offset(size.width / 2, 0f),
-                        end = androidx.compose.ui.geometry.Offset(size.width / 2, size.height),
-                        strokeWidth = 2.dp.toPx(),
-                    )
-                }
-            }
         }
 
         // Текстовая информация

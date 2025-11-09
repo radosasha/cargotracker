@@ -200,9 +200,6 @@ fun TrackerNavigation(
                 onLoadClick = { loadId ->
                     navController.navigate(Screen.home(loadId))
                 },
-                onNavigateToLogs = {
-                    navController.navigate(Screen.LOGS)
-                },
             )
         }
 

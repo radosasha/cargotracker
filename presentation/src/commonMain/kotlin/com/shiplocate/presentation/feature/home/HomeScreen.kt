@@ -56,7 +56,7 @@ fun HomeScreen(
         // Заголовок Load вверху
         uiState.load?.let { load ->
             Text(
-                text = "Load: ${load.loadName}",
+                text = "Load number: ${load.loadName}",
                 style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.primary,
             )
