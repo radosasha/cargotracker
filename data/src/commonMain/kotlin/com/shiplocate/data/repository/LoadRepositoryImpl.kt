@@ -36,13 +36,14 @@ class LoadRepositoryImpl(
             loadsLocalDataSource.removeLoads()
 
             logger.info(LogCategory.GENERAL, "💾 LoadRepositoryImpl: Caching ${loadDtos.size} loads")
-            loadsLocalDataSource.saveLoads(loadDtos.map { it.toEntity() })
+            val loadEntities = loadDtos.map { it.toEntity() }
+            loadsLocalDataSource.saveLoads(loadEntities)
 
-            // Cache stops for each load
-            loadDtos.forEach { loadDto ->
-                val stops = loadDto.toStopEntities(loadDto.id)
+            // Cache stops for each load - используем loadEntity.id для связи
+            loadDtos.zip(loadEntities).forEach { (loadDto, loadEntity) ->
+                val stops = loadDto.toStopEntities(loadEntity.id)
                 if (stops.isNotEmpty()) {
-                    logger.info(LogCategory.GENERAL, "💾 LoadRepositoryImpl: Caching ${stops.size} stops for load ${loadDto.id}")
+                    logger.info(LogCategory.GENERAL, "💾 LoadRepositoryImpl: Caching ${stops.size} stops for load ${loadEntity.id}")
                     stopsLocalDataSource.saveStops(stops)
                 }
             }
@@ -57,7 +58,7 @@ class LoadRepositoryImpl(
 
             try {
                 val loads = loadsLocalDataSource.getLoads().map { loadEntity ->
-                    val stops = stopsLocalDataSource.getStopsByLoadServerId(loadEntity.serverId)
+                    val stops = stopsLocalDataSource.getStopsByLoadId(loadEntity.id)
                         .map { it.toDomain() }
                     loadEntity.toDomain().copy(stops = stops)
                 }
@@ -78,7 +79,7 @@ class LoadRepositoryImpl(
     override suspend fun getCachedLoads(): List<Load> {
         logger.info(LogCategory.GENERAL, "💾 LoadRepositoryImpl: Getting cached loads only")
         return loadsLocalDataSource.getLoads().map { loadEntity ->
-            val stops = stopsLocalDataSource.getStopsByLoadServerId(loadEntity.serverId)
+            val stops = stopsLocalDataSource.getStopsByLoadId(loadEntity.id)
                 .map { it.toDomain() }
             loadEntity.toDomain().copy(stops = stops)
         }
@@ -100,11 +101,12 @@ class LoadRepositoryImpl(
 
             // Cache the updated results
             logger.info(LogCategory.GENERAL, "💾 LoadRepositoryImpl: Updating cache with ${loadDtos.size} loads")
-            loadsLocalDataSource.saveLoads(loadDtos.map { it.toEntity() })
+            val loadEntities = loadDtos.map { it.toEntity() }
+            loadsLocalDataSource.saveLoads(loadEntities)
 
-            // Cache stops for each load
-            loadDtos.forEach { loadDto ->
-                val stops = loadDto.toStopEntities(loadDto.id)
+            // Cache stops for each load - используем loadEntity.id для связи
+            loadDtos.zip(loadEntities).forEach { (loadDto, loadEntity) ->
+                val stops = loadDto.toStopEntities(loadEntity.id)
                 if (stops.isNotEmpty()) {
                     stopsLocalDataSource.saveStops(stops)
                 }
@@ -132,11 +134,12 @@ class LoadRepositoryImpl(
 
             // Cache the updated results
             logger.info(LogCategory.GENERAL, "💾 LoadRepositoryImpl: Updating cache with ${loadDtos.size} loads")
-            loadsLocalDataSource.saveLoads(loadDtos.map { it.toEntity() })
+            val loadEntities = loadDtos.map { it.toEntity() }
+            loadsLocalDataSource.saveLoads(loadEntities)
 
-            // Cache stops for each load
-            loadDtos.forEach { loadDto ->
-                val stops = loadDto.toStopEntities(loadDto.id)
+            // Cache stops for each load - используем loadEntity.id для связи
+            loadDtos.zip(loadEntities).forEach { (loadDto, loadEntity) ->
+                val stops = loadDto.toStopEntities(loadEntity.id)
                 if (stops.isNotEmpty()) {
                     stopsLocalDataSource.saveStops(stops)
                 }

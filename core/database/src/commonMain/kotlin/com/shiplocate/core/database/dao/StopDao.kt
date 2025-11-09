@@ -11,8 +11,8 @@ import com.shiplocate.core.database.entity.StopEntity
  */
 @Dao
 interface StopDao {
-    @Query("SELECT * FROM stops WHERE loadServerId = :loadServerId ORDER BY stopIndex ASC")
-    suspend fun getStopsByLoadServerId(loadServerId: Long): List<StopEntity>
+    @Query("SELECT * FROM stops WHERE loadId = :loadId ORDER BY stopIndex ASC")
+    suspend fun getStopsByLoadId(loadId: Long): List<StopEntity>
 
     @Query("SELECT * FROM stops")
     suspend fun getAllStops(): List<StopEntity>

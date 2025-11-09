@@ -15,9 +15,9 @@ class StopsLocalDataSource(
     /**
      * Get all stops for a specific load
      */
-    suspend fun getStopsByLoadServerId(loadServerId: Long): List<StopEntity> {
-        println("💾 StopsLocalDataSource: Getting stops for load $loadServerId")
-        return stopDao.getStopsByLoadServerId(loadServerId)
+    suspend fun getStopsByLoadId(loadId: Long): List<StopEntity> {
+        println("💾 StopsLocalDataSource: Getting stops for load $loadId")
+        return stopDao.getStopsByLoadId(loadId)
     }
 
     /**

@@ -13,8 +13,8 @@ import androidx.room.PrimaryKey
     foreignKeys = [
         ForeignKey(
             entity = LoadEntity::class,
-            parentColumns = ["serverId"],
-            childColumns = ["loadServerId"],
+            parentColumns = ["id"],
+            childColumns = ["loadId"],
             onDelete = ForeignKey.CASCADE,
         ),
     ],
@@ -22,8 +22,8 @@ import androidx.room.PrimaryKey
 data class StopEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
-    @ColumnInfo(name = "loadServerId", index = true)
-    val loadServerId: Long, // Foreign key to LoadEntity.serverId
+    @ColumnInfo(name = "loadId", index = true)
+    val loadId: Long, // Foreign key to LoadEntity.id
     val serverId: Long, // Server's stop ID
     val type: Int,
     val locationAddress: String,

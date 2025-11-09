@@ -32,10 +32,10 @@ fun LoadDto.toEntity(): LoadEntity {
     )
 }
 
-fun LoadDto.toStopEntities(loadServerId: Long): List<StopEntity> {
+fun LoadDto.toStopEntities(loadId: Long): List<StopEntity> {
     return stops.map { stopDto ->
         StopEntity(
-            loadServerId = loadServerId,
+            loadId = loadId,
             serverId = stopDto.id,
             type = stopDto.type,
             locationAddress = stopDto.locationAddress,
