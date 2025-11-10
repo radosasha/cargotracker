@@ -1,4 +1,4 @@
-package com.shiplocate.trackingsdk
+package com.shiplocate.trackingsdk.trip
 
 import com.shiplocate.core.logging.LogCategory
 import com.shiplocate.core.logging.Logger
@@ -31,12 +31,12 @@ class TripRecorder(
      * Запускает GPS трекинг и возвращает Flow с результатами обработки координат
      * @return Flow<LocationProcessResult> поток результатов обработки GPS координат
      */
-    suspend fun startTracking(): Flow<LocationProcessResult> {
+    suspend fun startTracking(loadId: Long): Flow<LocationProcessResult> {
         logger.info(LogCategory.LOCATION, "TripRecorder: Starting GPS location processing")
 
         // Запускаем GPS трекинг и конвертируем Flow<Location> в Flow<LocationProcessResult>
         val connectedLoad = withContext(Dispatchers.Default) {
-            loadRepository.getConnectedLoad()
+            loadRepository.getLoadById(loadId)
         } ?: throw IllegalStateException("Connected Load not found")
 
         return gpsRepository.startGpsTracking()

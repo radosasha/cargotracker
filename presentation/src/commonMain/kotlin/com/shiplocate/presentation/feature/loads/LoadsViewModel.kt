@@ -66,18 +66,26 @@ class LoadsViewModel(
                 if (isTrackingActive) {
                     logger.info(LogCategory.LOCATION, "LoadsViewModel: Tracking was active before, restoring...")
 
-                    // Автоматически запускаем трекинг
-                    val result =
-                        withContext(Dispatchers.Default) {
-                            startTrackingUseCase()
+                    // Получаем первый load из кеша для восстановления трекинга
+                    val loads = getCachedLoadsUseCase()
+                    val firstLoad = loads.firstOrNull()
+                    
+                    if (firstLoad != null) {
+                        // Автоматически запускаем трекинг с loadId
+                        val result =
+                            withContext(Dispatchers.Default) {
+                                startTrackingUseCase(firstLoad.id)
+                            }
+                        if (result.isSuccess) {
+                            logger.info(LogCategory.LOCATION, "LoadsViewModel: Tracking restored successfully with loadId=${firstLoad.id}")
+                        } else {
+                            logger.error(
+                                LogCategory.LOCATION,
+                                "LoadsViewModel: Failed to restore tracking: ${result.exceptionOrNull()?.message}",
+                            )
                         }
-                    if (result.isSuccess) {
-                        logger.info(LogCategory.LOCATION, "LoadsViewModel: Tracking restored successfully")
                     } else {
-                        logger.error(
-                            LogCategory.LOCATION,
-                            "LoadsViewModel: Failed to restore tracking: ${result.exceptionOrNull()?.message}",
-                        )
+                        logger.warn(LogCategory.LOCATION, "LoadsViewModel: No loads found in cache, cannot restore tracking")
                     }
                 } else {
                     logger.info(LogCategory.LOCATION, "LoadsViewModel: Tracking was not active, no restoration needed")

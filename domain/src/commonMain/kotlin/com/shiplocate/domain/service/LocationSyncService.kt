@@ -6,6 +6,7 @@ package com.shiplocate.domain.service
 interface LocationSyncService {
     /**
      * Запускает периодическую синхронизацию неотправленных координат
+     * @param loadId ID загрузки для трекинга
      */
     fun startSync()
 

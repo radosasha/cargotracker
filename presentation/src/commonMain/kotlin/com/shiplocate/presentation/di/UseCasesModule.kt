@@ -7,6 +7,7 @@ import com.shiplocate.domain.usecase.HandleFirebaseTokenUseCase
 import com.shiplocate.domain.usecase.ManageFirebaseTokensUseCase
 import com.shiplocate.domain.usecase.RequestAllPermissionsUseCase
 import com.shiplocate.domain.usecase.RequestNotificationPermissionUseCase
+import com.shiplocate.domain.usecase.SavePhoneNumberUseCase
 import com.shiplocate.domain.usecase.SendCachedTokenOnAuthUseCase
 import com.shiplocate.domain.usecase.StartTrackingUseCase
 import com.shiplocate.domain.usecase.StopTrackingUseCase
@@ -17,12 +18,11 @@ import com.shiplocate.domain.usecase.auth.HasAuthSessionUseCase
 import com.shiplocate.domain.usecase.auth.RequestSmsCodeUseCase
 import com.shiplocate.domain.usecase.auth.SaveAuthSessionUseCase
 import com.shiplocate.domain.usecase.auth.VerifySmsCodeUseCase
-import com.shiplocate.domain.usecase.SavePhoneNumberUseCase
 import com.shiplocate.domain.usecase.load.ConnectToLoadUseCase
 import com.shiplocate.domain.usecase.load.DisconnectFromLoadUseCase
 import com.shiplocate.domain.usecase.load.GetCachedLoadsUseCase
+import com.shiplocate.domain.usecase.load.GetConnectedLoadUseCase
 import com.shiplocate.domain.usecase.load.GetLoadsUseCase
-import com.shiplocate.domain.usecase.load.HasConnectedLoadUseCase
 import com.shiplocate.domain.usecase.logs.GetLogsClientIdUseCase
 import com.shiplocate.domain.usecase.logs.GetLogsUseCase
 import org.koin.core.module.dsl.factoryOf
@@ -66,7 +66,7 @@ val useCasesModule =
         factoryOf(::GetCachedLoadsUseCase)
         factoryOf(::ConnectToLoadUseCase)
         factoryOf(::DisconnectFromLoadUseCase)
-        factoryOf(::HasConnectedLoadUseCase)
+        factoryOf(::GetConnectedLoadUseCase)
 
         // Firebase Token Use Cases
         factoryOf(::HandleFirebaseTokenUseCase)

@@ -27,7 +27,7 @@ class IOSTrackingService(
         private const val TAG = "TrackingSDKIOS"
     }
 
-    suspend fun startTracking(): Result<Unit> {
+    suspend fun startTracking(loadId: Long): Result<Unit> {
         return try {
             if (isTracking) {
                 logger.info(LogCategory.LOCATION, "$TAG: Already tracking, ignoring start request")
@@ -37,7 +37,7 @@ class IOSTrackingService(
             logger.info(LogCategory.LOCATION, "$TAG: Starting GPS tracking through StartProcessLocationsUseCase")
 
             // Запускаем обработку GPS координат и подписываемся на Flow результатов
-            collectingJob = trackingManager.startTracking()
+            collectingJob = trackingManager.startTracking(loadId)
                 .onEach { event ->
                     when (event) {
                         is TrackingStateEvent.LocationProcessed -> {

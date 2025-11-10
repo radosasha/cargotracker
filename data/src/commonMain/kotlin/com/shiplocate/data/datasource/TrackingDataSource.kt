@@ -8,8 +8,9 @@ import com.shiplocate.data.model.TrackingDataStatus
 interface TrackingDataSource {
     /**
      * Запускает GPS трекинг
+     * @param loadId ID загрузки для трекинга
      */
-    suspend fun startTracking(): Result<Unit>
+    suspend fun startTracking(loadId: Long): Result<Unit>
 
     /**
      * Останавливает GPS трекинг

@@ -19,15 +19,16 @@ class TrackingSDKAndroid(
         private const val TAG = "TrackingSDKAndroid"
     }
 
-    override suspend fun startTracking(): Result<Unit> {
+    override suspend fun startTracking(loadId: Long): Result<Unit> {
         return try {
 
             // Используем AndroidTrackingService из trackingsdk модуля
             val intent = Intent(context, AndroidTrackingService::class.java)
+            intent.putExtra(AndroidTrackingService.EXTRA_LOAD_ID, loadId)
             context.startForegroundService(intent)
             isTracking = true
 
-            logger.info(LogCategory.LOCATION, "$TAG: Tracking started, isTracking = $isTracking")
+            logger.info(LogCategory.LOCATION, "$TAG: Tracking started with loadId=$loadId, isTracking = $isTracking")
             Result.success(Unit)
         } catch (e: Exception) {
             logger.error(LogCategory.LOCATION, "$TAG: Error starting tracking: ${e.message}", e)

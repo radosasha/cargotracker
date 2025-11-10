@@ -21,6 +21,14 @@ class LoadsLocalDataSource(
     }
 
     /**
+     * Get load by internal ID from cache
+     */
+    suspend fun getLoadById(loadId: Long): LoadEntity? {
+        println("💾 LoadLocalDataSource: Getting load by id=$loadId")
+        return loadDao.getLoadById(loadId)
+    }
+
+    /**
      * Cache loads to database
      */
     suspend fun saveLoads(loads: List<LoadEntity>) {

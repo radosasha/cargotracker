@@ -8,8 +8,9 @@ import com.shiplocate.domain.model.TrackingStatus
 interface TrackingRepository {
     /**
      * Запускает GPS трекинг
+     * @param loadId ID загрузки для трекинга
      */
-    suspend fun startTracking(): Result<Unit>
+    suspend fun startTracking(loadId: Long): Result<Unit>
 
     /**
      * Останавливает GPS трекинг

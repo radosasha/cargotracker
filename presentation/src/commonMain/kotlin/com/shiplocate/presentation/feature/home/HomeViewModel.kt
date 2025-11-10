@@ -175,7 +175,7 @@ class HomeViewModel(
                 logger.info(LogCategory.UI, "HomeViewModel: Successfully connected to load ${load.loadName} (id: $loadId)")
 
                 // Step 2: Start tracking
-                val result = startTrackingUseCase()
+                val result = startTrackingUseCase(loadId)
                 if (result.isSuccess) {
                     // Обновляем статус трекинга
                     val trackingStatus = getTrackingStatusUseCase()

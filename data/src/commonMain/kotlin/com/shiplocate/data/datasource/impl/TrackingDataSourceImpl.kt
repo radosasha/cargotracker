@@ -12,8 +12,8 @@ class TrackingDataSourceImpl(
     private val trackingSDK: TrackingSDK
 ) : TrackingDataSource {
     
-    override suspend fun startTracking(): Result<Unit> {
-        return trackingSDK.startTracking()
+    override suspend fun startTracking(loadId: Long): Result<Unit> {
+        return trackingSDK.startTracking(loadId)
     }
 
     override suspend fun stopTracking(): Result<Unit> {

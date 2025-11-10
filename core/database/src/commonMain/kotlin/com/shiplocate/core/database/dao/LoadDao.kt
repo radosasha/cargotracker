@@ -14,6 +14,9 @@ interface LoadDao {
     @Query("SELECT * FROM loads ORDER BY createdAt DESC")
     suspend fun getAllLoads(): List<LoadEntity>
 
+    @Query("SELECT * FROM loads WHERE id = :loadId")
+    suspend fun getLoadById(loadId: Long): LoadEntity?
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertLoads(loads: List<LoadEntity>)
 

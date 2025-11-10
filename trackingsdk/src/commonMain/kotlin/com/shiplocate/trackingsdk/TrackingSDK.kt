@@ -5,7 +5,11 @@ package com.shiplocate.trackingsdk
  * Определяет публичный API для SDK
  */
 interface TrackingSDK {
-    suspend fun startTracking(): Result<Unit>
+    /**
+     * Запускает GPS трекинг
+     * @param loadId ID загрузки для трекинга
+     */
+    suspend fun startTracking(loadId: Long): Result<Unit>
     suspend fun stopTracking(): Result<Unit>
     suspend fun isTrackingActive(): Boolean
     fun getServiceStatus(): String

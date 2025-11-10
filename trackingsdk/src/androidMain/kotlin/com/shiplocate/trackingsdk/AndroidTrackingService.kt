@@ -34,6 +34,11 @@ class AndroidTrackingService : LifecycleService(), KoinComponent {
         private const val NOTIFICATION_ID = 1
         private const val CHANNEL_ID = "location_tracking_channel"
         private const val CHANNEL_NAME = "Location Tracking"
+        
+        /**
+         * Ключ для передачи loadId через Intent
+         */
+        const val EXTRA_LOAD_ID = "loadId"
     }
 
     inner class LocationBinder : Binder() {
@@ -52,7 +57,16 @@ class AndroidTrackingService : LifecycleService(), KoinComponent {
     ): Int {
         super.onStartCommand(intent, flags, startId)
         startForeground(NOTIFICATION_ID, createNotification())
-        startLocationTracking()
+        
+        // Получаем loadId из Intent
+        val loadId = intent?.getLongExtra(EXTRA_LOAD_ID, -1L) ?: -1L
+        if (loadId == -1L) {
+            println("AndroidTrackingService: ⚠️ No loadId provided in Intent, cannot start tracking")
+            stopSelf()
+            return START_NOT_STICKY
+        }
+        
+        startLocationTracking(loadId)
         return START_STICKY // Перезапуск сервиса если он был убит системой
     }
 
@@ -112,7 +126,7 @@ class AndroidTrackingService : LifecycleService(), KoinComponent {
             .build()
     }
 
-    private fun startLocationTracking() {
+    private fun startLocationTracking(loadId: Long) {
         if (isTracking) {
             println("LocationTrackingService: Already tracking, ignoring start request")
             return
@@ -120,10 +134,10 @@ class AndroidTrackingService : LifecycleService(), KoinComponent {
 
         lifecycle.coroutineScope.launch {
             try {
-                println("LocationTrackingService: Starting GPS tracking through TrackingManager")
+                println("LocationTrackingService: Starting GPS tracking through TrackingManager with loadId=$loadId")
 
                 // Запускаем обработку GPS координат и подписываемся на Flow результатов
-                trackingManager.startTracking()
+                trackingManager.startTracking(loadId)
                     .flowOn(Dispatchers.IO)
                     .onEach { event ->
                         when (event) {

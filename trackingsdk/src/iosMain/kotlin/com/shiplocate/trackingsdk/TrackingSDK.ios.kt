@@ -14,9 +14,9 @@ class TrackingSDKIOS(val trackingService: IOSTrackingService) : TrackingSDK, Koi
         private const val TAG = "TrackingSDKAndroid"
     }
 
-    override suspend fun startTracking(): Result<Unit> {
+    override suspend fun startTracking(loadId: Long): Result<Unit> {
         isTracking = true
-        return trackingService.startTracking()
+        return trackingService.startTracking(loadId)
     }
 
     override suspend fun stopTracking(): Result<Unit> {

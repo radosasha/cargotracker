@@ -2,6 +2,7 @@ package com.shiplocate.domain.usecase.load
 
 import com.shiplocate.core.logging.LogCategory
 import com.shiplocate.core.logging.Logger
+import com.shiplocate.domain.model.load.Load
 import com.shiplocate.domain.repository.AuthPreferencesRepository
 import com.shiplocate.domain.repository.LoadRepository
 
@@ -9,12 +10,12 @@ import com.shiplocate.domain.repository.LoadRepository
  * Use Case для проверки наличия connected load
  * Сначала проверяет кеш, если не найден - запрашивает с сервера
  */
-class HasConnectedLoadUseCase(
+class GetConnectedLoadUseCase(
     private val loadRepository: LoadRepository,
     private val authPreferencesRepository: AuthPreferencesRepository,
     private val logger: Logger,
 ) {
-    suspend operator fun invoke(): Boolean {
+    suspend operator fun invoke(): Load? {
         logger.info(LogCategory.LOCATION, "HasConnectedLoadUseCase: Checking for connected load...")
         
         // Сначала проверяем кеш
@@ -24,7 +25,7 @@ class HasConnectedLoadUseCase(
                 LogCategory.LOCATION,
                 "HasConnectedLoadUseCase: Found connected load in cache: ${cachedConnectedLoad.loadName}",
             )
-            return true
+            return cachedConnectedLoad
         }
         
         logger.info(LogCategory.LOCATION, "HasConnectedLoadUseCase: No connected load in cache, checking server...")
@@ -35,7 +36,7 @@ class HasConnectedLoadUseCase(
         
         if (token == null) {
             logger.warn(LogCategory.LOCATION, "HasConnectedLoadUseCase: Not authenticated, cannot check server")
-            return false
+            return null
         }
         
         // Получаем loads с сервера (с fallback на кеш)
@@ -43,9 +44,9 @@ class HasConnectedLoadUseCase(
         
         return if (loadsResult.isSuccess) {
             val loads = loadsResult.getOrNull() ?: emptyList()
-            val hasConnectedLoad = loads.any { it.loadStatus == 1 }
+            val hasConnectedLoad = loads.find { it.loadStatus == 1 }
             
-            if (hasConnectedLoad) {
+            if (hasConnectedLoad != null) {
                 logger.info(
                     LogCategory.LOCATION,
                     "HasConnectedLoadUseCase: Found connected load on server",
@@ -63,7 +64,7 @@ class HasConnectedLoadUseCase(
                 LogCategory.LOCATION,
                 "HasConnectedLoadUseCase: Failed to get loads from server: ${loadsResult.exceptionOrNull()?.message}",
             )
-            false
+            null
         }
     }
 }

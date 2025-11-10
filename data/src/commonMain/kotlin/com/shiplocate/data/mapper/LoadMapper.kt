@@ -42,6 +42,8 @@ fun LoadDto.toStopEntities(loadId: Long): List<StopEntity> {
             date = stopDto.date,
             geofenceRadius = stopDto.geofenceRadius,
             stopIndex = stopDto.index,
+            latitude = stopDto.latitude,
+            longitude = stopDto.longitude
         )
     }
 }
@@ -54,6 +56,8 @@ fun StopDto.toDomain(): Stop {
         date = date,
         geofenceRadius = geofenceRadius,
         index = index,
+        latitude = latitude,
+        longitude = longitude
     )
 }
 
@@ -65,6 +69,8 @@ fun StopEntity.toDomain(): Stop {
         date = date,
         geofenceRadius = geofenceRadius,
         index = stopIndex,
+        latitude = latitude,
+        longitude = longitude
     )
 }
 

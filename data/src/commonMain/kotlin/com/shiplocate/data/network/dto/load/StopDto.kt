@@ -21,5 +21,9 @@ data class StopDto(
     val geofenceRadius: Int,
     @SerialName("index")
     val index: Int,
+    @SerialName("latitude")
+    val latitude: Double,
+    @SerialName("longitude")
+    val longitude: Double,
 )
 

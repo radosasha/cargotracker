@@ -17,7 +17,7 @@ class StartTrackingUseCase(
     private val prefsRepository: PrefsRepository,
     private val logger: Logger,
 ) {
-    suspend operator fun invoke(): Result<Unit> {
+    suspend operator fun invoke(loadId: Long): Result<Unit> {
         // Проверяем разрешения перед запуском
         val permissionStatus = permissionRepository.getPermissionStatus()
 
@@ -31,7 +31,7 @@ class StartTrackingUseCase(
                 return Result.success(Unit)
             }
 
-            val result = trackingRepository.startTracking()
+            val result = trackingRepository.startTracking(loadId)
 
             result
         } else {

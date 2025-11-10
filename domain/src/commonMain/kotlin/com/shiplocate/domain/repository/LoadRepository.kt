@@ -1,6 +1,7 @@
 package com.shiplocate.domain.repository
 
 import com.shiplocate.domain.model.load.Load
+import com.shiplocate.domain.model.load.Stop
 
 /**
  * Repository interface for Load data operations
@@ -19,6 +20,15 @@ interface LoadRepository {
      * @return List of cached loads
      */
     suspend fun getCachedLoads(): List<Load>
+
+    /**
+     * Get load by internal ID from cache
+     * @param loadId Internal load ID
+     * @return Load if found, null otherwise
+     */
+    suspend fun getLoadById(loadId: Long): Load?
+
+    suspend fun getStopsByLoadId(loadId: Long): List<Stop>
 
     suspend fun getConnectedLoad(): Load?
 

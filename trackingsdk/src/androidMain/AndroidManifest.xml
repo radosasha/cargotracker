@@ -6,6 +6,9 @@
         <receiver
             android:name="com.shiplocate.trackingsdk.motion.ActivityUpdatesReceiver"
             android:exported="false" />
+        <receiver
+            android:name="com.shiplocate.trackingsdk.geofence.GeofenceBroadcastReceiver"
+            android:exported="false" />
         <service
             android:name="com.shiplocate.trackingsdk.AndroidTrackingService"
             android:enabled="true"

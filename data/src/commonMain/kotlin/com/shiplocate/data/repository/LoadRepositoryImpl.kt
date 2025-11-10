@@ -9,6 +9,7 @@ import com.shiplocate.data.mapper.toDomain
 import com.shiplocate.data.mapper.toEntity
 import com.shiplocate.data.mapper.toStopEntities
 import com.shiplocate.domain.model.load.Load
+import com.shiplocate.domain.model.load.Stop
 import com.shiplocate.domain.repository.LoadRepository
 
 /**
@@ -83,6 +84,20 @@ class LoadRepositoryImpl(
                 .map { it.toDomain() }
             loadEntity.toDomain().copy(stops = stops)
         }
+    }
+
+    override suspend fun getLoadById(loadId: Long): Load? {
+        logger.info(LogCategory.GENERAL, "💾 LoadRepositoryImpl: Getting load by id=$loadId")
+        val loadEntity = loadsLocalDataSource.getLoadById(loadId) ?: return null
+
+        val stops = stopsLocalDataSource.getStopsByLoadId(loadEntity.id)
+            .map { it.toDomain() }
+
+        return loadEntity.toDomain().copy(stops = stops)
+    }
+
+    override suspend fun getStopsByLoadId(loadId: Long): List<Stop> {
+        return stopsLocalDataSource.getStopsByLoadId(loadId).map { it.toDomain() }
     }
 
     override suspend fun getConnectedLoad(): Load? {

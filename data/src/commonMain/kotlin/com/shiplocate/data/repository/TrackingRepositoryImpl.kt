@@ -11,8 +11,8 @@ import com.shiplocate.domain.repository.TrackingRepository
 class TrackingRepositoryImpl(
     private val trackingDataSource: TrackingDataSource,
 ) : TrackingRepository {
-    override suspend fun startTracking(): Result<Unit> {
-        return trackingDataSource.startTracking()
+    override suspend fun startTracking(loadId: Long): Result<Unit> {
+        return trackingDataSource.startTracking(loadId)
     }
 
     override suspend fun stopTracking(): Result<Unit> {
