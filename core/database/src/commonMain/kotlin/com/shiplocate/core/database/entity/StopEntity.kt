@@ -31,6 +31,7 @@ data class StopEntity(
     val geofenceRadius: Int,
     val stopIndex: Int,
     val latitude: Double,
-    val longitude: Double
+    val longitude: Double,
+    val enter: Boolean
 )
 

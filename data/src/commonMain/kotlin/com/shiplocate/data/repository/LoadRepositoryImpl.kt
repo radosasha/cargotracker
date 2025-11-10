@@ -8,6 +8,7 @@ import com.shiplocate.data.datasource.load.StopsLocalDataSource
 import com.shiplocate.data.mapper.toDomain
 import com.shiplocate.data.mapper.toEntity
 import com.shiplocate.data.mapper.toStopEntities
+import com.shiplocate.data.network.dto.load.LoadDto
 import com.shiplocate.domain.model.load.Load
 import com.shiplocate.domain.model.load.Stop
 import com.shiplocate.domain.repository.LoadRepository
@@ -33,21 +34,7 @@ class LoadRepositoryImpl(
             // Cache the results
             logger.info(LogCategory.GENERAL, "💾 LoadRepositoryImpl: Remove previous cached loads")
 
-            // Delete Loads and cascade delete stops
-            loadsLocalDataSource.removeLoads()
-
-            logger.info(LogCategory.GENERAL, "💾 LoadRepositoryImpl: Caching ${loadDtos.size} loads")
-            val loadEntities = loadDtos.map { it.toEntity() }
-            loadsLocalDataSource.saveLoads(loadEntities)
-
-            // Cache stops for each load - используем loadEntity.id для связи
-            loadDtos.zip(loadEntities).forEach { (loadDto, loadEntity) ->
-                val stops = loadDto.toStopEntities(loadEntity.id)
-                if (stops.isNotEmpty()) {
-                    logger.info(LogCategory.GENERAL, "💾 LoadRepositoryImpl: Caching ${stops.size} stops for load ${loadEntity.id}")
-                    stopsLocalDataSource.saveStops(stops)
-                }
-            }
+            saveLoads(loadDtos)
 
             // Return domain models
             val loads = loadDtos.map { it.toDomain() }
@@ -116,17 +103,8 @@ class LoadRepositoryImpl(
 
             // Cache the updated results
             logger.info(LogCategory.GENERAL, "💾 LoadRepositoryImpl: Updating cache with ${loadDtos.size} loads")
-            val loadEntities = loadDtos.map { it.toEntity() }
-            loadsLocalDataSource.removeLoads()
-            loadsLocalDataSource.saveLoads(loadEntities)
 
-            // Cache stops for each load - используем loadEntity.id для связи
-            loadDtos.zip(loadEntities).forEach { (loadDto, loadEntity) ->
-                val stops = loadDto.toStopEntities(loadEntity.id)
-                if (stops.isNotEmpty()) {
-                    stopsLocalDataSource.saveStops(stops)
-                }
-            }
+            saveLoads(loadDtos)
 
             // Return domain models
             val loads = loadDtos.map { it.toDomain() }
@@ -150,17 +128,7 @@ class LoadRepositoryImpl(
 
             // Cache the updated results
             logger.info(LogCategory.GENERAL, "💾 LoadRepositoryImpl: Updating cache with ${loadDtos.size} loads")
-            val loadEntities = loadDtos.map { it.toEntity() }
-            loadsLocalDataSource.removeLoads()
-            loadsLocalDataSource.saveLoads(loadEntities)
-
-            // Cache stops for each load - используем loadEntity.id для связи
-            loadDtos.zip(loadEntities).forEach { (loadDto, loadEntity) ->
-                val stops = loadDto.toStopEntities(loadEntity.id)
-                if (stops.isNotEmpty()) {
-                    stopsLocalDataSource.saveStops(stops)
-                }
-            }
+            saveLoads(loadDtos)
 
             // Return domain models
             val loads = loadDtos.map { it.toDomain() }
@@ -187,6 +155,22 @@ class LoadRepositoryImpl(
         } catch (e: Exception) {
             logger.info(LogCategory.GENERAL, "❌ LoadRepositoryImpl: Failed to ping load: ${e.message}")
             Result.failure(e)
+        }
+    }
+
+
+    private suspend fun saveLoads(loadDtos: List<LoadDto>) {
+        val loadEntities = loadDtos.map { it.toEntity() }
+
+        loadsLocalDataSource.removeLoads()
+        loadsLocalDataSource.saveLoads(loadEntities)
+
+        // Cache stops for each load - используем loadEntity.id для связи
+        loadDtos.zip(loadEntities).forEach { (loadDto, loadEntity) ->
+            val stops = loadDto.toStopEntities(loadEntity.id)
+            if (stops.isNotEmpty()) {
+                stopsLocalDataSource.saveStops(stops)
+            }
         }
     }
 }

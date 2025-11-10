@@ -21,6 +21,6 @@ data class LoadDto(
     val createdAt: Long,
     @SerialName("loadStatus")
     val loadStatus: Int,
-    @SerialName("drops")
+    @SerialName("stops")
     val stops: List<StopDto> = emptyList(),
 )

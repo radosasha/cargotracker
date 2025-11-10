@@ -11,6 +11,7 @@ data class Stop(
     val geofenceRadius: Int,
     val index: Int,
     val latitude: Double,
-    val longitude: Double
+    val longitude: Double,
+    val enter: Boolean
 )
 

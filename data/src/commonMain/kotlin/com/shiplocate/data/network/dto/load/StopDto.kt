@@ -25,5 +25,7 @@ data class StopDto(
     val latitude: Double,
     @SerialName("longitude")
     val longitude: Double,
+    @SerialName("enter")
+    val enter: Boolean,
 )
 

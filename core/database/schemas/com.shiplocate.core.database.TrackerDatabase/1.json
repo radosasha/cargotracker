@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "ee2c6ee56d0a5dd1129a7bfbcd9b3077",
+    "identityHash": "fca1dc80ca1a07bc4bf925949b80609b",
     "entities": [
       {
         "tableName": "locations",
@@ -143,7 +143,7 @@
       },
       {
         "tableName": "stops",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `loadId` INTEGER NOT NULL, `serverId` INTEGER NOT NULL, `type` INTEGER NOT NULL, `locationAddress` TEXT NOT NULL, `date` INTEGER NOT NULL, `geofenceRadius` INTEGER NOT NULL, `stopIndex` INTEGER NOT NULL, `latitude` REAL NOT NULL, `longitude` REAL NOT NULL, FOREIGN KEY(`loadId`) REFERENCES `loads`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `loadId` INTEGER NOT NULL, `serverId` INTEGER NOT NULL, `type` INTEGER NOT NULL, `locationAddress` TEXT NOT NULL, `date` INTEGER NOT NULL, `geofenceRadius` INTEGER NOT NULL, `stopIndex` INTEGER NOT NULL, `latitude` REAL NOT NULL, `longitude` REAL NOT NULL, `enter` INTEGER NOT NULL, FOREIGN KEY(`loadId`) REFERENCES `loads`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "id",
@@ -204,6 +204,12 @@
             "columnName": "longitude",
             "affinity": "REAL",
             "notNull": true
+          },
+          {
+            "fieldPath": "enter",
+            "columnName": "enter",
+            "affinity": "INTEGER",
+            "notNull": true
           }
         ],
         "primaryKey": {
@@ -240,7 +246,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'ee2c6ee56d0a5dd1129a7bfbcd9b3077')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'fca1dc80ca1a07bc4bf925949b80609b')"
     ]
   }
 }

@@ -43,7 +43,8 @@ fun LoadDto.toStopEntities(loadId: Long): List<StopEntity> {
             geofenceRadius = stopDto.geofenceRadius,
             stopIndex = stopDto.index,
             latitude = stopDto.latitude,
-            longitude = stopDto.longitude
+            longitude = stopDto.longitude,
+            enter = stopDto.enter
         )
     }
 }
@@ -57,7 +58,8 @@ fun StopDto.toDomain(): Stop {
         geofenceRadius = geofenceRadius,
         index = index,
         latitude = latitude,
-        longitude = longitude
+        longitude = longitude,
+        enter = enter
     )
 }
 
@@ -70,7 +72,8 @@ fun StopEntity.toDomain(): Stop {
         geofenceRadius = geofenceRadius,
         index = stopIndex,
         latitude = latitude,
-        longitude = longitude
+        longitude = longitude,
+        enter = enter
     )
 }
 
