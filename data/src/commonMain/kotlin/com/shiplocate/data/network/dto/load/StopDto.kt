@@ -19,7 +19,7 @@ data class StopDto(
     val date: Long,
     @SerialName("geofenceRadius")
     val geofenceRadius: Int,
-    @SerialName("index")
+    @SerialName("stopIndex")
     val index: Int,
     @SerialName("latitude")
     val latitude: Double,
