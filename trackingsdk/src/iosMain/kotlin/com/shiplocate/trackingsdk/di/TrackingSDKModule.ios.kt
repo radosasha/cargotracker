@@ -109,6 +109,8 @@ actual val trackingSDKModule: Module = module {
         GeofenceTracker(
             loadsRepository = get(),
             geofenceClient = get(),
+            authPreferencesRepository = get(),
+            logger = get(),
             scope = get()
         )
     }

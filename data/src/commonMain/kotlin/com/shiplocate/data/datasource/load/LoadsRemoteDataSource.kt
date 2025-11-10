@@ -60,4 +60,18 @@ class LoadsRemoteDataSource(
         println("📡 LoadRemoteDataSource: Pinging load $loadId")
         loadApi.pingLoad(token, loadId)
     }
+
+    /**
+     * Enter stop - notify server that driver entered a stop
+     * @param token Bearer token for authentication
+     * @param stopId Stop ID to enter
+     * @return true if successful (200 OK or 400 Bad Request), false otherwise
+     */
+    suspend fun enterStop(
+        token: String,
+        stopId: Long,
+    ): Boolean {
+        println("📡 LoadRemoteDataSource: Entering stop $stopId")
+        return loadApi.enterStop(token, stopId)
+    }
 }

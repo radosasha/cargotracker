@@ -14,7 +14,6 @@ import com.google.android.gms.location.LocationServices
 import com.google.android.gms.tasks.Task
 import com.shiplocate.core.logging.LogCategory
 import com.shiplocate.core.logging.Logger
-import com.shiplocate.domain.model.load.Stop
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 
@@ -37,21 +36,15 @@ actual class GeofenceClient(
      * Добавляет геозону для отслеживания
      */
     @SuppressLint("MissingPermission")
-    actual suspend fun addGeofence(stop: Stop) {
+    actual suspend fun addGeofence(id: Long, latitude: Double, longitude: Double, radius: Int) {
         try {
             val geofence = Geofence.Builder()
-                .setRequestId(stop.id.toString())
-                // FIXME
+                .setRequestId(id.toString())
                 .setCircularRegion(
-                    45.0355,
-                    38.9753,
-                    50000f,
+                    latitude,
+                    longitude,
+                    radius.toFloat(),
                 )
-//                .setCircularRegion(
-//                    stop.latitude,
-//                    stop.longitude,
-//                    stop.geofenceRadius.toFloat(),
-//                )
                 .setExpirationDuration(Geofence.NEVER_EXPIRE)
                 .build()
 
@@ -66,7 +59,7 @@ actual class GeofenceClient(
             task.addOnSuccessListener {
                 logger.info(
                     LogCategory.LOCATION,
-                    "$TAG: Geofence added successfully for stop ${stop.id} (type: ${stop.type})",
+                    "$TAG: Geofence added successfully for stop $id)",
                 )
             }.addOnFailureListener { e ->
                 val errorMessage = when {
@@ -84,14 +77,14 @@ actual class GeofenceClient(
                 }
                 logger.error(
                     LogCategory.LOCATION,
-                    "$TAG: Failed to add geofence for stop ${stop.id}: $errorMessage",
+                    "$TAG: Failed to add geofence for stop ${id}: $errorMessage",
                     e,
                 )
             }
         } catch (e: Exception) {
             logger.error(
                 LogCategory.LOCATION,
-                "$TAG: Error adding geofence for stop ${stop.id}: ${e.message}",
+                "$TAG: Error adding geofence for stop ${id}: ${e.message}",
                 e,
             )
         }
@@ -100,22 +93,22 @@ actual class GeofenceClient(
     /**
      * Удаляет геозону
      */
-    actual suspend fun removeGeofence(stopId: Long) {
+    actual suspend fun removeGeofence(id: Long) {
         try {
-            val task: Task<Void> = geofencingClient.removeGeofences(listOf(stopId.toString()))
+            val task: Task<Void> = geofencingClient.removeGeofences(listOf(id.toString()))
             task.addOnSuccessListener {
-                logger.info(LogCategory.LOCATION, "$TAG: Geofence removed for stop $stopId")
+                logger.info(LogCategory.LOCATION, "$TAG: Geofence removed for stop $id")
             }.addOnFailureListener { e ->
                 logger.error(
                     LogCategory.LOCATION,
-                    "$TAG: Error removing geofence for stop $stopId: ${e.message}",
+                    "$TAG: Error removing geofence for stop $id: ${e.message}",
                     e,
                 )
             }
         } catch (e: Exception) {
             logger.error(
                 LogCategory.LOCATION,
-                "$TAG: Error removing geofence for stop $stopId: ${e.message}",
+                "$TAG: Error removing geofence for stop $id: ${e.message}",
                 e,
             )
         }
@@ -151,14 +144,6 @@ actual class GeofenceClient(
      */
     actual fun observeGeofenceEvents(): Flow<GeofenceEvent> {
         return GeofenceEventBus.flow
-    }
-
-    /**
-     * Очищает ресурсы
-     */
-    actual suspend fun destroy() {
-        logger.info(LogCategory.LOCATION, "$TAG: Destroying GeofenceClient")
-        // GeofencingClient не требует явного уничтожения
     }
 
     /**

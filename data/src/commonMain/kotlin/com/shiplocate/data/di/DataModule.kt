@@ -144,8 +144,8 @@ val dataModule =
             single<PrefsDataSource> { PrefsDataSourceImpl(get()) }
             single<AuthRemoteDataSource> { AuthRemoteDataSource(get(), get()) }
             single { LoadsRemoteDataSource(get()) }
-            single { LoadsLocalDataSource(get()) }
             single { StopsLocalDataSource(get()) }
+            single { LoadsLocalDataSource(get(), get<StopsLocalDataSource>()) }
             single<LogsRemoteDataSource> { LogsRemoteDataSourceImpl(get(), get()) }
 
             // Firebase Token Data Sources

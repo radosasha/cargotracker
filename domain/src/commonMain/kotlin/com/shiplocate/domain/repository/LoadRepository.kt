@@ -2,6 +2,7 @@ package com.shiplocate.domain.repository
 
 import com.shiplocate.domain.model.load.Load
 import com.shiplocate.domain.model.load.Stop
+import kotlinx.coroutines.flow.Flow
 
 /**
  * Repository interface for Load data operations
@@ -29,6 +30,13 @@ interface LoadRepository {
     suspend fun getLoadById(loadId: Long): Load?
 
     suspend fun getStopsByLoadId(loadId: Long): List<Stop>
+
+    /**
+     * Get stops for a specific load where enter == 0
+     * @param loadId Internal load ID
+     * @return List of stops where enter == 0
+     */
+    suspend fun getNotEnteredStopsByLoadId(loadId: Long): List<Stop>
 
     suspend fun getConnectedLoad(): Load?
 
@@ -67,4 +75,24 @@ interface LoadRepository {
         serverLoadId: Long,
     ): Result<Unit>
 
+    /**
+     * Add stop ID to enter stop queue if it doesn't exist
+     * @param stopId Server's stop ID
+     */
+    suspend fun addStopIdToQueue(stopId: Long)
+
+    /**
+     * Send all queued stop IDs to server via enterstop API
+     * Removes successfully sent stop IDs from queue
+     * @param token Authentication token
+     * @return Result indicating success or failure
+     */
+    suspend fun sendEnterStopQueue(token: String): Result<Unit>
+
+    /**
+     * Observe stops where enter == 0
+     * Returns Flow that emits list of stops when stops with enter=0 change
+     * @return Flow of stops where enter == 0
+     */
+    fun observeNotEnteredStopIdsUpdates(): Flow<List<Stop>>
 }

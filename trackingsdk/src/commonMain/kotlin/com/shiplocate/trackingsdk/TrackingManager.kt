@@ -131,6 +131,9 @@ class TrackingManager(
     }
 
     suspend fun stopTracking(): Result<Unit> {
+        // cancel geofence
+        geofenceTracker.stop()
+
         // Отменяем все jobs перед остановкой сервисов
         parkingStatusJob?.cancel()
         tripRecorderJob?.cancel()

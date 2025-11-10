@@ -63,6 +63,21 @@ fun StopDto.toDomain(): Stop {
     )
 }
 
+fun StopDto.toStopEntity(loadId: Long): StopEntity {
+    return StopEntity(
+        loadId = loadId,
+        serverId = id,
+        type = type,
+        locationAddress = locationAddress,
+        date = date,
+        geofenceRadius = geofenceRadius,
+        stopIndex = index,
+        latitude = latitude,
+        longitude = longitude,
+        enter = enter
+    )
+}
+
 fun StopEntity.toDomain(): Stop {
     return Stop(
         id = serverId,

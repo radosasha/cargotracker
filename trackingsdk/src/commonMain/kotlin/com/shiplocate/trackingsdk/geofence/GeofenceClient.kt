@@ -1,6 +1,5 @@
 package com.shiplocate.trackingsdk.geofence
 
-import com.shiplocate.domain.model.load.Stop
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -12,13 +11,13 @@ expect class GeofenceClient {
      * Добавляет геозону для отслеживания
      * @param stop Stop для которого создается геозона
      */
-    suspend fun addGeofence(stop: Stop)
+    suspend fun addGeofence(id: Long, latitude: Double, longitude: Double, radius: Int)
 
     /**
      * Удаляет геозону
      * @param stopId ID стопа для которого удаляется геозона
      */
-    suspend fun removeGeofence(stopId: Long)
+    suspend fun removeGeofence(id: Long)
 
     /**
      * Удаляет все геозоны
@@ -29,11 +28,6 @@ expect class GeofenceClient {
      * Поток событий геозон (вход/выход)
      */
     fun observeGeofenceEvents(): Flow<GeofenceEvent>
-
-    /**
-     * Очищает ресурсы
-     */
-    suspend fun destroy()
 }
 
 /**

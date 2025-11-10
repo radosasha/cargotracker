@@ -5,6 +5,7 @@ import com.shiplocate.core.logging.Logger
 import com.shiplocate.core.network.bodyOrThrow
 import com.shiplocate.data.network.dto.load.ConnectLoadRequest
 import com.shiplocate.data.network.dto.load.DisconnectLoadRequest
+import com.shiplocate.data.network.dto.load.EnterStopRequest
 import com.shiplocate.data.network.dto.load.LoadDto
 import com.shiplocate.data.network.dto.load.PingLoadRequest
 import io.ktor.client.HttpClient
@@ -70,6 +71,19 @@ interface LoadApi {
         token: String,
         loadId: Long,
     )
+
+    /**
+     * Enter stop - notify server that driver entered a stop
+     * Sets enter=true for the specified stop
+     *
+     * @param token JWT token for authentication
+     * @param stopId Stop ID to enter
+     * @return true if successful (200 OK or 400 Bad Request), false otherwise
+     */
+    suspend fun enterStop(
+        token: String,
+        stopId: Long,
+    ): Boolean
 }
 
 /**
@@ -148,5 +162,26 @@ class LoadApiImpl(
         // bodyOrThrow will throw exception if status is not success
         // We read body as String to verify request succeeded, but don't need to parse it
         response.bodyOrThrow<String>() // This verifies status is success
+    }
+
+    override suspend fun enterStop(
+        token: String,
+        stopId: Long,
+    ): Boolean {
+        logger.debug(LogCategory.NETWORK, "🌐 LoadApi: Entering stop $stopId")
+
+        val request = EnterStopRequest(stopId = stopId)
+        val response =
+            httpClient.post("$baseUrl/api/mobile/loads/enterstop") {
+                header(HttpHeaders.Authorization, "Bearer $token")
+                contentType(ContentType.Application.Json)
+                setBody(request)
+            }
+
+        logger.debug(LogCategory.NETWORK, "🌐 LoadApi: Enter stop response status: ${response.status}")
+
+        // Consider 200 OK or 404 Not found as success (404 means not found, but operation is processed)
+        val statusCode = response.status.value
+        return statusCode in 200..299 || statusCode == 404
     }
 }

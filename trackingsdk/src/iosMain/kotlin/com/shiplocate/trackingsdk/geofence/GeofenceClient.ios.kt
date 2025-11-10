@@ -2,7 +2,6 @@ package com.shiplocate.trackingsdk.geofence
 
 import com.shiplocate.core.logging.LogCategory
 import com.shiplocate.core.logging.Logger
-import com.shiplocate.domain.model.load.Stop
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -24,7 +23,6 @@ actual class GeofenceClient(
 
     companion object {
         private const val TAG = "GeofenceClient"
-        private const val GEOFENCE_RADIUS_DEFAULT = 100.0 // метров
     }
 
     init {
@@ -36,32 +34,29 @@ actual class GeofenceClient(
      * Добавляет геозону для отслеживания
      */
     @OptIn(ExperimentalForeignApi::class)
-    actual suspend fun addGeofence(stop: Stop) {
+    actual suspend fun addGeofence(id: Long, latitude: Double, longitude: Double, radius: Int) {
         try {
-            // TODO: получить координаты из stop.locationAddress или использовать locationId
-            // Пока используем дефолтные координаты, нужно будет добавить координаты в Stop
-            val radius = (stop.geofenceRadius ?: GEOFENCE_RADIUS_DEFAULT.toInt()).toDouble()
 
             val region = CLCircularRegion(
-                center = platform.CoreLocation.CLLocationCoordinate2DMake(stop.latitude, stop.longitude),
-                radius = radius,
-                identifier = stop.id.toString(),
+                center = platform.CoreLocation.CLLocationCoordinate2DMake(latitude, longitude),
+                radius = radius.toDouble(),
+                identifier = id.toString(),
             ).apply {
                 notifyOnEntry = true
-                notifyOnExit = true
+                notifyOnExit = false
             }
 
             locationManager.startMonitoringForRegion(region)
-            monitoredRegions[stop.id] = region
+            monitoredRegions[id] = region
 
             logger.info(
                 LogCategory.LOCATION,
-                "$TAG: Geofence added for stop ${stop.id} (type: ${stop.type})",
+                "$TAG: Geofence added for stop $id",
             )
         } catch (e: Exception) {
             logger.error(
                 LogCategory.LOCATION,
-                "$TAG: Error adding geofence for stop ${stop.id}: ${e.message}",
+                "$TAG: Error adding geofence for stop $id: ${e.message}",
                 e,
             )
         }
@@ -70,17 +65,17 @@ actual class GeofenceClient(
     /**
      * Удаляет геозону
      */
-    actual suspend fun removeGeofence(stopId: Long) {
+    actual suspend fun removeGeofence(id: Long) {
         try {
-            val region = monitoredRegions.remove(stopId)
+            val region = monitoredRegions.remove(id)
             if (region != null) {
                 locationManager.stopMonitoringForRegion(region)
-                logger.info(LogCategory.LOCATION, "$TAG: Geofence removed for stop $stopId")
+                logger.info(LogCategory.LOCATION, "$TAG: Geofence removed for stop $id")
             }
         } catch (e: Exception) {
             logger.error(
                 LogCategory.LOCATION,
-                "$TAG: Error removing geofence for stop $stopId: ${e.message}",
+                "$TAG: Error removing geofence for stop $id: ${e.message}",
                 e,
             )
         }
@@ -111,14 +106,6 @@ actual class GeofenceClient(
      */
     actual fun observeGeofenceEvents(): Flow<GeofenceEvent> {
         return geofenceEvents
-    }
-
-    /**
-     * Очищает ресурсы
-     */
-    actual suspend fun destroy() {
-        logger.info(LogCategory.LOCATION, "$TAG: Destroying GeofenceClient")
-        removeAllGeofences()
     }
 }
 

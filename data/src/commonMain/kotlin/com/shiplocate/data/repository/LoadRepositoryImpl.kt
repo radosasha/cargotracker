@@ -1,5 +1,7 @@
 package com.shiplocate.data.repository
 
+import com.shiplocate.core.database.entity.LoadEntity
+import com.shiplocate.core.database.entity.StopEntity
 import com.shiplocate.core.logging.LogCategory
 import com.shiplocate.core.logging.Logger
 import com.shiplocate.data.datasource.load.LoadsLocalDataSource
@@ -7,11 +9,13 @@ import com.shiplocate.data.datasource.load.LoadsRemoteDataSource
 import com.shiplocate.data.datasource.load.StopsLocalDataSource
 import com.shiplocate.data.mapper.toDomain
 import com.shiplocate.data.mapper.toEntity
-import com.shiplocate.data.mapper.toStopEntities
+import com.shiplocate.data.mapper.toStopEntity
 import com.shiplocate.data.network.dto.load.LoadDto
 import com.shiplocate.domain.model.load.Load
 import com.shiplocate.domain.model.load.Stop
 import com.shiplocate.domain.repository.LoadRepository
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 
 /**
  * Implementation of LoadRepository
@@ -87,6 +91,11 @@ class LoadRepositoryImpl(
         return stopsLocalDataSource.getStopsByLoadId(loadId).map { it.toDomain() }
     }
 
+    override suspend fun getNotEnteredStopsByLoadId(loadId: Long): List<Stop> {
+        logger.info(LogCategory.GENERAL, "💾 LoadRepositoryImpl: Getting stops for load $loadId where enter == 0")
+        return stopsLocalDataSource.getNotEnteredStopsByLoad(loadId).map { it.toDomain() }
+    }
+
     override suspend fun getConnectedLoad(): Load? {
         return getCachedLoads().find { it.loadStatus == 1 }
     }
@@ -158,18 +167,162 @@ class LoadRepositoryImpl(
         }
     }
 
+    override suspend fun addStopIdToQueue(stopId: Long) {
+        logger.info(LogCategory.GENERAL, "💾 LoadRepositoryImpl: Adding stopId $stopId to queue")
+        loadsLocalDataSource.addStopIdToQueue(stopId)
+    }
+
+    override suspend fun sendEnterStopQueue(token: String): Result<Unit> {
+        logger.info(LogCategory.GENERAL, "🔄 LoadRepositoryImpl: Sending enter stop queue to server")
+
+        return try {
+            // Get all queued stop IDs
+            val queuedStopIds = loadsLocalDataSource.getQueuedStopIds()
+            
+            if (queuedStopIds.isEmpty()) {
+                logger.info(LogCategory.GENERAL, "📭 LoadRepositoryImpl: No stop IDs in queue")
+                return Result.success(Unit)
+            }
+
+            logger.info(LogCategory.GENERAL, "📤 LoadRepositoryImpl: Sending ${queuedStopIds.size} stop IDs to server")
+
+            // Send each stop ID to server
+            val successfullySent = mutableListOf<Long>()
+            val failed = mutableListOf<Long>()
+
+            queuedStopIds.forEach { stopId ->
+                try {
+                    val success = loadsRemoteDataSource.enterStop(token, stopId)
+                    if (success) {
+                        successfullySent.add(stopId)
+                        logger.info(LogCategory.GENERAL, "✅ LoadRepositoryImpl: Successfully sent stopId $stopId")
+                    } else {
+                        failed.add(stopId)
+                        logger.warn(LogCategory.GENERAL, "⚠️ LoadRepositoryImpl: Failed to send stopId $stopId (non-success status)")
+                    }
+                } catch (e: Exception) {
+                    failed.add(stopId)
+                    logger.error(LogCategory.GENERAL, "❌ LoadRepositoryImpl: Error sending stopId $stopId: ${e.message}", e)
+                }
+            }
+
+            // Remove successfully sent stop IDs from queue
+            if (successfullySent.isNotEmpty()) {
+                loadsLocalDataSource.removeStopIdsFromQueue(successfullySent)
+                logger.info(LogCategory.GENERAL, "🗑️ LoadRepositoryImpl: Removed ${successfullySent.size} successfully sent stop IDs from queue")
+            }
+
+            if (failed.isNotEmpty()) {
+                logger.warn(LogCategory.GENERAL, "⚠️ LoadRepositoryImpl: ${failed.size} stop IDs failed to send and remain in queue")
+            }
+
+            Result.success(Unit)
+        } catch (e: Exception) {
+            logger.error(LogCategory.GENERAL, "❌ LoadRepositoryImpl: Failed to send enter stop queue: ${e.message}", e)
+            Result.failure(e)
+        }
+    }
+
+    override fun observeNotEnteredStopIdsUpdates(): Flow<List<Stop>> {
+        logger.info(LogCategory.GENERAL, "🔄 LoadRepositoryImpl: Observing not entered stops")
+        return loadsLocalDataSource.observeNotEnteredStops()
+            .map { stopEntities -> stopEntities.map { it.toDomain() } }
+    }
 
     private suspend fun saveLoads(loadDtos: List<LoadDto>) {
-        val loadEntities = loadDtos.map { it.toEntity() }
+        // Get all existing loads from database
+        val existingLoads = loadsLocalDataSource.getLoads()
+        val existingServerIds = existingLoads.map { it.serverId }.toSet()
+        val newServerIds = loadDtos.map { it.id }.toSet()
 
-        loadsLocalDataSource.removeLoads()
-        loadsLocalDataSource.saveLoads(loadEntities)
+        // Find loads to delete (exist in database but not in loadDtos)
+        val serverIdsToDelete = existingServerIds - newServerIds
+        if (serverIdsToDelete.isNotEmpty()) {
+            logger.info(LogCategory.GENERAL, "💾 LoadRepositoryImpl: Deleting ${serverIdsToDelete.size} loads that are not in server response")
+            loadsLocalDataSource.deleteLoadsNotIn(newServerIds.toList())
+        }
+
+        // Separate loads into new and existing
+        val loadsToInsert = mutableListOf<LoadEntity>()
+        val loadsToUpdate = mutableListOf<LoadEntity>()
+
+        loadDtos.forEach { loadDto ->
+            val existingLoad = existingLoads.find { it.serverId == loadDto.id }
+            if (existingLoad != null) {
+                // Update existing load with new data, keeping the same id
+                loadsToUpdate.add(loadDto.toEntity().copy(id = existingLoad.id))
+            } else {
+                // New load: set id = 0 so Room will auto-generate a new id
+                loadsToInsert.add(loadDto.toEntity().copy(id = 0))
+            }
+        }
+
+        // Insert new loads
+        if (loadsToInsert.isNotEmpty()) {
+            logger.info(LogCategory.GENERAL, "💾 LoadRepositoryImpl: Inserting ${loadsToInsert.size} new loads")
+            loadsLocalDataSource.insertLoads(loadsToInsert)
+        }
+
+        // Update existing loads
+        if (loadsToUpdate.isNotEmpty()) {
+            logger.info(LogCategory.GENERAL, "💾 LoadRepositoryImpl: Updating ${loadsToUpdate.size} existing loads")
+            loadsLocalDataSource.updateLoads(loadsToUpdate)
+        }
+
+        // Get all load entities (including newly inserted ones) for stops mapping
+        val allLoads = loadsLocalDataSource.getLoads()
+        val loadEntities = loadDtos.map { loadDto ->
+            allLoads.find { it.serverId == loadDto.id } ?: error("Load not found after save: ${loadDto.id}")
+        }
 
         // Cache stops for each load - используем loadEntity.id для связи
         loadDtos.zip(loadEntities).forEach { (loadDto, loadEntity) ->
-            val stops = loadDto.toStopEntities(loadEntity.id)
-            if (stops.isNotEmpty()) {
-                stopsLocalDataSource.saveStops(stops)
+            // Get existing stops for this load
+            val existingStops = stopsLocalDataSource.getStopsByLoadId(loadEntity.id)
+            val existingServerIds = existingStops.map { it.serverId }.toSet()
+            val newServerIds = loadDto.stops.map { it.id }.toSet()
+
+            // Find stops to delete (exist in database but not in loadDto.stops)
+            val serverIdsToDelete = existingServerIds - newServerIds
+            if (serverIdsToDelete.isNotEmpty() || newServerIds.isEmpty()) {
+                logger.info(
+                    LogCategory.GENERAL,
+                    "💾 LoadRepositoryImpl: Deleting stops for load ${loadEntity.id} that are not in server response",
+                )
+                stopsLocalDataSource.deleteStopsNotIn(loadEntity.id, newServerIds.toList())
+            }
+
+            // Separate stops into new and existing
+            val stopsToInsert = mutableListOf<StopEntity>()
+            val stopsToUpdate = mutableListOf<StopEntity>()
+
+            loadDto.stops.forEach { stopDto ->
+                val existingStop = existingStops.find { it.serverId == stopDto.id }
+                if (existingStop != null) {
+                    // Update existing stop with new data, keeping the same id
+                    stopsToUpdate.add(stopDto.toStopEntity(loadEntity.id).copy(id = existingStop.id))
+                } else {
+                    // New stop: set id = 0 so Room will auto-generate a new id
+                    stopsToInsert.add(stopDto.toStopEntity(loadEntity.id).copy(id = 0))
+                }
+            }
+
+            // Insert new stops
+            if (stopsToInsert.isNotEmpty()) {
+                logger.info(
+                    LogCategory.GENERAL,
+                    "💾 LoadRepositoryImpl: Inserting ${stopsToInsert.size} new stops for load ${loadEntity.id}",
+                )
+                stopsLocalDataSource.insertStops(stopsToInsert)
+            }
+
+            // Update existing stops
+            if (stopsToUpdate.isNotEmpty()) {
+                logger.info(
+                    LogCategory.GENERAL,
+                    "💾 LoadRepositoryImpl: Updating ${stopsToUpdate.size} existing stops for load ${loadEntity.id}",
+                )
+                stopsLocalDataSource.updateStops(stopsToUpdate)
             }
         }
     }
