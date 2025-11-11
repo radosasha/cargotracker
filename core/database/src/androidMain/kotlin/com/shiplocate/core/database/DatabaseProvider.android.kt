@@ -14,6 +14,8 @@ actual class DatabaseProvider(private val context: Context) {
         return Room.databaseBuilder<TrackerDatabase>(
             context = appContext,
             name = dbFile.absolutePath,
-        ).build()
+        )
+            .addMigrations(MIGRATION_2_3)
+            .build()
     }
 }

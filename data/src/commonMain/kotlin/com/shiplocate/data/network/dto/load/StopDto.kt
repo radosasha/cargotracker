@@ -13,6 +13,8 @@ data class StopDto(
     val id: Long,
     @SerialName("type")
     val type: Int,
+    @SerialName("locationName")
+    val locationName: String,
     @SerialName("locationAddress")
     val locationAddress: String,
     @SerialName("date")

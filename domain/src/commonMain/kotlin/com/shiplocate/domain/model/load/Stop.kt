@@ -6,6 +6,7 @@ package com.shiplocate.domain.model.load
 data class Stop(
     val id: Long,
     val type: Int,
+    val locationName: String,
     val locationAddress: String,
     val date: Long,
     val geofenceRadius: Int,

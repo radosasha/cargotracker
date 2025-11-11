@@ -26,6 +26,7 @@ data class StopEntity(
     val loadId: Long, // Foreign key to LoadEntity.id
     val serverId: Long, // Server's stop ID
     val type: Int,
+    val locationName: String,
     val locationAddress: String,
     val date: Long,
     val geofenceRadius: Int,

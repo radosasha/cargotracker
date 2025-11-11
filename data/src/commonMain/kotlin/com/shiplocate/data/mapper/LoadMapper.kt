@@ -38,6 +38,7 @@ fun LoadDto.toStopEntities(loadId: Long): List<StopEntity> {
             loadId = loadId,
             serverId = stopDto.id,
             type = stopDto.type,
+            locationName = stopDto.locationName,
             locationAddress = stopDto.locationAddress,
             date = stopDto.date,
             geofenceRadius = stopDto.geofenceRadius,
@@ -53,6 +54,7 @@ fun StopDto.toDomain(): Stop {
     return Stop(
         id = id,
         type = type,
+        locationName = locationName,
         locationAddress = locationAddress,
         date = date,
         geofenceRadius = geofenceRadius,
@@ -68,6 +70,7 @@ fun StopDto.toStopEntity(loadId: Long): StopEntity {
         loadId = loadId,
         serverId = id,
         type = type,
+        locationName = locationName,
         locationAddress = locationAddress,
         date = date,
         geofenceRadius = geofenceRadius,
@@ -82,6 +85,7 @@ fun StopEntity.toDomain(): Stop {
     return Stop(
         id = serverId,
         type = type,
+        locationName = locationName,
         locationAddress = locationAddress,
         date = date,
         geofenceRadius = geofenceRadius,

@@ -29,6 +29,7 @@ actual class DatabaseProvider() {
             name = dbFile.path!!
         )
         .setDriver(BundledSQLiteDriver())
+        .addMigrations(MIGRATION_2_3)
         .build()
     }
 }

@@ -116,7 +116,8 @@ private fun StopTimelineItem(
                 ""
             }
 
-            val locationText = stop.locationAddress.ifEmpty { "No address" }
+            val locationNameText = stop.locationName.ifEmpty { "" }
+            val locationAddressText = stop.locationAddress.ifEmpty { "No address" }
 
             Text(
                 text = dateText,
@@ -124,10 +125,19 @@ private fun StopTimelineItem(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
 
+            if (locationNameText.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = locationNameText,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+            }
+
             Spacer(modifier = Modifier.height(4.dp))
 
             Text(
-                text = locationText,
+                text = locationAddressText,
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
