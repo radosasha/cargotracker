@@ -15,7 +15,7 @@ actual class DatabaseProvider(private val context: Context) {
             context = appContext,
             name = dbFile.absolutePath,
         )
-            .addMigrations(MIGRATION_2_3)
+            .addMigrations(MIGRATION_2_3, MIGRATION_3_4)
             .build()
     }
 }

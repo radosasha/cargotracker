@@ -141,6 +141,17 @@ private fun StopTimelineItem(
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+
+            // Отображаем note, если оно не пустое
+            val noteText = stop.note?.takeIf { it.isNotEmpty() }
+            if (noteText != null) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = noteText,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+            }
         }
     }
 }

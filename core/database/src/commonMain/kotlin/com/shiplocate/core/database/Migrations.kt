@@ -11,3 +11,11 @@ val MIGRATION_2_3 = Migration(2, 3) { database ->
     database.execSQL("ALTER TABLE stops ADD COLUMN locationName TEXT NOT NULL DEFAULT ''")
 }
 
+/**
+ * Миграция базы данных с версии 3 на версию 4
+ * Добавляет колонку note в таблицу stops
+ */
+val MIGRATION_3_4 = Migration(3, 4) { database ->
+    database.execSQL("ALTER TABLE stops ADD COLUMN note TEXT")
+}
+

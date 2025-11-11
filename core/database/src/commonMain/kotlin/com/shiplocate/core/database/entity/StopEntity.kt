@@ -33,6 +33,7 @@ data class StopEntity(
     val stopIndex: Int,
     val latitude: Double,
     val longitude: Double,
-    val enter: Boolean
+    val enter: Boolean,
+    val note: String? = null,
 )
 
