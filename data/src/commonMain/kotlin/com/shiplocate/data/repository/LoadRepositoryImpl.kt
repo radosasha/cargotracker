@@ -41,7 +41,7 @@ class LoadRepositoryImpl(
             saveLoads(loadDtos)
 
             // Return domain models
-            val loads = loadDtos.map { it.toDomain() }
+            val loads = getCachedLoads()
             logger.info(LogCategory.GENERAL, "✅ LoadRepositoryImpl: Successfully loaded ${loads.size} loads from server")
             Result.success(loads)
         } catch (e: Exception) {
@@ -49,11 +49,7 @@ class LoadRepositoryImpl(
             logger.info(LogCategory.GENERAL, "⚠️ LoadRepositoryImpl: Server request failed, falling back to cache: ${e.message}")
 
             try {
-                val loads = loadsLocalDataSource.getLoads().map { loadEntity ->
-                    val stops = stopsLocalDataSource.getStopsByLoadId(loadEntity.id)
-                        .map { it.toDomain() }
-                    loadEntity.toDomain().copy(stops = stops)
-                }
+                val loads = getCachedLoads()
                 if (loads.isNotEmpty()) {
                     logger.info(LogCategory.GENERAL, "✅ LoadRepositoryImpl: Loaded ${loads.size} loads from cache")
                     Result.success(loads)
@@ -70,11 +66,13 @@ class LoadRepositoryImpl(
 
     override suspend fun getCachedLoads(): List<Load> {
         logger.info(LogCategory.GENERAL, "💾 LoadRepositoryImpl: Getting cached loads only")
-        return loadsLocalDataSource.getLoads().map { loadEntity ->
+        val loads = loadsLocalDataSource.getLoads()
+        val result = loads.map { loadEntity ->
             val stops = stopsLocalDataSource.getStopsByLoadId(loadEntity.id)
                 .map { it.toDomain() }
             loadEntity.toDomain().copy(stops = stops)
         }
+        return result
     }
 
     override suspend fun getLoadById(loadId: Long): Load? {
@@ -116,7 +114,7 @@ class LoadRepositoryImpl(
             saveLoads(loadDtos)
 
             // Return domain models
-            val loads = loadDtos.map { it.toDomain() }
+            val loads = getCachedLoads()
             logger.info(LogCategory.GENERAL, "✅ LoadRepositoryImpl: Successfully connected to load $serverLoadId")
             Result.success(loads)
         } catch (e: Exception) {
@@ -140,7 +138,7 @@ class LoadRepositoryImpl(
             saveLoads(loadDtos)
 
             // Return domain models
-            val loads = loadDtos.map { it.toDomain() }
+            val loads = getCachedLoads()
             logger.info(LogCategory.GENERAL, "✅ LoadRepositoryImpl: Successfully disconnected from load $serverLoadId")
             Result.success(loads)
         } catch (e: Exception) {
@@ -178,7 +176,7 @@ class LoadRepositoryImpl(
         return try {
             // Get all queued stop IDs
             val queuedStopIds = loadsLocalDataSource.getQueuedStopIds()
-            
+
             if (queuedStopIds.isEmpty()) {
                 logger.info(LogCategory.GENERAL, "📭 LoadRepositoryImpl: No stop IDs in queue")
                 return Result.success(Unit)
@@ -209,7 +207,10 @@ class LoadRepositoryImpl(
             // Remove successfully sent stop IDs from queue
             if (successfullySent.isNotEmpty()) {
                 loadsLocalDataSource.removeStopIdsFromQueue(successfullySent)
-                logger.info(LogCategory.GENERAL, "🗑️ LoadRepositoryImpl: Removed ${successfullySent.size} successfully sent stop IDs from queue")
+                logger.info(
+                    LogCategory.GENERAL,
+                    "🗑️ LoadRepositoryImpl: Removed ${successfullySent.size} successfully sent stop IDs from queue"
+                )
             }
 
             if (failed.isNotEmpty()) {
@@ -238,7 +239,10 @@ class LoadRepositoryImpl(
         // Find loads to delete (exist in database but not in loadDtos)
         val serverIdsToDelete = existingServerIds - newServerIds
         if (serverIdsToDelete.isNotEmpty()) {
-            logger.info(LogCategory.GENERAL, "💾 LoadRepositoryImpl: Deleting ${serverIdsToDelete.size} loads that are not in server response")
+            logger.info(
+                LogCategory.GENERAL,
+                "💾 LoadRepositoryImpl: Deleting ${serverIdsToDelete.size} loads that are not in server response"
+            )
             loadsLocalDataSource.deleteLoadsNotIn(newServerIds.toList())
         }
 
