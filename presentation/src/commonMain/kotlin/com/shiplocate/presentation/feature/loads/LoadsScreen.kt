@@ -13,6 +13,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -21,6 +22,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -51,6 +53,7 @@ fun LoadsScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
     val currentPage by viewModel.currentPage.collectAsStateWithLifecycle()
+    val showRejectSuccessDialog by viewModel.showRejectSuccessDialog.collectAsStateWithLifecycle()
     
     // Pager state with 2 pages (Active and Upcoming)
     val pagerState = rememberPagerState(pageCount = { 2 }, initialPage = currentPage)
@@ -116,6 +119,30 @@ fun LoadsScreen(
                 }
             }
         }
+    }
+
+    // Диалог успешного reject
+    if (showRejectSuccessDialog) {
+        AlertDialog(
+            onDismissRequest = { viewModel.dismissRejectSuccessDialog() },
+            title = {
+                Text(
+                    text = "Load Rejected",
+                    style = MaterialTheme.typography.titleLarge,
+                )
+            },
+            text = {
+                Text(
+                    text = "You have successfully rejected the load.",
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { viewModel.dismissRejectSuccessDialog() }) {
+                    Text("OK")
+                }
+            },
+        )
     }
 }
 

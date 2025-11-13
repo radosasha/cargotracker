@@ -9,12 +9,14 @@ import com.shiplocate.data.network.dto.load.EnterStopRequest
 import com.shiplocate.data.network.dto.load.LoadDto
 import com.shiplocate.data.network.dto.load.PingLoadRequest
 import io.ktor.client.HttpClient
+import io.ktor.client.plugins.ClientRequestException
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 
 /**
@@ -84,6 +86,20 @@ interface LoadApi {
         token: String,
         stopId: Long,
     ): Boolean
+
+    /**
+     * Reject load
+     * Rejects the specified load
+     *
+     * @param token JWT token for authentication
+     * @param serverLoadId Load ID to reject
+     * @return Updated list of LoadDto
+     * @throws Exception if request fails
+     */
+    suspend fun rejectLoad(
+        token: String,
+        serverLoadId: Long,
+    ): List<LoadDto>
 }
 
 /**
@@ -183,5 +199,40 @@ class LoadApiImpl(
         // Consider 200 OK or 404 Not found as success (404 means not found, but operation is processed)
         val statusCode = response.status.value
         return statusCode in 200..299 || statusCode == 404
+    }
+
+    override suspend fun rejectLoad(
+        token: String,
+        serverLoadId: Long,
+    ): List<LoadDto> {
+        logger.debug(LogCategory.NETWORK, "🌐 LoadApi: Rejecting load $serverLoadId")
+
+        val request = ConnectLoadRequest(serverLoadId = serverLoadId)
+        val response =
+            httpClient.post("$baseUrl/api/mobile/loads/reject") {
+                header(HttpHeaders.Authorization, "Bearer $token")
+                contentType(ContentType.Application.Json)
+                setBody(request)
+            }
+
+        logger.debug(LogCategory.NETWORK, "🌐 LoadApi: Reject response status: ${response.status}")
+        
+        // Обрабатываем 200 OK или 400 Bad Request как успех
+        val statusCode = response.status.value
+        if (statusCode == HttpStatusCode.OK.value || statusCode == HttpStatusCode.BadRequest.value) {
+            return try {
+                response.bodyOrThrow()
+            } catch (e: ClientRequestException) {
+                // Если 400, возвращаем пустой список (операция выполнена)
+                if (statusCode == HttpStatusCode.BadRequest.value) {
+                    logger.debug(LogCategory.NETWORK, "🌐 LoadApi: Reject returned 400, treating as success")
+                    emptyList()
+                } else {
+                    throw e
+                }
+            }
+        } else {
+            return response.bodyOrThrow()
+        }
     }
 }

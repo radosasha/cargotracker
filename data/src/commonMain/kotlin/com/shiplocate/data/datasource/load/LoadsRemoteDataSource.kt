@@ -74,4 +74,18 @@ class LoadsRemoteDataSource(
         println("📡 LoadRemoteDataSource: Entering stop $stopId")
         return loadApi.enterStop(token, stopId)
     }
+
+    /**
+     * Reject load
+     * @param token Bearer token for authentication
+     * @param serverLoadId Load ID to reject
+     * @return Updated list of LoadDto
+     */
+    suspend fun rejectLoad(
+        token: String,
+        serverLoadId: Long,
+    ): List<LoadDto> {
+        println("📡 LoadRemoteDataSource: Rejecting load $serverLoadId")
+        return loadApi.rejectLoad(token, serverLoadId)
+    }
 }

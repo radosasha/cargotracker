@@ -65,6 +65,18 @@ interface LoadRepository {
     ): Result<List<Load>>
 
     /**
+     * Reject load
+     * Rejects the specified load
+     * @param token Authentication token
+     * @param serverLoadId Load ID to reject
+     * @return Updated list of loads
+     */
+    suspend fun rejectLoad(
+        token: String,
+        serverLoadId: Long,
+    ): Result<List<Load>>
+
+    /**
      * Ping load to update connection status
      * Updates connectionStatus to "online" and lastUpdate timestamp
      * @param token Authentication token

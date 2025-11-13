@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.shiplocate.presentation.component.MessageCard
 import com.shiplocate.presentation.component.StopsTimeline
+import com.shiplocate.presentation.model.LoadStatus
 
 /**
  * Главный экран приложения
@@ -39,7 +40,7 @@ fun LoadScreen(
     loadId: Long,
     viewModel: LoadViewModel,
     onNavigateToLogs: () -> Unit = {},
-    onNavigateBack: () -> Unit = {},
+    onNavigateBack: (wasRejected: Boolean, switchToActive: Boolean) -> Unit = { _, _ -> },
     onNavigateToPermissions: () -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -51,9 +52,27 @@ fun LoadScreen(
     // Обработка навигации назад после успешного "Load delivered"
     LaunchedEffect(uiState.shouldNavigateBack) {
         if (uiState.shouldNavigateBack) {
-            onNavigateBack()
+            onNavigateBack(false, false)
             // Сбрасываем флаг после навигации
             viewModel.resetNavigateBackFlag()
+        }
+    }
+
+    // Обработка навигации назад после успешного "Reject load"
+    LaunchedEffect(uiState.shouldNavigateBackAfterReject) {
+        if (uiState.shouldNavigateBackAfterReject) {
+            onNavigateBack(true, false) // Передаем true, чтобы показать диалог
+            // Сбрасываем флаг после навигации
+            viewModel.resetNavigateBackAfterRejectFlag()
+        }
+    }
+
+    // Обработка навигации назад после успешного "Start tracking"
+    LaunchedEffect(uiState.shouldNavigateBackAfterStart) {
+        if (uiState.shouldNavigateBackAfterStart) {
+            onNavigateBack(false, true) // Переключаемся на вкладку Active
+            // Сбрасываем флаг после навигации
+            viewModel.resetNavigateBackAfterStartFlag()
         }
     }
 
@@ -84,47 +103,86 @@ fun LoadScreen(
             }
         }
 
-        // Кнопка Start / Load delivered
+        // Кнопки в зависимости от статуса Load
+        val loadStatus = uiState.load?.loadStatus
         val isTrackingActive = uiState.trackingStatus == com.shiplocate.domain.model.TrackingStatus.ACTIVE
         val hasPermissions = uiState.permissionStatus?.hasAllPermissions ?: false
-        
-        Button(
-            onClick = {
-                if (!hasPermissions) {
-                    // Переходим на экран разрешений
-                    onNavigateToPermissions()
-                } else if (!isTrackingActive) {
-                    viewModel.startTracking()
-                } else {
-                    // Показываем диалог подтверждения для "Load delivered"
-                    viewModel.showLoadDeliveredDialog()
-                }
-            },
-            enabled = !uiState.isLoading,
-            modifier = Modifier.fillMaxWidth(),
-            colors = if (isTrackingActive) {
-                // Красный цвет для кнопки "Load delivered"
-                ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.error,
-                    contentColor = MaterialTheme.colorScheme.onError,
-                )
-            } else {
-                ButtonDefaults.buttonColors()
-            },
-        ) {
-            Text(
-                text =
-                    when {
-                        !hasPermissions -> "Start"
-                        !isTrackingActive -> "Start"
-                        else -> "Load delivered"
+
+        when (loadStatus) {
+            LoadStatus.LOAD_STATUS_NOT_CONNECTED -> {
+                // Показываем кнопку Start
+                Button(
+                    onClick = {
+                        if (!hasPermissions) {
+                            // Переходим на экран разрешений
+                            onNavigateToPermissions()
+                        } else {
+                            viewModel.startTracking()
+                        }
                     },
-            )
+                    enabled = !uiState.isLoading,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text("Start")
+                }
+            }
+
+            LoadStatus.LOAD_STATUS_CONNECTED -> {
+                // Показываем кнопки "Load delivered" и "Reject load"
+                Button(
+                    onClick = {
+                        // Показываем диалог подтверждения для "Load delivered"
+                        viewModel.showLoadDeliveredDialog()
+                    },
+                    enabled = !uiState.isLoading,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = if (isTrackingActive) {
+                        // Красный цвет для кнопки "Load delivered"
+                        ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.error,
+                            contentColor = MaterialTheme.colorScheme.onError,
+                        )
+                    } else {
+                        ButtonDefaults.buttonColors()
+                    },
+                ) {
+                    Text(
+                        text =
+                            when {
+                                !hasPermissions -> "Start"
+                                !isTrackingActive -> "Start"
+                                else -> "Load delivered"
+                            },
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Кнопка Reject
+                Button(
+                    onClick = { viewModel.showRejectLoadDialog() },
+                    enabled = !uiState.isLoading,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error,
+                        contentColor = MaterialTheme.colorScheme.onError,
+                    ),
+                ) {
+                    Text("Reject")
+                }
+            }
+
+            LoadStatus.LOAD_STATUS_DISCONNECTED,
+            LoadStatus.LOAD_STATUS_REJECTED,
+            LoadStatus.LOAD_STATUS_UNKNOWN,
+            null,
+                -> {
+                // Не показываем кнопок для других статусов
+            }
         }
 
+        // Кнопка для перехода к логам (всегда видна)
         Spacer(modifier = Modifier.height(16.dp))
-
-        // Кнопка для перехода к логам
         OutlinedButton(
             onClick = onNavigateToLogs,
             enabled = !uiState.isLoading,
@@ -184,6 +242,41 @@ fun LoadScreen(
             },
             dismissButton = {
                 TextButton(onClick = { viewModel.dismissLoadDeliveredDialog() }) {
+                    Text("Cancel")
+                }
+            },
+        )
+    }
+
+    // Диалог подтверждения "Reject load"
+    if (uiState.showRejectLoadDialog) {
+        AlertDialog(
+            onDismissRequest = { viewModel.dismissRejectLoadDialog() },
+            title = {
+                Text(
+                    text = "Confirm Load Rejection",
+                    style = MaterialTheme.typography.titleLarge,
+                )
+            },
+            text = {
+                Text(
+                    text = "Are you sure you want to reject this load? This action cannot be undone.",
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = { viewModel.confirmRejectLoad() },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error,
+                        contentColor = MaterialTheme.colorScheme.onError,
+                    ),
+                ) {
+                    Text("Confirm")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.dismissRejectLoadDialog() }) {
                     Text("Cancel")
                 }
             },

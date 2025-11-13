@@ -25,6 +25,7 @@ import com.shiplocate.domain.usecase.auth.SaveAuthSessionUseCase
 import com.shiplocate.domain.usecase.auth.VerifySmsCodeUseCase
 import com.shiplocate.domain.usecase.load.ConnectToLoadUseCase
 import com.shiplocate.domain.usecase.load.DisconnectFromLoadUseCase
+import com.shiplocate.domain.usecase.load.RejectLoadUseCase
 import com.shiplocate.domain.usecase.load.GetCachedLoadsUseCase
 import com.shiplocate.domain.usecase.load.GetConnectedLoadUseCase
 import com.shiplocate.domain.usecase.load.GetLoadsUseCase
@@ -76,6 +77,7 @@ val useCasesModule =
         factoryOf(::GetCachedLoadsUseCase)
         factoryOf(::ConnectToLoadUseCase)
         factoryOf(::DisconnectFromLoadUseCase)
+        factoryOf(::RejectLoadUseCase)
         factoryOf(::GetConnectedLoadUseCase)
 
         // Firebase Token Use Cases

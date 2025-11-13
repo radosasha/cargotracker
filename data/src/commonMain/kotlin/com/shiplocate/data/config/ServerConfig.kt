@@ -6,8 +6,9 @@ package com.shiplocate.data.config
 object ServerConfig {
     // Базовый URL сервера (без http://)
 //    const val BASE_URL = "demo.traccar.org"
-    const val BASE_URL = "192.168.31.116"
+    const val BASE_URL = "192.168.31.74"
 //    const val BASE_URL = "44.216.176.38"
+//    const val BASE_URL = "192.99.145.241"
 
     // URL для OsmAnd протокола (порт 5055)
     const val OSMAND_SERVER_URL = "http://$BASE_URL:5055"

@@ -217,6 +217,19 @@ fun TrackerNavigation(
             LaunchedEffect(currentBackStackEntry?.destination?.route) {
                 if (currentBackStackEntry?.destination?.route == Screen.LOADS) {
                     viewModel.fetchLoadsFromCache()
+                    // Проверяем, был ли возврат после reject
+                    val savedStateHandle = currentBackStackEntry?.savedStateHandle
+                    val wasRejected = savedStateHandle?.get<Boolean>("rejectSuccess") ?: false
+                    if (wasRejected) {
+                        viewModel.showRejectSuccessDialog()
+                        savedStateHandle?.remove<Boolean>("rejectSuccess")
+                    }
+                    // Проверяем, нужно ли переключиться на вкладку Active
+                    val switchToActive = savedStateHandle?.get<Boolean>("switchToActive") ?: false
+                    if (switchToActive) {
+                        viewModel.setCurrentPage(0) // Переключаемся на вкладку Active (страница 0)
+                        savedStateHandle?.remove<Boolean>("switchToActive")
+                    }
                 }
             }
 
@@ -259,7 +272,16 @@ fun TrackerNavigation(
                 onNavigateToLogs = {
                     navController.navigate(Screen.LOGS)
                 },
-                onNavigateBack = {
+                onNavigateBack = { wasRejected, switchToActive ->
+                    val loadsEntry = navController.getBackStackEntry(Screen.LOADS)
+                    if (wasRejected) {
+                        // Устанавливаем флаг в savedStateHandle для LoadsScreen
+                        loadsEntry.savedStateHandle["rejectSuccess"] = true
+                    }
+                    if (switchToActive) {
+                        // Устанавливаем флаг для переключения на вкладку Active
+                        loadsEntry.savedStateHandle["switchToActive"] = true
+                    }
                     navController.popBackStack()
                 },
                 onNavigateToPermissions = {

@@ -147,6 +147,30 @@ class LoadRepositoryImpl(
         }
     }
 
+    override suspend fun rejectLoad(
+        token: String,
+        serverLoadId: Long,
+    ): Result<List<Load>> {
+        logger.info(LogCategory.GENERAL, "🔄 LoadRepositoryImpl: Rejecting load $serverLoadId")
+
+        return try {
+            logger.info(LogCategory.GENERAL, "🌐 LoadRepositoryImpl: Sending reject request to server")
+            val loadDtos = loadsRemoteDataSource.rejectLoad(token, serverLoadId)
+
+            // Cache the updated results
+            logger.info(LogCategory.GENERAL, "💾 LoadRepositoryImpl: Updating cache with ${loadDtos.size} loads")
+            saveLoads(loadDtos)
+
+            // Return domain models
+            val loads = getCachedLoads()
+            logger.info(LogCategory.GENERAL, "✅ LoadRepositoryImpl: Successfully rejected load $serverLoadId")
+            Result.success(loads)
+        } catch (e: Exception) {
+            logger.info(LogCategory.GENERAL, "❌ LoadRepositoryImpl: Failed to reject load: ${e.message}")
+            Result.failure(e)
+        }
+    }
+
     override suspend fun pingLoad(
         token: String,
         serverLoadId: Long,

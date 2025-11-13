@@ -12,6 +12,8 @@ import com.shiplocate.domain.usecase.StartTrackingUseCase
 import com.shiplocate.domain.usecase.StopTrackingUseCase
 import com.shiplocate.domain.usecase.load.ConnectToLoadUseCase
 import com.shiplocate.domain.usecase.load.DisconnectFromLoadUseCase
+import com.shiplocate.domain.usecase.load.RejectLoadUseCase
+import com.shiplocate.presentation.mapper.toUiModel
 import com.shiplocate.presentation.model.LoadUiState
 import com.shiplocate.presentation.model.MessageType
 import kotlinx.coroutines.Dispatchers
@@ -34,6 +36,7 @@ class LoadViewModel(
     private val stopTrackingUseCase: StopTrackingUseCase,
     private val connectToLoadUseCase: ConnectToLoadUseCase,
     private val disconnectFromLoadUseCase: DisconnectFromLoadUseCase,
+    private val rejectLoadUseCase: RejectLoadUseCase,
     private val loadRepository: LoadRepository,
     private val logger: Logger,
 ) : ViewModel() {
@@ -61,7 +64,7 @@ class LoadViewModel(
         viewModelScope.launch {
             val loads = loadRepository.getCachedLoads()
             val load = loads.find { it.id == loadId }
-            _uiState.value = _uiState.value.copy(load = load)
+            _uiState.value = _uiState.value.copy(load = load?.toUiModel())
         }
     }
 
@@ -137,6 +140,7 @@ class LoadViewModel(
                             trackingStatus = trackingStatus,
                             message = "GPS трекинг запущен",
                             messageType = MessageType.SUCCESS,
+                            shouldNavigateBackAfterStart = true, // Устанавливаем флаг для навигации назад
                         )
                 } else {
                     _uiState.value =
@@ -176,6 +180,84 @@ class LoadViewModel(
 
     fun resetNavigateBackFlag() {
         _uiState.value = _uiState.value.copy(shouldNavigateBack = false)
+    }
+
+    fun showRejectLoadDialog() {
+        _uiState.value = _uiState.value.copy(showRejectLoadDialog = true)
+    }
+
+    fun dismissRejectLoadDialog() {
+        _uiState.value = _uiState.value.copy(showRejectLoadDialog = false)
+    }
+
+    fun resetNavigateBackAfterRejectFlag() {
+        _uiState.value = _uiState.value.copy(shouldNavigateBackAfterReject = false)
+    }
+
+    fun resetNavigateBackAfterStartFlag() {
+        _uiState.value = _uiState.value.copy(shouldNavigateBackAfterStart = false)
+    }
+
+    fun confirmRejectLoad() {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(
+                showRejectLoadDialog = false,
+                isLoading = true,
+            )
+
+            try {
+                // Step 1: Find load by id
+                val loads = loadRepository.getCachedLoads()
+                val load = loads.find { it.id == loadId }
+
+                if (load == null) {
+                    logger.error(LogCategory.UI, "LoadViewModel: Load not found with id: $loadId")
+                    _uiState.value =
+                        _uiState.value.copy(
+                            isLoading = false,
+                            message = "Load not found: $loadId",
+                            messageType = MessageType.ERROR,
+                        )
+                    return@launch
+                }
+
+                logger.info(LogCategory.UI, "LoadViewModel: Rejecting load ${load.loadName} (id: $loadId)")
+
+                // Step 2: Reject load
+                val result =
+                    withContext(Dispatchers.Default) {
+                        rejectLoadUseCase(loadId)
+                    }
+
+                if (result.isSuccess) {
+                    logger.info(LogCategory.UI, "LoadViewModel: Successfully rejected load ${load.loadName} (id: $loadId)")
+                    _uiState.value =
+                        _uiState.value.copy(
+                            isLoading = false,
+                            shouldNavigateBackAfterReject = true, // Устанавливаем флаг для навигации назад
+                        )
+                } else {
+                    logger.error(
+                        LogCategory.UI,
+                        "LoadViewModel: Failed to reject load: ${result.exceptionOrNull()?.message}",
+                    )
+                    _uiState.value =
+                        _uiState.value.copy(
+                            isLoading = false,
+                            message = "Failed to reject load: ${result.exceptionOrNull()?.message}",
+                            messageType = MessageType.ERROR,
+                        )
+                }
+            } catch (e: Exception) {
+                logger.error(LogCategory.UI, "LoadViewModel: Exception during reject load: ${e.message}")
+                _uiState.value =
+                    _uiState.value.copy(
+                        isLoading = false,
+                        message = "Error rejecting load: ${e.message}",
+                        messageType = MessageType.ERROR,
+                    )
+            }
+        }
     }
 
     fun confirmLoadDelivered() {

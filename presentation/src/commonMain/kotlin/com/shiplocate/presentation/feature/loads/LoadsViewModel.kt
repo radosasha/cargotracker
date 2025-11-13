@@ -41,11 +41,28 @@ class LoadsViewModel(
     private val _currentPage = MutableStateFlow(0)
     val currentPage: StateFlow<Int> = _currentPage.asStateFlow()
 
+    private val _showRejectSuccessDialog = MutableStateFlow(false)
+    val showRejectSuccessDialog: StateFlow<Boolean> = _showRejectSuccessDialog.asStateFlow()
+
     /**
      * Set current page for pager
      */
     fun setCurrentPage(page: Int) {
         _currentPage.value = page
+    }
+
+    /**
+     * Show reject success dialog
+     */
+    fun showRejectSuccessDialog() {
+        _showRejectSuccessDialog.value = true
+    }
+
+    /**
+     * Dismiss reject success dialog
+     */
+    fun dismissRejectSuccessDialog() {
+        _showRejectSuccessDialog.value = false
     }
 
     init {
