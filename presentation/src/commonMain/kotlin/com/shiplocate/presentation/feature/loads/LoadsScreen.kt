@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -111,44 +112,61 @@ fun LoadsScreen(
                         }
                     }
                     
-                    // Bottom Navigation Bar
-                    NavigationBar {
-                        NavigationBarItem(
-                            selected = pagerState.currentPage == 0,
-                            onClick = {
-                                coroutineScope.launch {
-                                    pagerState.animateScrollToPage(0)
-                                }
-                            },
-                            icon = {
-                                ActiveIcon(
-                                    color = if (pagerState.currentPage == 0) {
-                                        MaterialTheme.colorScheme.primary
-                                    } else {
-                                        MaterialTheme.colorScheme.onSurfaceVariant
-                                    },
-                                )
-                            },
-                            label = { Text("Active") },
-                        )
-                        NavigationBarItem(
-                            selected = pagerState.currentPage == 1,
-                            onClick = {
-                                coroutineScope.launch {
-                                    pagerState.animateScrollToPage(1)
-                                }
-                            },
-                            icon = {
-                                UpcomingIcon(
-                                    color = if (pagerState.currentPage == 1) {
-                                        MaterialTheme.colorScheme.primary
-                                    } else {
-                                        MaterialTheme.colorScheme.onSurfaceVariant
-                                    },
-                                )
-                            },
-                            label = { Text("Upcoming") },
-                        )
+                    // Bottom Navigation Bar with system navigation bar padding
+                    // Wrapped in Box to apply padding only at the bottom for system navigation bar
+                    Box(
+                        modifier = Modifier.navigationBarsPadding(),
+                    ) {
+                        NavigationBar {
+                            NavigationBarItem(
+                                selected = pagerState.currentPage == 0,
+                                onClick = {
+                                    coroutineScope.launch {
+                                        pagerState.animateScrollToPage(0)
+                                    }
+                                },
+                                icon = {
+                                    ActiveIcon(
+                                        color = if (pagerState.currentPage == 0) {
+                                            MaterialTheme.colorScheme.primary
+                                        } else {
+                                            MaterialTheme.colorScheme.onSurfaceVariant
+                                        },
+                                        iconSize = 20.dp,
+                                    )
+                                },
+                                label = {
+                                    Text(
+                                        text = "Active",
+                                        style = MaterialTheme.typography.labelSmall,
+                                    )
+                                },
+                            )
+                            NavigationBarItem(
+                                selected = pagerState.currentPage == 1,
+                                onClick = {
+                                    coroutineScope.launch {
+                                        pagerState.animateScrollToPage(1)
+                                    }
+                                },
+                                icon = {
+                                    UpcomingIcon(
+                                        color = if (pagerState.currentPage == 1) {
+                                            MaterialTheme.colorScheme.primary
+                                        } else {
+                                            MaterialTheme.colorScheme.onSurfaceVariant
+                                        },
+                                        iconSize = 20.dp,
+                                    )
+                                },
+                                label = {
+                                    Text(
+                                        text = "Upcoming",
+                                        style = MaterialTheme.typography.labelSmall,
+                                    )
+                                },
+                            )
+                        }
                     }
                 }
             }
