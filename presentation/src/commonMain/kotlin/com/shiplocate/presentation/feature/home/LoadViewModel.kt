@@ -7,6 +7,7 @@ import com.shiplocate.core.logging.Logger
 import com.shiplocate.domain.repository.LoadRepository
 import com.shiplocate.domain.usecase.GetPermissionStatusUseCase
 import com.shiplocate.domain.usecase.GetTrackingStatusUseCase
+import com.shiplocate.domain.usecase.ObservePermissionsUseCase
 import com.shiplocate.domain.usecase.StartTrackingUseCase
 import com.shiplocate.domain.usecase.StopTrackingUseCase
 import com.shiplocate.domain.usecase.load.ConnectToLoadUseCase
@@ -17,6 +18,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -25,6 +28,7 @@ import kotlinx.coroutines.withContext
  */
 class LoadViewModel(
     private val getPermissionStatusUseCase: GetPermissionStatusUseCase,
+    private val observePermissionsUseCase: ObservePermissionsUseCase,
     private val getTrackingStatusUseCase: GetTrackingStatusUseCase,
     private val startTrackingUseCase: StartTrackingUseCase,
     private val stopTrackingUseCase: StopTrackingUseCase,
@@ -39,6 +43,13 @@ class LoadViewModel(
 
     init {
         observePermissionsAndTrackingStatus()
+        // Подписываемся на изменения разрешений из Flow
+        observePermissionsUseCase()
+            .onEach { status ->
+                logger.debug(LogCategory.PERMISSIONS, "LoadViewModel: Received permission status update from Flow")
+                _uiState.value = _uiState.value.copy(permissionStatus = status)
+            }
+            .launchIn(viewModelScope)
     }
 
     fun initialize(loadId: Long) {

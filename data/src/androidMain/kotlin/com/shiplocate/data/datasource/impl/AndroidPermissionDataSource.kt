@@ -10,7 +10,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 
 /**
@@ -30,7 +29,7 @@ class AndroidPermissionDataSource(
             hasLocationPermission = permissionManager.hasLocationPermissions(),
             hasBackgroundLocationPermission = permissionManager.hasBackgroundLocationPermission(),
             hasNotificationPermission = permissionManager.hasNotificationPermission(),
-            hasActivityRecognitionPermission = permissionManager.hasActivityRecognitionPermission(),
+//            hasActivityRecognitionPermission = permissionManager.hasActivityRecognitionPermission(),
             isBatteryOptimizationDisabled = permissionManager.isBatteryOptimizationDisabled(),
         )
     }
@@ -45,14 +44,15 @@ class AndroidPermissionDataSource(
                 LogCategory.PERMISSIONS,
                 "AndroidPermissionDataSource.requestAllPermissions() - status: location=${status.hasLocationPermission}, " +
                     "background=${status.hasBackgroundLocationPermission}, notification=${status.hasNotificationPermission}, " +
-                    "activityRecognition=${status.hasActivityRecognitionPermission}, battery=${status.isBatteryOptimizationDisabled}",
+//                    "activityRecognition=${status.hasActivityRecognitionPermission}, " +
+                    "battery=${status.isBatteryOptimizationDisabled}",
             )
 
             if (
                 status.hasLocationPermission &&
                 status.hasBackgroundLocationPermission &&
                 status.hasNotificationPermission &&
-                status.hasActivityRecognitionPermission &&
+//                status.hasActivityRecognitionPermission &&
                 status.isBatteryOptimizationDisabled
             ) {
                 logger.info(LogCategory.PERMISSIONS, "AndroidPermissionDataSource.requestAllPermissions() - all permissions granted, returning success")
@@ -141,6 +141,6 @@ class AndroidPermissionDataSource(
 
     override fun observePermissions(): Flow<PermissionDataModel> {
         logger.debug(LogCategory.PERMISSIONS, "AndroidPermissionDataSource.observePermissions() called")
-        return permissionsFlow.asSharedFlow()
+        return permissionsFlow
     }
 }

@@ -15,7 +15,7 @@ object PermissionMapper {
             hasLocationPermission = dataModel.hasLocationPermission,
             hasBackgroundLocationPermission = dataModel.hasBackgroundLocationPermission,
             hasNotificationPermission = dataModel.hasNotificationPermission,
-            hasActivityRecognitionPermission = dataModel.hasActivityRecognitionPermission,
+//            hasActivityRecognitionPermission = dataModel.hasActivityRecognitionPermission,
             isBatteryOptimizationDisabled = dataModel.isBatteryOptimizationDisabled,
         )
     }
@@ -28,7 +28,7 @@ object PermissionMapper {
             hasLocationPermission = domainModel.hasLocationPermission,
             hasBackgroundLocationPermission = domainModel.hasBackgroundLocationPermission,
             hasNotificationPermission = domainModel.hasNotificationPermission,
-            hasActivityRecognitionPermission = domainModel.hasActivityRecognitionPermission,
+//            hasActivityRecognitionPermission = domainModel.hasActivityRecognitionPermission,
             isBatteryOptimizationDisabled = domainModel.isBatteryOptimizationDisabled,
         )
     }
