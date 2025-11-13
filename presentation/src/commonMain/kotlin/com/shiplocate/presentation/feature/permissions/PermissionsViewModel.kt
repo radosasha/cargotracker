@@ -9,6 +9,7 @@ import com.shiplocate.domain.usecase.ObservePermissionsUseCase
 import com.shiplocate.domain.usecase.RequestBackgroundLocationPermissionUseCase
 import com.shiplocate.domain.usecase.RequestBatteryOptimizationDisableUseCase
 import com.shiplocate.domain.usecase.RequestLocationPermissionUseCase
+import com.shiplocate.domain.usecase.RequestNotificationPermissionUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -25,6 +26,7 @@ class PermissionsViewModel(
     private val requestLocationPermissionUseCase: RequestLocationPermissionUseCase,
     private val requestBackgroundLocationPermissionUseCase: RequestBackgroundLocationPermissionUseCase,
     private val requestBatteryOptimizationDisableUseCase: RequestBatteryOptimizationDisableUseCase,
+    private val requestNotificationPermissionUseCase: RequestNotificationPermissionUseCase,
     private val logger: Logger,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(PermissionsUiState())
@@ -58,10 +60,12 @@ class PermissionsViewModel(
                 hasLocationPermission = status.hasLocationPermission,
                 hasBackgroundLocationPermission = status.hasBackgroundLocationPermission,
                 isBatteryOptimizationDisabled = status.isBatteryOptimizationDisabled,
+                hasNotificationPermission = status.hasNotificationPermission,
                 hasAllPermissions =
                     status.hasLocationPermission &&
                         status.hasBackgroundLocationPermission &&
-                        status.isBatteryOptimizationDisabled,
+                        status.isBatteryOptimizationDisabled &&
+                        status.hasNotificationPermission,
             )
     }
 
@@ -136,6 +140,30 @@ class PermissionsViewModel(
             }
         }
     }
+
+    fun requestNotificationPermission() {
+        viewModelScope.launch {
+            try {
+                logger.info(LogCategory.PERMISSIONS, "PermissionsViewModel: Requesting notification permission")
+                val result = requestNotificationPermissionUseCase()
+                if (result.isSuccess) {
+                    val granted = result.getOrNull() ?: false
+                    _uiState.value =
+                        _uiState.value.copy(
+                            hasNotificationPermission = granted,
+                        )
+                    logger.info(LogCategory.PERMISSIONS, "PermissionsViewModel: Notification permission granted: $granted")
+                } else {
+                    logger.warn(LogCategory.PERMISSIONS, "PermissionsViewModel: Notification permission denied")
+                }
+                // Обновляем статус после запроса
+                refreshPermissionStatus()
+            } catch (e: Exception) {
+                logger.error(LogCategory.PERMISSIONS, "PermissionsViewModel: Error requesting notification permission: ${e.message}", e)
+                refreshPermissionStatus()
+            }
+        }
+    }
 }
 
 /**
@@ -145,6 +173,7 @@ data class PermissionsUiState(
     val hasLocationPermission: Boolean = false,
     val hasBackgroundLocationPermission: Boolean = false,
     val isBatteryOptimizationDisabled: Boolean = false,
+    val hasNotificationPermission: Boolean = false,
     val hasAllPermissions: Boolean = false,
 )
 

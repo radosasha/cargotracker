@@ -7,7 +7,6 @@ import com.shiplocate.core.logging.Logger
 import com.shiplocate.domain.repository.LoadRepository
 import com.shiplocate.domain.usecase.GetPermissionStatusUseCase
 import com.shiplocate.domain.usecase.GetTrackingStatusUseCase
-import com.shiplocate.domain.usecase.RequestAllPermissionsUseCase
 import com.shiplocate.domain.usecase.StartTrackingUseCase
 import com.shiplocate.domain.usecase.StopTrackingUseCase
 import com.shiplocate.domain.usecase.load.ConnectToLoadUseCase
@@ -27,7 +26,6 @@ import kotlinx.coroutines.withContext
 class LoadViewModel(
     private val getPermissionStatusUseCase: GetPermissionStatusUseCase,
     private val getTrackingStatusUseCase: GetTrackingStatusUseCase,
-    private val requestAllPermissionsUseCase: RequestAllPermissionsUseCase,
     private val startTrackingUseCase: StartTrackingUseCase,
     private val stopTrackingUseCase: StopTrackingUseCase,
     private val connectToLoadUseCase: ConnectToLoadUseCase,
@@ -75,60 +73,6 @@ class LoadViewModel(
                         message = "Ошибка при загрузке статуса: ${e.message}",
                         messageType = MessageType.ERROR,
                     )
-            }
-        }
-    }
-
-    fun requestPermissions() {
-        viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true)
-
-            try {
-                val result = requestAllPermissionsUseCase()
-                logger.info(LogCategory.PERMISSIONS, "HomeViewModel.onRequestPermissions() - result: ${result.isSuccess}")
-                if (result.isSuccess) {
-                    val permissionStatus = result.getOrNull()
-                    logger.debug(LogCategory.PERMISSIONS, "HomeViewModel.onRequestPermissions() - permissionStatus: $permissionStatus")
-                    logger.debug(
-                        LogCategory.PERMISSIONS,
-                        "HomeViewModel.onRequestPermissions() - hasAllPermissions: ${permissionStatus?.hasAllPermissions}",
-                    )
-
-                    _uiState.value =
-                        _uiState.value.copy(
-                            permissionStatus = permissionStatus,
-                            message = "Разрешения получены",
-                            messageType = MessageType.SUCCESS,
-                        )
-
-                    // Если все разрешения получены, автоматически запускаем трекинг
-                    if (permissionStatus?.hasAllPermissions == true) {
-                        logger.info(
-                            LogCategory.PERMISSIONS,
-                            "HomeViewModel.onRequestPermissions() - all permissions granted, starting tracking",
-                        )
-                        startTracking()
-                    } else {
-                        logger.warn(
-                            LogCategory.PERMISSIONS,
-                            "HomeViewModel.onRequestPermissions() - not all permissions granted, not starting tracking",
-                        )
-                    }
-                } else {
-                    _uiState.value =
-                        _uiState.value.copy(
-                            message = "Не удалось получить разрешения: ${result.exceptionOrNull()?.message}",
-                            messageType = MessageType.ERROR,
-                        )
-                }
-            } catch (e: Exception) {
-                _uiState.value =
-                    _uiState.value.copy(
-                        message = "Ошибка при запросе разрешений: ${e.message}",
-                        messageType = MessageType.ERROR,
-                    )
-            } finally {
-                _uiState.value = _uiState.value.copy(isLoading = false)
             }
         }
     }

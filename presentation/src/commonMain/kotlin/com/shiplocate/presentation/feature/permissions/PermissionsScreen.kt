@@ -97,6 +97,14 @@ fun PermissionsScreen(
             onGrantClick = { viewModel.requestBatteryOptimizationDisable() },
         )
 
+        // Step 4: Notification Permission
+        PermissionStepCard(
+            stepNumber = 4,
+            title = "Allow Notifications so you can receive important updates about your deliveries.",
+            isGranted = uiState.hasNotificationPermission,
+            onGrantClick = { viewModel.requestNotificationPermission() },
+        )
+
         // Note
         Card(
             modifier = Modifier.fillMaxWidth(),
