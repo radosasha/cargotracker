@@ -38,6 +38,16 @@ class LoadsViewModel(
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
 
+    private val _currentPage = MutableStateFlow(0)
+    val currentPage: StateFlow<Int> = _currentPage.asStateFlow()
+
+    /**
+     * Set current page for pager
+     */
+    fun setCurrentPage(page: Int) {
+        _currentPage.value = page
+    }
+
     init {
         logger.info(LogCategory.UI, "LoadsViewModel: Initialized")
         fetchLoadsFromCache()

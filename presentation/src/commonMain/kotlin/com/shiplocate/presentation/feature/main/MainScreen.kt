@@ -9,8 +9,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import com.shiplocate.presentation.component.LoadsBottomNavigationBar
 import com.shiplocate.presentation.component.TrackerTopAppBar
+import com.shiplocate.presentation.di.koinLoadsViewModel
 import com.shiplocate.presentation.navigation.Screen
 import com.shiplocate.presentation.navigation.TrackerNavigation
 
@@ -25,6 +28,17 @@ fun MainScreen() {
     var currentRoute by remember { mutableStateOf<String?>(null) }
 
     MaterialTheme {
+        // Remember LoadsViewModel only when on LOADS screen
+        val loadsViewModel = remember(currentRoute) {
+            if (currentRoute == Screen.LOADS) {
+                koinLoadsViewModel()
+            } else {
+                null
+            }
+        }
+        val currentPage by loadsViewModel?.currentPage?.collectAsStateWithLifecycle() 
+            ?: remember { mutableStateOf(0) }
+
         Scaffold(
             modifier = Modifier.fillMaxSize(),
             topBar = {
@@ -39,6 +53,16 @@ fun MainScreen() {
                             } else {
                                 null
                             },
+                    )
+                }
+            },
+            bottomBar = {
+                if (currentRoute == Screen.LOADS && loadsViewModel != null) {
+                    LoadsBottomNavigationBar(
+                        currentPage = currentPage,
+                        onPageSelected = { page ->
+                            loadsViewModel.setCurrentPage(page)
+                        },
                     )
                 }
             },
