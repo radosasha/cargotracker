@@ -14,6 +14,7 @@ data class HomeUiState(
     val isLoading: Boolean = true,
     val message: String? = null,
     val messageType: MessageType? = null,
+    val showLoadDeliveredDialog: Boolean = false,
 )
 
 /**

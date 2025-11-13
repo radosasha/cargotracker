@@ -11,11 +11,14 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -70,27 +73,39 @@ fun HomeScreen(
             }
         }
 
-        // Кнопка Start
+        // Кнопка Start / Load delivered
+        val isTrackingActive = uiState.trackingStatus == com.shiplocate.domain.model.TrackingStatus.ACTIVE
+        val hasPermissions = uiState.permissionStatus?.hasAllPermissions ?: false
+        
         Button(
             onClick = {
-                val hasPermissions = uiState.permissionStatus?.hasAllPermissions ?: false
                 if (!hasPermissions) {
                     viewModel.requestPermissions()
-                } else if (uiState.trackingStatus != com.shiplocate.domain.model.TrackingStatus.ACTIVE) {
+                } else if (!isTrackingActive) {
                     viewModel.startTracking()
                 } else {
-                    viewModel.stopTracking()
+                    // Показываем диалог подтверждения для "Load delivered"
+                    viewModel.showLoadDeliveredDialog()
                 }
             },
             enabled = !uiState.isLoading,
             modifier = Modifier.fillMaxWidth(),
+            colors = if (isTrackingActive) {
+                // Красный цвет для кнопки "Load delivered"
+                ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.error,
+                    contentColor = MaterialTheme.colorScheme.onError,
+                )
+            } else {
+                ButtonDefaults.buttonColors()
+            },
         ) {
             Text(
                 text =
                     when {
-                        !(uiState.permissionStatus?.hasAllPermissions ?: false) -> "Start"
-                        uiState.trackingStatus != com.shiplocate.domain.model.TrackingStatus.ACTIVE -> "Start"
-                        else -> "Stop"
+                        !hasPermissions -> "Start"
+                        !isTrackingActive -> "Start"
+                        else -> "Load delivered"
                     },
             )
         }
@@ -126,5 +141,40 @@ fun HomeScreen(
                 CircularProgressIndicator()
             }
         }
+    }
+
+    // Диалог подтверждения "Load delivered"
+    if (uiState.showLoadDeliveredDialog) {
+        AlertDialog(
+            onDismissRequest = { viewModel.dismissLoadDeliveredDialog() },
+            title = {
+                Text(
+                    text = "Confirm Load Delivery",
+                    style = MaterialTheme.typography.titleLarge,
+                )
+            },
+            text = {
+                Text(
+                    text = "Are you sure you want to mark this load as delivered? This will stop tracking and disconnect from the load.",
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = { viewModel.confirmLoadDelivered() },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error,
+                        contentColor = MaterialTheme.colorScheme.onError,
+                    ),
+                ) {
+                    Text("Confirm")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.dismissLoadDeliveredDialog() }) {
+                    Text("Cancel")
+                }
+            },
+        )
     }
 }

@@ -324,4 +324,94 @@ class HomeViewModel(
                 messageType = null,
             )
     }
+
+    fun showLoadDeliveredDialog() {
+        _uiState.value = _uiState.value.copy(showLoadDeliveredDialog = true)
+    }
+
+    fun dismissLoadDeliveredDialog() {
+        _uiState.value = _uiState.value.copy(showLoadDeliveredDialog = false)
+    }
+
+    fun confirmLoadDelivered() {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(
+                showLoadDeliveredDialog = false,
+                isLoading = true,
+            )
+
+            try {
+                // Step 1: Find load by id
+                val loads = loadRepository.getCachedLoads()
+                val load = loads.find { it.id == loadId }
+
+                if (load == null) {
+                    logger.error(LogCategory.UI, "HomeViewModel: Load not found with id: $loadId")
+                    _uiState.value =
+                        _uiState.value.copy(
+                            isLoading = false,
+                            message = "Load not found: $loadId",
+                            messageType = MessageType.ERROR,
+                        )
+                    return@launch
+                }
+
+                logger.info(LogCategory.UI, "HomeViewModel: Marking load ${load.loadName} (id: $loadId) as delivered")
+
+                // Step 2: Disconnect from load (marks as delivered)
+                val disconnectResult =
+                    withContext(Dispatchers.Default) {
+                        disconnectFromLoadUseCase(loadId)
+                    }
+                if (disconnectResult.isFailure) {
+                    logger.error(
+                        LogCategory.UI,
+                        "HomeViewModel: Failed to mark load as delivered: ${disconnectResult.exceptionOrNull()?.message}",
+                    )
+                    _uiState.value =
+                        _uiState.value.copy(
+                            isLoading = false,
+                            message = "Failed to mark load as delivered: ${disconnectResult.exceptionOrNull()?.message}",
+                            messageType = MessageType.ERROR,
+                        )
+                    return@launch
+                }
+
+                logger.info(LogCategory.UI, "HomeViewModel: Successfully marked load ${load.loadName} (id: $loadId) as delivered")
+
+                // Step 3: Stop tracking
+                val result = stopTrackingUseCase()
+                if (result.isFailure) {
+                    logger.error(LogCategory.UI, "HomeViewModel: Failed to stop tracking: ${result.exceptionOrNull()?.message}")
+                    _uiState.value =
+                        _uiState.value.copy(
+                            isLoading = false,
+                            message = "Load marked as delivered, but failed to stop tracking: ${result.exceptionOrNull()?.message}",
+                            messageType = MessageType.ERROR,
+                        )
+                    return@launch
+                }
+
+                logger.info(LogCategory.UI, "HomeViewModel: Successfully stopped tracking after marking load as delivered")
+
+                // Обновляем статус трекинга
+                val trackingStatus = getTrackingStatusUseCase()
+                _uiState.value =
+                    _uiState.value.copy(
+                        trackingStatus = trackingStatus,
+                        message = "Load marked as delivered",
+                        messageType = MessageType.SUCCESS,
+                    )
+            } catch (e: Exception) {
+                logger.error(LogCategory.UI, "HomeViewModel: Exception during mark load as delivered: ${e.message}")
+                _uiState.value =
+                    _uiState.value.copy(
+                        message = "Error marking load as delivered: ${e.message}",
+                        messageType = MessageType.ERROR,
+                    )
+            } finally {
+                _uiState.value = _uiState.value.copy(isLoading = false)
+            }
+        }
+    }
 }
