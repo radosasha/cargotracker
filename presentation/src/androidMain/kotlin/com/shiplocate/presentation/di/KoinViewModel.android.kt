@@ -2,7 +2,7 @@ package com.shiplocate.presentation.di
 
 import com.shiplocate.presentation.feature.auth.EnterPhoneViewModel
 import com.shiplocate.presentation.feature.auth.EnterPinViewModel
-import com.shiplocate.presentation.feature.home.HomeViewModel
+import com.shiplocate.presentation.feature.home.LoadViewModel
 import com.shiplocate.presentation.feature.loads.LoadsViewModel
 import com.shiplocate.presentation.feature.logs.LogsViewModel
 import org.koin.core.component.KoinComponent
@@ -11,9 +11,9 @@ import org.koin.core.component.inject
 /**
  * Android реализация для инъекции ViewModels через Koin
  */
-actual fun koinHomeViewModel(): HomeViewModel {
+actual fun koinLoadViewModel(): LoadViewModel {
     return object : KoinComponent {
-        val viewModel: HomeViewModel by inject()
+        val viewModel: LoadViewModel by inject()
     }.viewModel
 }
 

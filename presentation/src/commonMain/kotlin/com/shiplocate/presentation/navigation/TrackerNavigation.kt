@@ -23,16 +23,16 @@ import androidx.navigation.navArgument
 import com.shiplocate.domain.usecase.auth.HasAuthSessionUseCase
 import com.shiplocate.presentation.di.koinEnterPhoneViewModel
 import com.shiplocate.presentation.di.koinEnterPinViewModel
-import com.shiplocate.presentation.di.koinHomeViewModel
 import com.shiplocate.presentation.di.koinInject
+import com.shiplocate.presentation.di.koinLoadViewModel
 import com.shiplocate.presentation.di.koinLoadsViewModel
 import com.shiplocate.presentation.di.koinLogsViewModel
 import com.shiplocate.presentation.feature.auth.EnterPhoneScreen
 import com.shiplocate.presentation.feature.auth.EnterPhoneViewModel
 import com.shiplocate.presentation.feature.auth.EnterPinScreen
 import com.shiplocate.presentation.feature.auth.EnterPinViewModel
-import com.shiplocate.presentation.feature.home.HomeScreen
-import com.shiplocate.presentation.feature.home.HomeViewModel
+import com.shiplocate.presentation.feature.home.LoadScreen
+import com.shiplocate.presentation.feature.home.LoadViewModel
 import com.shiplocate.presentation.feature.loads.LoadsScreen
 import com.shiplocate.presentation.feature.loads.LoadsViewModel
 import com.shiplocate.presentation.feature.logs.LogsScreen
@@ -45,7 +45,7 @@ import kotlinx.coroutines.launch
  * (Type-safe args не поддерживаются в KMP)
  *
  * Проверяет наличие токена при старте
- * 
+ *
  * @param paddingValues PaddingValues из Scaffold для передачи в экраны
  * @param onNavControllerReady Callback для передачи navController и currentRoute наружу
  * @param onBottomBarStateChanged Callback для передачи состояния bottomBar наружу
@@ -63,10 +63,10 @@ fun TrackerNavigation(
 
     var isCheckingAuth by remember { mutableStateOf(true) }
     var startDestination by remember { mutableStateOf(Screen.ENTER_PHONE) }
-    
+
     // Отслеживаем текущий route для передачи наружу
     var currentRoute by remember { mutableStateOf<String?>(null) }
-    
+
     // Отслеживаем изменения в navigation state через listener для надежности
     DisposableEffect(navController) {
         val listener = NavController.OnDestinationChangedListener { _, destination, _ ->
@@ -77,23 +77,23 @@ fun TrackerNavigation(
             }
         }
         navController.addOnDestinationChangedListener(listener)
-        
+
         // Инициализируем текущий route
         val initialRoute = navController.currentBackStackEntry?.destination?.route
         if (initialRoute != null) {
             currentRoute = initialRoute
             onNavControllerReady(navController, initialRoute)
         }
-        
+
         onDispose {
             navController.removeOnDestinationChangedListener(listener)
         }
     }
-    
+
     // Также отслеживаем через state для немедленного обновления UI
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val route = navBackStackEntry?.destination?.route
-    
+
     LaunchedEffect(route) {
         if (route != null && route != currentRoute) {
             currentRoute = route
@@ -186,10 +186,10 @@ fun TrackerNavigation(
             val viewModel: LoadsViewModel = viewModel(
                 factory = loadsViewModelFactory,
             )
-            
+
             // Отслеживаем текущую страницу для bottomBar
             val currentPage by viewModel.currentPage.collectAsStateWithLifecycle()
-            
+
             // Передаем состояние bottomBar в MainScreen
             LaunchedEffect(currentRoute, currentPage) {
                 if (currentRoute == Screen.LOADS) {
@@ -205,10 +205,10 @@ fun TrackerNavigation(
                     onBottomBarStateChanged(BottomBarState.None)
                 }
             }
-            
+
             // Отслеживаем текущий backStackEntry для обновления данных при возврате
             val currentBackStackEntry by navController.currentBackStackEntryAsState()
-            
+
             // Обновляем данные из кеша когда текущий экран - LoadsScreen
             // Это сработает при первом открытии и при возврате на экран
             LaunchedEffect(currentBackStackEntry?.destination?.route) {
@@ -216,7 +216,7 @@ fun TrackerNavigation(
                     viewModel.fetchLoadsFromCache()
                 }
             }
-            
+
             LoadsScreen(
                 paddingValues = paddingValues,
                 viewModel = viewModel,
@@ -239,22 +239,25 @@ fun TrackerNavigation(
                     onBottomBarStateChanged(BottomBarState.None)
                 }
             }
-            
-            val homeViewModelFactory = viewModelFactory {
-                    initializer<HomeViewModel> {
-                        koinHomeViewModel()
-                    }
+
+            val loadViewModelFactory = viewModelFactory {
+                initializer<LoadViewModel> {
+                    koinLoadViewModel()
                 }
+            }
             val loadId = backStackEntry.getLongArgument("loadId") ?: 0L
-            val viewModel: HomeViewModel = viewModel(
-                    factory = homeViewModelFactory,
-                )
-            HomeScreen(
+            val viewModel: LoadViewModel = viewModel(
+                factory = loadViewModelFactory,
+            )
+            LoadScreen(
                 paddingValues = paddingValues,
                 loadId = loadId,
                 viewModel = viewModel,
                 onNavigateToLogs = {
                     navController.navigate(Screen.LOGS)
+                },
+                onNavigateBack = {
+                    navController.popBackStack()
                 },
             )
         }
@@ -267,7 +270,7 @@ fun TrackerNavigation(
                     onBottomBarStateChanged(BottomBarState.None)
                 }
             }
-            
+
             val logsViewModelFactory =
                 viewModelFactory {
                     initializer<LogsViewModel> {

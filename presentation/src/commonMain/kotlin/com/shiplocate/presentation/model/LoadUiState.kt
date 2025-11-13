@@ -7,7 +7,7 @@ import com.shiplocate.domain.model.load.Load
 /**
  * Presentation модель для состояния главного экрана
  */
-data class HomeUiState(
+data class LoadUiState(
     val load: Load? = null,
     val permissionStatus: PermissionStatus? = null,
     val trackingStatus: TrackingStatus = TrackingStatus.STOPPED,
@@ -15,6 +15,7 @@ data class HomeUiState(
     val message: String? = null,
     val messageType: MessageType? = null,
     val showLoadDeliveredDialog: Boolean = false,
+    val shouldNavigateBack: Boolean = false,
 )
 
 /**

@@ -34,16 +34,26 @@ import com.shiplocate.presentation.component.StopsTimeline
  */
 @Suppress("FunctionName")
 @Composable
-fun HomeScreen(
+fun LoadScreen(
     paddingValues: PaddingValues,
     loadId: Long,
-    viewModel: HomeViewModel,
+    viewModel: LoadViewModel,
     onNavigateToLogs: () -> Unit = {},
+    onNavigateBack: () -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     LaunchedEffect(loadId) {
         viewModel.initialize(loadId)
+    }
+
+    // Обработка навигации назад после успешного "Load delivered"
+    LaunchedEffect(uiState.shouldNavigateBack) {
+        if (uiState.shouldNavigateBack) {
+            onNavigateBack()
+            // Сбрасываем флаг после навигации
+            viewModel.resetNavigateBackFlag()
+        }
     }
 
     Column(

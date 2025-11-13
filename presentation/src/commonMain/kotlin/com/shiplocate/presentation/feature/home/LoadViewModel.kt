@@ -4,16 +4,15 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.shiplocate.core.logging.LogCategory
 import com.shiplocate.core.logging.Logger
+import com.shiplocate.domain.repository.LoadRepository
 import com.shiplocate.domain.usecase.GetPermissionStatusUseCase
 import com.shiplocate.domain.usecase.GetTrackingStatusUseCase
 import com.shiplocate.domain.usecase.RequestAllPermissionsUseCase
 import com.shiplocate.domain.usecase.StartTrackingUseCase
 import com.shiplocate.domain.usecase.StopTrackingUseCase
-import com.shiplocate.domain.usecase.TestServerUseCase
-import com.shiplocate.domain.repository.LoadRepository
 import com.shiplocate.domain.usecase.load.ConnectToLoadUseCase
 import com.shiplocate.domain.usecase.load.DisconnectFromLoadUseCase
-import com.shiplocate.presentation.model.HomeUiState
+import com.shiplocate.presentation.model.LoadUiState
 import com.shiplocate.presentation.model.MessageType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,21 +24,20 @@ import kotlinx.coroutines.withContext
 /**
  * ViewModel для главного экрана
  */
-class HomeViewModel(
+class LoadViewModel(
     private val getPermissionStatusUseCase: GetPermissionStatusUseCase,
     private val getTrackingStatusUseCase: GetTrackingStatusUseCase,
     private val requestAllPermissionsUseCase: RequestAllPermissionsUseCase,
     private val startTrackingUseCase: StartTrackingUseCase,
     private val stopTrackingUseCase: StopTrackingUseCase,
-    private val testServerUseCase: TestServerUseCase,
     private val connectToLoadUseCase: ConnectToLoadUseCase,
     private val disconnectFromLoadUseCase: DisconnectFromLoadUseCase,
     private val loadRepository: LoadRepository,
     private val logger: Logger,
 ) : ViewModel() {
     private var loadId: Long = 0L
-    private val _uiState = MutableStateFlow(HomeUiState())
-    val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
+    private val _uiState = MutableStateFlow(LoadUiState())
+    val uiState: StateFlow<LoadUiState> = _uiState.asStateFlow()
 
     init {
         observePermissionsAndTrackingStatus()
@@ -205,118 +203,6 @@ class HomeViewModel(
         }
     }
 
-    fun stopTracking() {
-        viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true)
-
-            try {
-                // Step 1: Find load by id
-                val loads = loadRepository.getCachedLoads()
-                val load = loads.find { it.id == loadId }
-
-                if (load == null) {
-                    logger.error(LogCategory.UI, "HomeViewModel: Load not found with id: $loadId")
-                    _uiState.value =
-                        _uiState.value.copy(
-                            isLoading = false,
-                            message = "Load not found: $loadId",
-                            messageType = MessageType.ERROR,
-                        )
-                    return@launch
-                }
-
-                logger.info(LogCategory.UI, "HomeViewModel: Disconnecting from load ${load.loadName} (id: $loadId) before stopping tracking")
-
-                val disconnectResult =
-                    withContext(Dispatchers.Default) {
-                        disconnectFromLoadUseCase(loadId)
-                    }
-                if (disconnectResult.isFailure) {
-                    logger.error(
-                        LogCategory.UI,
-                        "HomeViewModel: Failed to disconnect from load: ${disconnectResult.exceptionOrNull()?.message}",
-                    )
-                    _uiState.value =
-                        _uiState.value.copy(
-                            isLoading = false,
-                            message = "Failed to disconnect from load: ${disconnectResult.exceptionOrNull()?.message}",
-                            messageType = MessageType.ERROR,
-                        )
-                    return@launch
-                }
-
-                logger.info(LogCategory.UI, "HomeViewModel: Successfully disconnected from load ${load.loadName} (id: $loadId)")
-
-                // Step 2: Stop tracking
-                val result = stopTrackingUseCase()
-                if (result.isFailure) {
-                    logger.error(LogCategory.UI, "HomeViewModel: Failed to stop tracking: ${result.exceptionOrNull()?.message}")
-                    _uiState.value =
-                        _uiState.value.copy(
-                            isLoading = false,
-                            message = "Не удалось остановить трекинг: ${result.exceptionOrNull()?.message}",
-                            messageType = MessageType.ERROR,
-                        )
-                    return@launch
-                }
-
-                logger.info(LogCategory.UI, "HomeViewModel: Successfully stopped tracking")
-
-                // Обновляем статус трекинга
-                val trackingStatus = getTrackingStatusUseCase()
-                _uiState.value =
-                    _uiState.value.copy(
-                        trackingStatus = trackingStatus,
-                        message = "GPS трекинг остановлен",
-                        messageType = MessageType.SUCCESS,
-                    )
-            } catch (e: Exception) {
-                logger.error(LogCategory.UI, "HomeViewModel: Exception during stop tracking: ${e.message}")
-                _uiState.value =
-                    _uiState.value.copy(
-                        message = "Ошибка при остановке трекинга: ${e.message}",
-                        messageType = MessageType.ERROR,
-                    )
-            } finally {
-                _uiState.value = _uiState.value.copy(isLoading = false)
-            }
-        }
-    }
-
-    fun onTestServer() {
-        viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true)
-
-            try {
-                logger.info(LogCategory.NETWORK, "HomeViewModel.onTestServer() - testing server connection")
-                val result = testServerUseCase()
-
-                if (result.isSuccess) {
-                    _uiState.value =
-                        _uiState.value.copy(
-                            message = "Тестовые координаты отправлены на сервер: 55.7558, 37.6176 (Москва)",
-                            messageType = MessageType.SUCCESS,
-                        )
-                } else {
-                    _uiState.value =
-                        _uiState.value.copy(
-                            message = "Ошибка при отправке тестовых координат: ${result.exceptionOrNull()?.message}",
-                            messageType = MessageType.ERROR,
-                        )
-                }
-            } catch (e: Exception) {
-                logger.error(LogCategory.NETWORK, "HomeViewModel.onTestServer() - error: ${e.message}")
-                _uiState.value =
-                    _uiState.value.copy(
-                        message = "Ошибка при тестировании сервера: ${e.message}",
-                        messageType = MessageType.ERROR,
-                    )
-            } finally {
-                _uiState.value = _uiState.value.copy(isLoading = false)
-            }
-        }
-    }
-
     fun clearMessage() {
         _uiState.value =
             _uiState.value.copy(
@@ -331,6 +217,10 @@ class HomeViewModel(
 
     fun dismissLoadDeliveredDialog() {
         _uiState.value = _uiState.value.copy(showLoadDeliveredDialog = false)
+    }
+
+    fun resetNavigateBackFlag() {
+        _uiState.value = _uiState.value.copy(shouldNavigateBack = false)
     }
 
     fun confirmLoadDelivered() {
@@ -401,6 +291,7 @@ class HomeViewModel(
                         trackingStatus = trackingStatus,
                         message = "Load marked as delivered",
                         messageType = MessageType.SUCCESS,
+                        shouldNavigateBack = true, // Устанавливаем флаг для навигации назад
                     )
             } catch (e: Exception) {
                 logger.error(LogCategory.UI, "HomeViewModel: Exception during mark load as delivered: ${e.message}")
