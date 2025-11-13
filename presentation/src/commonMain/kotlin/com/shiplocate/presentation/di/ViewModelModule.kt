@@ -5,6 +5,7 @@ import com.shiplocate.presentation.feature.auth.EnterPinViewModel
 import com.shiplocate.presentation.feature.home.LoadViewModel
 import com.shiplocate.presentation.feature.loads.LoadsViewModel
 import com.shiplocate.presentation.feature.logs.LogsViewModel
+import com.shiplocate.presentation.feature.permissions.PermissionsViewModel
 import org.koin.core.module.dsl.factoryOf
 import org.koin.dsl.module
 
@@ -20,6 +21,7 @@ val viewModelModule =
         factoryOf(::LoadViewModel)
         factoryOf(::LoadsViewModel)
         factoryOf(::LogsViewModel)
+        factoryOf(::PermissionsViewModel)
 
         // Auth ViewModels
         factoryOf(::EnterPhoneViewModel)

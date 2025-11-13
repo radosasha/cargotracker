@@ -27,6 +27,7 @@ import com.shiplocate.presentation.di.koinInject
 import com.shiplocate.presentation.di.koinLoadViewModel
 import com.shiplocate.presentation.di.koinLoadsViewModel
 import com.shiplocate.presentation.di.koinLogsViewModel
+import com.shiplocate.presentation.di.koinPermissionsViewModel
 import com.shiplocate.presentation.feature.auth.EnterPhoneScreen
 import com.shiplocate.presentation.feature.auth.EnterPhoneViewModel
 import com.shiplocate.presentation.feature.auth.EnterPinScreen
@@ -37,6 +38,8 @@ import com.shiplocate.presentation.feature.loads.LoadsScreen
 import com.shiplocate.presentation.feature.loads.LoadsViewModel
 import com.shiplocate.presentation.feature.logs.LogsScreen
 import com.shiplocate.presentation.feature.logs.LogsViewModel
+import com.shiplocate.presentation.feature.permissions.PermissionsScreen
+import com.shiplocate.presentation.feature.permissions.PermissionsViewModel
 import com.shiplocate.presentation.model.BottomBarState
 import kotlinx.coroutines.launch
 
@@ -257,6 +260,35 @@ fun TrackerNavigation(
                     navController.navigate(Screen.LOGS)
                 },
                 onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onNavigateToPermissions = {
+                    navController.navigate(Screen.PERMISSIONS)
+                },
+            )
+        }
+
+        // Permissions screen
+        composable(Screen.PERMISSIONS) {
+            // Скрываем bottomBar при переходе на другие экраны
+            LaunchedEffect(currentRoute) {
+                if (currentRoute != Screen.LOADS) {
+                    onBottomBarStateChanged(BottomBarState.None)
+                }
+            }
+
+            val permissionsViewModelFactory = viewModelFactory {
+                initializer<PermissionsViewModel> {
+                    koinPermissionsViewModel()
+                }
+            }
+            val viewModel: PermissionsViewModel = viewModel(
+                factory = permissionsViewModelFactory,
+            )
+            PermissionsScreen(
+                paddingValues = paddingValues,
+                viewModel = viewModel,
+                onContinue = {
                     navController.popBackStack()
                 },
             )

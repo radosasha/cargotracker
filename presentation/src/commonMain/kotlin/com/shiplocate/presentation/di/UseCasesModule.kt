@@ -5,7 +5,12 @@ import com.shiplocate.domain.usecase.GetPermissionStatusUseCase
 import com.shiplocate.domain.usecase.GetTrackingStatusUseCase
 import com.shiplocate.domain.usecase.HandleFirebaseTokenUseCase
 import com.shiplocate.domain.usecase.ManageFirebaseTokensUseCase
+import com.shiplocate.domain.usecase.NotifyPermissionGrantedUseCase
+import com.shiplocate.domain.usecase.ObservePermissionsUseCase
 import com.shiplocate.domain.usecase.RequestAllPermissionsUseCase
+import com.shiplocate.domain.usecase.RequestBackgroundLocationPermissionUseCase
+import com.shiplocate.domain.usecase.RequestBatteryOptimizationDisableUseCase
+import com.shiplocate.domain.usecase.RequestLocationPermissionUseCase
 import com.shiplocate.domain.usecase.RequestNotificationPermissionUseCase
 import com.shiplocate.domain.usecase.SavePhoneNumberUseCase
 import com.shiplocate.domain.usecase.SendCachedTokenOnAuthUseCase
@@ -43,6 +48,11 @@ val useCasesModule =
         factoryOf(::GetPermissionStatusUseCase)
         factoryOf(::RequestAllPermissionsUseCase)
         factoryOf(::RequestNotificationPermissionUseCase)
+        factoryOf(::RequestLocationPermissionUseCase)
+        factoryOf(::RequestBackgroundLocationPermissionUseCase)
+        factoryOf(::RequestBatteryOptimizationDisableUseCase)
+        factoryOf(::ObservePermissionsUseCase)
+        factoryOf(::NotifyPermissionGrantedUseCase)
 
         // Tracking Use Cases
         factoryOf(::GetTrackingStatusUseCase)

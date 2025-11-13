@@ -9,11 +9,20 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.shiplocate.core.logging.LogCategory
 import com.shiplocate.core.logging.Logger
 import com.shiplocate.di.AndroidKoinApp
+import com.shiplocate.domain.usecase.NotifyPermissionGrantedUseCase
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
 class MainActivity : ComponentActivity(), KoinComponent {
     private val logger: Logger by inject()
+    private val notifyPermissionGrantedUseCase: NotifyPermissionGrantedUseCase by inject()
+    
+    // Coroutine scope для вызова suspend функций
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
@@ -54,15 +63,21 @@ class MainActivity : ComponentActivity(), KoinComponent {
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
 
-        // Передаем результат в AndroidPermissionRequester для обработки
-        try {
-            val permissionManager: AndroidPermissionManagerImpl by inject()
-            permissionManager.handlePermissionResult(requestCode, grantResults)
-        } catch (e: Exception) {
-            logger.debug(
-                LogCategory.PERMISSIONS,
-                "Permission result: requestCode=$requestCode, permissions=${permissions.joinToString()}, grantResults=${grantResults.joinToString()}"
-            )
+        // Уведомляем о том, что разрешения были получены через Use Case
+        scope.launch {
+            try {
+                logger.debug(
+                    LogCategory.PERMISSIONS,
+                    "Permission result: requestCode=$requestCode, permissions=${permissions.joinToString()}, grantResults=${grantResults.joinToString()}"
+                )
+                notifyPermissionGrantedUseCase()
+            } catch (e: Exception) {
+                logger.error(
+                    LogCategory.PERMISSIONS,
+                    "Error notifying permission granted: ${e.message}",
+                    e
+                )
+            }
         }
     }
 

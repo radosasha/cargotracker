@@ -128,13 +128,13 @@ class IOSPermissionManagerImpl : PermissionManager {
 
     override suspend fun requestAllPermissions(): Result<Unit> {
         if (!hasLocationPermissions()) {
-            val result = requestLocationPermission()
+            val result = requestLocationPermissionInternal()
             if (result.isFailure) {
                 return result
             }
         }
         if (!hasBackgroundLocationPermission()) {
-            val result = requestBackgroundLocationPermission()
+            val result = requestBackgroundLocationPermissionInternal()
             if (result.isFailure) {
                 return result
             }
@@ -154,7 +154,28 @@ class IOSPermissionManagerImpl : PermissionManager {
         return Result.success(Unit)
     }
 
-    private suspend fun requestLocationPermission(): Result<Unit> {
+    override suspend fun requestLocationPermission(): Result<Unit> {
+        return if (!hasLocationPermissions()) {
+            requestLocationPermissionInternal()
+        } else {
+            Result.success(Unit)
+        }
+    }
+
+    override suspend fun requestBackgroundLocationPermission(): Result<Unit> {
+        return if (!hasBackgroundLocationPermission()) {
+            requestBackgroundLocationPermissionInternal()
+        } else {
+            Result.success(Unit)
+        }
+    }
+
+    override suspend fun requestBatteryOptimizationDisable(): Result<Unit> {
+        // iOS не требует отдельного разрешения для батареи
+        return Result.success(Unit)
+    }
+
+    private suspend fun requestLocationPermissionInternal(): Result<Unit> {
         return suspendCancellableCoroutine { continuation ->
             dispatch_async(dispatch_get_main_queue()) {
                 locationDelegate.onAuthorizationChange = { newStatus ->
@@ -258,7 +279,7 @@ class IOSPermissionManagerImpl : PermissionManager {
         }
     }
 
-    private suspend fun requestBackgroundLocationPermission(): Result<Unit> {
+    private suspend fun requestBackgroundLocationPermissionInternal(): Result<Unit> {
         return suspendCancellableCoroutine { continuation ->
             dispatch_async(dispatch_get_main_queue()) {
                 locationDelegate.onAuthorizationChange = { newStatus ->

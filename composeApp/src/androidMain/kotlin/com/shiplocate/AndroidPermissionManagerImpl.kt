@@ -89,6 +89,58 @@ class AndroidPermissionManagerImpl(private val activityContextProvider: Activity
         }
     }
 
+    override suspend fun requestLocationPermission(): Result<Unit> {
+        return try {
+            println("AndroidPermissionManagerImpl.requestLocationPermission() called")
+            if (!permissionChecker.hasLocationPermissions()) {
+                if (permissionRequester.shouldShowLocationPermissionRationale()) {
+                    println("Showing location permission rationale")
+                }
+                println("Requesting location permissions")
+                permissionRequester.requestLocationPermissions()
+            } else {
+                println("Location permission already granted")
+            }
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun requestBackgroundLocationPermission(): Result<Unit> {
+        return try {
+            println("AndroidPermissionManagerImpl.requestBackgroundLocationPermission() called")
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                if (!permissionChecker.hasBackgroundLocationPermission()) {
+                    println("Requesting background location permission")
+                    permissionRequester.requestBackgroundLocationPermission()
+                } else {
+                    println("Background location permission already granted")
+                }
+            } else {
+                println("Background location permission not required for this Android version (API ${Build.VERSION.SDK_INT})")
+            }
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun requestBatteryOptimizationDisable(): Result<Unit> {
+        return try {
+            println("AndroidPermissionManagerImpl.requestBatteryOptimizationDisable() called")
+            if (!permissionChecker.isBatteryOptimizationDisabled()) {
+                println("Requesting battery optimization disable")
+                permissionRequester.requestBatteryOptimizationDisable()
+            } else {
+                println("Battery optimization already disabled")
+            }
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     fun continuePermissionRequest() {
         println("AndroidPermissionRequester.continuePermissionRequest() called")
 

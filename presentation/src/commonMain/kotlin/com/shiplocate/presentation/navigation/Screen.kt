@@ -10,6 +10,7 @@ object Screen {
     const val LOADS = "loads"
     const val HOME = "home/{loadId}"
     const val LOGS = "logs"
+    const val PERMISSIONS = "permissions"
 
     fun enterPin(phone: String) = "enter_pin/$phone"
 

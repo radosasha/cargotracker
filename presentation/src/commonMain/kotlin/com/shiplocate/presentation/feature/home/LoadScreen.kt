@@ -40,6 +40,7 @@ fun LoadScreen(
     viewModel: LoadViewModel,
     onNavigateToLogs: () -> Unit = {},
     onNavigateBack: () -> Unit = {},
+    onNavigateToPermissions: () -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -90,7 +91,8 @@ fun LoadScreen(
         Button(
             onClick = {
                 if (!hasPermissions) {
-                    viewModel.requestPermissions()
+                    // Переходим на экран разрешений
+                    onNavigateToPermissions()
                 } else if (!isTrackingActive) {
                     viewModel.startTracking()
                 } else {
