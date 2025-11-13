@@ -9,6 +9,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
@@ -36,6 +37,7 @@ import com.shiplocate.presentation.feature.loads.LoadsScreen
 import com.shiplocate.presentation.feature.loads.LoadsViewModel
 import com.shiplocate.presentation.feature.logs.LogsScreen
 import com.shiplocate.presentation.feature.logs.LogsViewModel
+import com.shiplocate.presentation.model.BottomBarState
 import kotlinx.coroutines.launch
 
 /**
@@ -46,12 +48,14 @@ import kotlinx.coroutines.launch
  * 
  * @param paddingValues PaddingValues из Scaffold для передачи в экраны
  * @param onNavControllerReady Callback для передачи navController и currentRoute наружу
+ * @param onBottomBarStateChanged Callback для передачи состояния bottomBar наружу
  */
 @Suppress("FunctionName")
 @Composable
 fun TrackerNavigation(
     paddingValues: PaddingValues,
     onNavControllerReady: (NavController, String?) -> Unit = { _, _ -> },
+    onBottomBarStateChanged: (BottomBarState) -> Unit = {},
 ) {
     val navController = rememberNavController()
     val hasAuthSessionUseCase: HasAuthSessionUseCase = koinInject()
@@ -183,6 +187,25 @@ fun TrackerNavigation(
                 factory = loadsViewModelFactory,
             )
             
+            // Отслеживаем текущую страницу для bottomBar
+            val currentPage by viewModel.currentPage.collectAsStateWithLifecycle()
+            
+            // Передаем состояние bottomBar в MainScreen
+            LaunchedEffect(currentRoute, currentPage) {
+                if (currentRoute == Screen.LOADS) {
+                    onBottomBarStateChanged(
+                        BottomBarState.Loads(
+                            currentPage = currentPage,
+                            onPageSelected = { page ->
+                                viewModel.setCurrentPage(page)
+                            },
+                        ),
+                    )
+                } else {
+                    onBottomBarStateChanged(BottomBarState.None)
+                }
+            }
+            
             // Отслеживаем текущий backStackEntry для обновления данных при возврате
             val currentBackStackEntry by navController.currentBackStackEntryAsState()
             
@@ -210,6 +233,13 @@ fun TrackerNavigation(
                     navArgument("loadId") { type = NavType.LongType },
                 ),
         ) { backStackEntry ->
+            // Скрываем bottomBar при переходе на другие экраны
+            LaunchedEffect(currentRoute) {
+                if (currentRoute != Screen.LOADS) {
+                    onBottomBarStateChanged(BottomBarState.None)
+                }
+            }
+            
             val homeViewModelFactory = viewModelFactory {
                     initializer<HomeViewModel> {
                         koinHomeViewModel()
@@ -231,6 +261,13 @@ fun TrackerNavigation(
 
         // Logs screen
         composable(Screen.LOGS) {
+            // Скрываем bottomBar при переходе на другие экраны
+            LaunchedEffect(currentRoute) {
+                if (currentRoute != Screen.LOADS) {
+                    onBottomBarStateChanged(BottomBarState.None)
+                }
+            }
+            
             val logsViewModelFactory =
                 viewModelFactory {
                     initializer<LogsViewModel> {
