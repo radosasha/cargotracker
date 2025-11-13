@@ -56,7 +56,7 @@ class AndroidPermissionManagerImpl(private val activityContextProvider: Activity
             // Если диалог был заблокирован, это будет обработано в handlePermissionResult()
 
             println("No dialogs blocked, continuing with permission request")
-            continuePermissionRequest()
+//            continuePermissionRequest()
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
@@ -216,7 +216,7 @@ class AndroidPermissionManagerImpl(private val activityContextProvider: Activity
 
                 if (allGranted) {
                     // Основные разрешения получены, продолжаем с фоновым разрешением
-                    continuePermissionRequest()
+//                    continuePermissionRequest()
                 } else {
                     // Пользователь отказал в разрешениях
                     // Проверяем, был ли диалог заблокирован (состояние 4: Don't ask again)
@@ -236,7 +236,7 @@ class AndroidPermissionManagerImpl(private val activityContextProvider: Activity
 
                 if (granted) {
                     // Фоновое разрешение получено, продолжаем с Activity Recognition
-                    continuePermissionRequest()
+//                    continuePermissionRequest()
                 } else {
                     // Пользователь отказал в фоновом разрешении
                     // Проверяем, был ли диалог заблокирован (состояние 4: Don't ask again)
@@ -265,7 +265,7 @@ class AndroidPermissionManagerImpl(private val activityContextProvider: Activity
 
                 if (granted) {
                     // Activity Recognition разрешение получено, продолжаем с уведомлениями
-                    continuePermissionRequest()
+//                    continuePermissionRequest()
                 } else {
                     // Пользователь отказал в Activity Recognition разрешении
                     // Проверяем, был ли диалог заблокирован (состояние 4: Don't ask again)

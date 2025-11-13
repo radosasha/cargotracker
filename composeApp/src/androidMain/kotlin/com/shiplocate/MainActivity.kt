@@ -20,7 +20,7 @@ import org.koin.core.component.inject
 class MainActivity : ComponentActivity(), KoinComponent {
     private val logger: Logger by inject()
     private val notifyPermissionGrantedUseCase: NotifyPermissionGrantedUseCase by inject()
-    
+
     // Coroutine scope для вызова suspend функций
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
@@ -54,6 +54,9 @@ class MainActivity : ComponentActivity(), KoinComponent {
         // Проверяем разрешения при возврате в приложение
         // Это поможет обновить UI если пользователь предоставил разрешения в настройках
         // В реальном приложении здесь можно добавить логику для обновления UI
+        scope.launch {
+            notifyPermissionGrantedUseCase()
+        }
     }
 
     override fun onRequestPermissionsResult(
@@ -70,6 +73,8 @@ class MainActivity : ComponentActivity(), KoinComponent {
                     LogCategory.PERMISSIONS,
                     "Permission result: requestCode=$requestCode, permissions=${permissions.joinToString()}, grantResults=${grantResults.joinToString()}"
                 )
+                val androidPermissionManagerImpl: AndroidPermissionManagerImpl by inject()
+                androidPermissionManagerImpl.handlePermissionResult(requestCode, grantResults)
                 notifyPermissionGrantedUseCase()
             } catch (e: Exception) {
                 logger.error(
