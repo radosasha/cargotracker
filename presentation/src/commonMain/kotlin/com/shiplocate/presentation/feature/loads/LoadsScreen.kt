@@ -1,5 +1,6 @@
 package com.shiplocate.presentation.feature.loads
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -8,8 +9,11 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -18,22 +22,32 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.shiplocate.domain.model.load.Load
 import com.shiplocate.presentation.util.DateFormatter
+import kotlinx.coroutines.launch
+import kotlin.math.min
 
 /**
- * Loads screen displaying list of loads
+ * Loads screen displaying list of loads with Pager and Bottom Navigation
  * Shows loading state, error state, empty state, or list of loads
  */
 @Suppress("FunctionName")
@@ -46,6 +60,10 @@ fun LoadsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
+    
+    // Pager state with 2 pages (Active and Upcoming)
+    val pagerState = rememberPagerState(pageCount = { 2 }, initialPage = 0)
+    val coroutineScope = rememberCoroutineScope()
 
     Box(
         modifier =
@@ -62,13 +80,78 @@ fun LoadsScreen(
                     onRetry = { viewModel.retry() },
                     onRefresh = { viewModel.refresh() },
                 )
-            is LoadsUiState.Success ->
-                LoadsListWithRefresh(
-                    loads = state.loads,
-                    isRefreshing = isRefreshing,
-                    onRefresh = { viewModel.refresh() },
-                    onLoadClick = onLoadClick,
-                )
+            is LoadsUiState.Success -> {
+                Column(modifier = Modifier.fillMaxSize()) {
+                    // Pager with two pages
+                    HorizontalPager(
+                        state = pagerState,
+                        modifier = Modifier.weight(1f),
+                    ) { page ->
+                        when (page) {
+                            0 -> {
+                                // Active loads (loadStatus == 1)
+                                val activeLoads = state.loads.filter { it.loadStatus == 1 }
+                                LoadsListWithRefresh(
+                                    loads = activeLoads,
+                                    isRefreshing = isRefreshing,
+                                    onRefresh = { viewModel.refresh() },
+                                    onLoadClick = onLoadClick,
+                                )
+                            }
+                            1 -> {
+                                // Upcoming loads (loadStatus == 0)
+                                val upcomingLoads = state.loads.filter { it.loadStatus == 0 }
+                                LoadsListWithRefresh(
+                                    loads = upcomingLoads,
+                                    isRefreshing = isRefreshing,
+                                    onRefresh = { viewModel.refresh() },
+                                    onLoadClick = onLoadClick,
+                                )
+                            }
+                        }
+                    }
+                    
+                    // Bottom Navigation Bar
+                    NavigationBar {
+                        NavigationBarItem(
+                            selected = pagerState.currentPage == 0,
+                            onClick = {
+                                coroutineScope.launch {
+                                    pagerState.animateScrollToPage(0)
+                                }
+                            },
+                            icon = {
+                                ActiveIcon(
+                                    color = if (pagerState.currentPage == 0) {
+                                        MaterialTheme.colorScheme.primary
+                                    } else {
+                                        MaterialTheme.colorScheme.onSurfaceVariant
+                                    },
+                                )
+                            },
+                            label = { Text("Active") },
+                        )
+                        NavigationBarItem(
+                            selected = pagerState.currentPage == 1,
+                            onClick = {
+                                coroutineScope.launch {
+                                    pagerState.animateScrollToPage(1)
+                                }
+                            },
+                            icon = {
+                                UpcomingIcon(
+                                    color = if (pagerState.currentPage == 1) {
+                                        MaterialTheme.colorScheme.primary
+                                    } else {
+                                        MaterialTheme.colorScheme.onSurfaceVariant
+                                    },
+                                )
+                            },
+                            label = { Text("Upcoming") },
+                        )
+                    }
+                }
+            }
         }
     }
 }
@@ -366,5 +449,104 @@ private fun getLoadStatusColor(status: Int): Color {
         1 -> Color(0xFF4CAF50) // Green for Connected
         2 -> Color(0xFFFF9800) // Orange for Disconnected
         else -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f) // Gray for Unknown
+    }
+}
+
+/**
+ * Иконка для Active loads (активные/подключенные)
+ * Иконка: круг с галочкой внутри (символ активности/подключения)
+ */
+@Composable
+private fun ActiveIcon(
+    color: Color,
+    modifier: Modifier = Modifier,
+    iconSize: androidx.compose.ui.unit.Dp = 24.dp,
+) {
+    Canvas(modifier = modifier.size(iconSize)) {
+        val centerX = size.width / 2
+        val centerY = size.height / 2
+        val iconSizePx = min(size.width, size.height) * 0.8f
+
+        // Круг
+        drawCircle(
+            color = color,
+            radius = iconSizePx / 2f,
+            center = Offset(centerX, centerY),
+            style = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round),
+        )
+
+        // Галочка
+        val checkPath = Path().apply {
+            moveTo(centerX - iconSizePx * 0.2f, centerY)
+            lineTo(centerX - iconSizePx * 0.05f, centerY + iconSizePx * 0.15f)
+            lineTo(centerX + iconSizePx * 0.2f, centerY - iconSizePx * 0.15f)
+        }
+        drawPath(
+            checkPath,
+            color = color,
+            style = Stroke(width = 2.5.dp.toPx(), cap = StrokeCap.Round),
+        )
+    }
+}
+
+/**
+ * Иконка для Upcoming loads (предстоящие)
+ * Иконка: календарь (символ предстоящих событий)
+ */
+@Composable
+private fun UpcomingIcon(
+    color: Color,
+    modifier: Modifier = Modifier,
+    iconSize: androidx.compose.ui.unit.Dp = 24.dp,
+) {
+    Canvas(modifier = modifier.size(iconSize)) {
+        val centerX = size.width / 2
+        val centerY = size.height / 2
+        val iconSizePx = min(size.width, size.height) * 0.7f
+
+        // Календарь - прямоугольник
+        drawRect(
+            color = color,
+            topLeft = Offset(centerX - iconSizePx * 0.35f, centerY - iconSizePx * 0.3f),
+            size = Size(iconSizePx * 0.7f, iconSizePx * 0.6f),
+            style = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round),
+        )
+
+        // Верхняя часть календаря (заголовок)
+        drawRect(
+            color = color,
+            topLeft = Offset(centerX - iconSizePx * 0.35f, centerY - iconSizePx * 0.3f),
+            size = Size(iconSizePx * 0.7f, iconSizePx * 0.15f),
+        )
+
+        // Кольца для переплета
+        val ringRadius = iconSizePx * 0.08f
+        drawCircle(
+            color = color,
+            radius = ringRadius,
+            center = Offset(centerX - iconSizePx * 0.2f, centerY - iconSizePx * 0.225f),
+        )
+        drawCircle(
+            color = color,
+            radius = ringRadius,
+            center = Offset(centerX + iconSizePx * 0.2f, centerY - iconSizePx * 0.225f),
+        )
+
+        // Линии для дней недели
+        val lineY1 = centerY - iconSizePx * 0.1f
+        val lineY2 = centerY + iconSizePx * 0.1f
+        val lineSpacing = iconSizePx * 0.15f
+
+        // Три горизонтальные линии
+        for (i in 0..2) {
+            val y = lineY1 + i * lineSpacing
+            drawLine(
+                color = color,
+                start = Offset(centerX - iconSizePx * 0.25f, y),
+                end = Offset(centerX + iconSizePx * 0.25f, y),
+                strokeWidth = 1.5.dp.toPx(),
+                cap = StrokeCap.Round,
+            )
+        }
     }
 }
