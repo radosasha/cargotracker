@@ -96,8 +96,21 @@ class LoadViewModel(
             _uiState.value = _uiState.value.copy(isLoading = true)
 
             try {
-                // Step 1: Find load by id
+                // Step 0: Check if there's already an active connected load (different from current)
                 val loads = loadRepository.getCachedLoads()
+                val activeLoad = loads.find { it.loadStatus == 1 && it.id != loadId }
+                
+                if (activeLoad != null) {
+                    logger.warn(LogCategory.UI, "HomeViewModel: There is already an active load: ${activeLoad.loadName} (id: ${activeLoad.id})")
+                    _uiState.value =
+                        _uiState.value.copy(
+                            isLoading = false,
+                            showActiveLoadDialog = true, // Показываем диалог
+                        )
+                    return@launch
+                }
+
+                // Step 1: Find load by id
                 val load = loads.find { it.id == loadId }
 
                 if (load == null) {
@@ -196,6 +209,10 @@ class LoadViewModel(
 
     fun resetNavigateBackAfterStartFlag() {
         _uiState.value = _uiState.value.copy(shouldNavigateBackAfterStart = false)
+    }
+
+    fun dismissActiveLoadDialog() {
+        _uiState.value = _uiState.value.copy(showActiveLoadDialog = false)
     }
 
     fun confirmRejectLoad() {

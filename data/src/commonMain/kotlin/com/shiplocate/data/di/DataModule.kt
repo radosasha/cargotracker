@@ -106,7 +106,7 @@ val dataModule =
             single<AuthApi> {
                 AuthApiImpl(
                     httpClient = get(),
-                    baseUrl = "http://${ServerConfig.BASE_URL}:8082",
+                    baseUrl = "http://${ServerConfig.BASE_URL}",
                 )
             }
 
@@ -114,7 +114,7 @@ val dataModule =
             single<FirebaseTokenApi> {
                 FirebaseTokenApiImpl(
                     httpClient = get(),
-                    baseUrl = "http://${ServerConfig.BASE_URL}:8082",
+                    baseUrl = "http://${ServerConfig.BASE_URL}",
                 )
             }
 
@@ -122,7 +122,7 @@ val dataModule =
             single<LoadApi> {
                 LoadApiImpl(
                     httpClient = get(),
-                    baseUrl = "http://${ServerConfig.BASE_URL}:8082",
+                    baseUrl = "http://${ServerConfig.BASE_URL}",
                     logger = get(),
                 )
             }
@@ -131,7 +131,7 @@ val dataModule =
             single<LogsApi> {
                 LogsApiImpl(
                     httpClient = get(),
-                    baseUrl = "http://${ServerConfig.BASE_URL}:8082",
+                    baseUrl = "http://${ServerConfig.BASE_URL}",
                     filesManager = get(),
                     logger = get(),
                 )

@@ -18,6 +18,7 @@ data class LoadUiState(
     val showRejectLoadDialog: Boolean = false,
     val shouldNavigateBackAfterReject: Boolean = false,
     val shouldNavigateBackAfterStart: Boolean = false,
+    val showActiveLoadDialog: Boolean = false,
 )
 
 /**

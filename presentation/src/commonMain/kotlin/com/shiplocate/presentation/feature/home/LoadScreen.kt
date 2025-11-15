@@ -282,4 +282,28 @@ fun LoadScreen(
             },
         )
     }
+
+    // Диалог о наличии активного груза
+    if (uiState.showActiveLoadDialog) {
+        AlertDialog(
+            onDismissRequest = { viewModel.dismissActiveLoadDialog() },
+            title = {
+                Text(
+                    text = "Active Load Exists",
+                    style = MaterialTheme.typography.titleLarge,
+                )
+            },
+            text = {
+                Text(
+                    text = "Already there is an active load, close it to start a new one.",
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { viewModel.dismissActiveLoadDialog() }) {
+                    Text("OK")
+                }
+            },
+        )
+    }
 }
