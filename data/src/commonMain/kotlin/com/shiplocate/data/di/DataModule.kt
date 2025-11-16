@@ -28,12 +28,11 @@ import com.shiplocate.data.network.api.AuthApi
 import com.shiplocate.data.network.api.AuthApiImpl
 import com.shiplocate.data.network.api.FirebaseTokenApi
 import com.shiplocate.data.network.api.FirebaseTokenApiImpl
-import com.shiplocate.data.network.api.FlespiLocationApi
 import com.shiplocate.data.network.api.LoadApi
 import com.shiplocate.data.network.api.LoadApiImpl
 import com.shiplocate.data.network.api.LogsApi
 import com.shiplocate.data.network.api.LogsApiImpl
-import com.shiplocate.data.network.api.OsmAndLocationApi
+import com.shiplocate.data.network.api.LocationApi
 import com.shiplocate.data.repository.AuthPreferencesRepositoryImpl
 import com.shiplocate.data.repository.AuthRepositoryImpl
 import com.shiplocate.data.repository.DeviceRepositoryImpl
@@ -99,8 +98,13 @@ val dataModule =
             }
 
             // Network API
-            single { OsmAndLocationApi(get(), ServerConfig.OSMAND_SERVER_URL, get()) }
-            single { FlespiLocationApi(get(), ServerConfig.FLESPI_SERVER_URL, get()) }
+            single {
+                LocationApi(
+                    httpClient = get(),
+                    baseUrl = "http://${ServerConfig.BASE_URL}",
+                    logger = get(),
+                )
+            }
 
             // Auth API
             single<AuthApi> {
@@ -139,7 +143,7 @@ val dataModule =
 
             // Data Sources
             single<GpsLocationDataSource> { GpsLocationDataSourceImpl(get()) }
-            single<LocationRemoteDataSource> { LocationRemoteDataSourceImpl(get(), get(), get()) }
+            single<LocationRemoteDataSource> { LocationRemoteDataSourceImpl(get(), get()) }
             single<TrackingDataSource> { TrackingDataSourceImpl(get()) }
             single<PrefsDataSource> { PrefsDataSourceImpl(get()) }
             single<AuthRemoteDataSource> { AuthRemoteDataSource(get(), get()) }
@@ -175,7 +179,7 @@ val dataModule =
                     forceSaveIntervalMs = 30 * 60 * 1000L
                 )
             }
-            single<LocationSyncService> { LocationSyncServiceImpl(get(), get(), get(), get()) }
+            single<LocationSyncService> { LocationSyncServiceImpl(get(), get(), get(), get(), get()) }
 
             // CoroutineScope для LocationSyncService
             factory<CoroutineScope> { CoroutineScope(Dispatchers.Default) }

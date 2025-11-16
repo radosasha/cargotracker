@@ -2,6 +2,7 @@ package com.shiplocate.data.services
 
 import com.shiplocate.core.logging.LogCategory
 import com.shiplocate.core.logging.Logger
+import com.shiplocate.domain.repository.AuthPreferencesRepository
 import com.shiplocate.domain.repository.LoadRepository
 import com.shiplocate.domain.repository.LocationRepository
 import com.shiplocate.domain.service.LocationSyncService
@@ -23,6 +24,7 @@ import kotlinx.coroutines.launch
 class LocationSyncServiceImpl(
     private val locationRepository: LocationRepository,
     private val loadRepository: LoadRepository,
+    private val authPrefsRepository: AuthPreferencesRepository,
     private val coroutineScope: CoroutineScope,
     private val logger: Logger,
 ) : LocationSyncService {
@@ -46,7 +48,6 @@ class LocationSyncServiceImpl(
 
         syncJob = coroutineScope.launch {
             val connectedLoad = loadRepository.getConnectedLoad() ?: throw IllegalStateException("Connected load not found")
-            // Используем loadName только для отправки на сервер (OsmAnd протокол ожидает uniqueId)
             val serverLoadId = connectedLoad.serverId
             while (isActive) {
                 try {
@@ -110,10 +111,17 @@ class LocationSyncServiceImpl(
             val maxBatchSize = 100
             var totalUploaded = 0
 
+            // Получаем токен для аутентификации
+            val authSession = authPrefsRepository.getSession()
+            if (authSession == null) {
+                logger.info(LogCategory.GENERAL, "LocationSyncManager: No auth session found, cannot upload locations")
+                return Result.failure(Exception("No auth session found"))
+            }
+
             if (unsentLocations.size <= maxBatchSize) {
                 // Небольшой список - отправляем целиком
                 val locations = unsentLocations.map { it.second }
-                val result = locationRepository.sendLocations(serverLoadId, locations)
+                val result = locationRepository.sendLocations(authSession.token, serverLoadId, locations)
 
                 if (result.isSuccess) {
                     val allIds = unsentLocations.map { it.first }
@@ -148,7 +156,7 @@ class LocationSyncServiceImpl(
                     )
 
                     val locations = batch.map { it.second }
-                    val result = locationRepository.sendLocations(serverLoadId, locations)
+                    val result = locationRepository.sendLocations(authSession.token, serverLoadId, locations)
 
                     if (result.isSuccess) {
                         val batchIds = batch.map { it.first }

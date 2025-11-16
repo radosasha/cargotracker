@@ -15,25 +15,14 @@ class LocationRepositoryImpl(
     private val remoteLocationDataSource: LocationRemoteDataSource,
     private val localLocationDataSource: LocationLocalDataSource,
 ) : LocationRepository {
-    override suspend fun sendLocation(
-        serverLoadId: Long,
-        location: GpsLocation,
-    ): Result<Unit> {
-        return try {
-            val locationDataModel = LocationMapper.toData(location)
-            remoteLocationDataSource.sendLocation(serverLoadId, locationDataModel)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
     override suspend fun sendLocations(
+        token: String,
         serverLoadId: Long,
         locations: List<DeviceLocation>,
     ): Result<Unit> {
         return try {
             val locationDataModels = locations.map { LocationMapper.deviceLocationToData(it) }
-            remoteLocationDataSource.sendLocations(serverLoadId, locationDataModels)
+            remoteLocationDataSource.sendLocations(token, serverLoadId, locationDataModels)
         } catch (e: Exception) {
             Result.failure(e)
         }

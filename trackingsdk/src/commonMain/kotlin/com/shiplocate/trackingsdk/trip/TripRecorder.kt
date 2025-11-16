@@ -3,6 +3,8 @@ package com.shiplocate.trackingsdk.trip
 import com.shiplocate.core.logging.LogCategory
 import com.shiplocate.core.logging.Logger
 import com.shiplocate.domain.model.GpsLocation
+import com.shiplocate.domain.repository.AuthPreferencesRepository
+import com.shiplocate.domain.repository.AuthRepository
 import com.shiplocate.domain.repository.DeviceRepository
 import com.shiplocate.domain.repository.GpsRepository
 import com.shiplocate.domain.repository.LoadRepository
@@ -24,6 +26,7 @@ class TripRecorder(
     private val locationProcessor: LocationProcessor,
     private val deviceRepository: DeviceRepository,
     private val loadRepository: LoadRepository,
+    private val authPrefsRepository: AuthPreferencesRepository,
     private val logger: Logger,
 ) {
 
@@ -107,32 +110,33 @@ class TripRecorder(
                 val unsentLocations = locationRepository.getUnsentDeviceLocations()
                 logger.debug(LogCategory.LOCATION, "TripRecorder: Found ${unsentLocations.size} unsent locations in DB")
 
-                // Определяем стратегию отправки
-                val uploadResult =
-                    if (unsentLocations.size == 1) {
-                        // Если только одна координата - отправляем через OsmAnd протокол
-                        logger.debug(LogCategory.LOCATION, "TripRecorder: Sending single location via OsmAnd protocol")
-                        locationRepository.sendLocation(serverId, location)
-                    } else {
-                        // Если несколько координат - отправляем все через Flespi протокол
-                        logger.debug(LogCategory.LOCATION, "TripRecorder: Sending ${unsentLocations.size} locations via Flespi protocol")
-                        val locations = unsentLocations.map { it.second }
-                        locationRepository.sendLocations(serverId, locations)
-                    }
+                // Получаем токен для аутентификации
+                val authSession = authPrefsRepository.getSession()
+                if (authSession == null) {
+                    logger.error(LogCategory.LOCATION, "TripRecorder: No auth session found, cannot send coordinates")
+                    return processResult.copy(
+                        shouldSend = false,
+                        reason = "No auth session found",
+                        lastCoordinateLat = location.latitude,
+                        lastCoordinateLon = location.longitude,
+                        lastCoordinateTime = location.timestamp.toEpochMilliseconds(),
+                        coordinateErrorMeters = location.accuracy.toInt(),
+                    )
+                }
+
+                // Отправляем все координаты через мобильный API
+                logger.debug(LogCategory.LOCATION, "TripRecorder: Sending ${unsentLocations.size} locations via mobile API")
+                val locations = unsentLocations.map { it.second }
+                val uploadResult = locationRepository.sendLocations(authSession.token, serverId, locations)
 
                 if (uploadResult.isSuccess) {
                     // Обновляем статистику отправки
                     locationProcessor.updateSentLocations(location, unsentLocations.size)
 
                     // Если отправка успешна - удаляем все отправленные координаты из БД
-                    if (unsentLocations.size == 1) {
-                        locationRepository.deleteLocationFromDb(locationId)
-                        logger.debug(LogCategory.LOCATION, "TripRecorder: Single location uploaded and deleted from DB")
-                    } else {
-                        val ids = unsentLocations.map { it.first }
-                        locationRepository.deleteLocationsFromDb(ids)
-                        logger.debug(LogCategory.LOCATION, "TripRecorder: ${unsentLocations.size} locations uploaded and deleted from DB")
-                    }
+                    val ids = unsentLocations.map { it.first }
+                    locationRepository.deleteLocationsFromDb(ids)
+                    logger.debug(LogCategory.LOCATION, "TripRecorder: ${unsentLocations.size} locations uploaded and deleted from DB")
                     return processResult.copy(
                         reason = "Successfully sent to server and deleted from DB",
                         lastCoordinateLat = location.latitude,

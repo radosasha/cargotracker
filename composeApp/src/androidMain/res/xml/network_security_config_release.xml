@@ -15,6 +15,11 @@
         <domain includeSubdomains="false">44.216.176.38</domain>
     </domain-config>
     
+    <!-- Разрешить HTTP для api.shiplocate.com -->
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">api.shiplocate.com</domain>
+    </domain-config>
+    
     <!-- 
         Если у вас есть другие production серверы, добавьте их здесь:
         <domain-config cleartextTrafficPermitted="true">

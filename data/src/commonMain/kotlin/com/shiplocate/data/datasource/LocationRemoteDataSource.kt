@@ -7,17 +7,13 @@ import com.shiplocate.data.model.LocationDataModel
  */
 interface LocationRemoteDataSource {
     /**
-     * Отправляет одну GPS координату на сервер
-     */
-    suspend fun sendLocation(
-        serverLoadId: Long,
-        location: LocationDataModel,
-    ): Result<Unit>
-
-    /**
      * Отправляет GPS координаты на сервер
+     * @param token Bearer token для аутентификации
+     * @param serverLoadId ID груза на сервере
+     * @param locations список координат для отправки
      */
     suspend fun sendLocations(
+        token: String,
         serverLoadId: Long,
         locations: List<LocationDataModel>,
     ): Result<Unit>

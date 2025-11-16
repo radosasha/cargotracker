@@ -29,6 +29,7 @@ actual val trackingSDKModule: Module = module {
             locationProcessor = get(),
             deviceRepository = get(),
             loadRepository = get(),
+            authPrefsRepository = get(),
             logger = get()
         )
     }

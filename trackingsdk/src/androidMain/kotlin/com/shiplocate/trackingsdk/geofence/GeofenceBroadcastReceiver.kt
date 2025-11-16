@@ -59,23 +59,23 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
                 }
             }
             Geofence.GEOFENCE_TRANSITION_EXIT -> {
-                logger.info(LogCategory.LOCATION, "GeofenceBroadcastReceiver: Exited geofence")
-                geofencingEvent.triggeringGeofences?.forEach { geofence ->
-                    val stopId = geofence.requestId.toLongOrNull()
-                    if (stopId != null) {
-                        // TODO: Получить stopType из кеша или передать через Intent
-                        // Пока используем дефолтное значение
-                        val stopType = 0
-                        scope.launch {
-                            GeofenceEventBus.flow.emit(
-                                GeofenceEvent.Exited(
-                                    stopId = stopId,
-                                    stopType = stopType,
-                                ),
-                            )
-                        }
-                    }
-                }
+//                logger.info(LogCategory.LOCATION, "GeofenceBroadcastReceiver: Exited geofence")
+//                geofencingEvent.triggeringGeofences?.forEach { geofence ->
+//                    val stopId = geofence.requestId.toLongOrNull()
+//                    if (stopId != null) {
+//                        // TODO: Получить stopType из кеша или передать через Intent
+//                        // Пока используем дефолтное значение
+//                        val stopType = 0
+//                        scope.launch {
+//                            GeofenceEventBus.flow.emit(
+//                                GeofenceEvent.Exited(
+//                                    stopId = stopId,
+//                                    stopType = stopType,
+//                                ),
+//                            )
+//                        }
+//                    }
+//                }
             }
             else -> {
                 logger.warn(

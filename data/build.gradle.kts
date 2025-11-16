@@ -33,7 +33,7 @@ kotlin {
             implementation(libs.datastore)
             implementation(libs.datastore.preferences)
 
-            // Ktor API (needed for FlespiLocationApi and OsmAndLocationApi)
+            // Ktor API (needed for LocationApi)
             // core:network provides only HttpClientProvider, not Ktor API
             implementation(libs.ktor.client.core)
             implementation(libs.ktor.client.content.negotiation)

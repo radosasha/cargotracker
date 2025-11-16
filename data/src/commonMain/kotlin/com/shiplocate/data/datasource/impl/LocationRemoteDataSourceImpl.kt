@@ -4,28 +4,18 @@ import com.shiplocate.core.logging.LogCategory
 import com.shiplocate.core.logging.Logger
 import com.shiplocate.data.datasource.LocationRemoteDataSource
 import com.shiplocate.data.model.LocationDataModel
-import com.shiplocate.data.network.api.FlespiLocationApi
-import com.shiplocate.data.network.api.OsmAndLocationApi
+import com.shiplocate.data.network.api.LocationApi
 
 /**
  * Remote реализация LocationRemoteDataSource
- * Использует OsmAnd протокол для одиночных координат и Flespi протокол для пакетной отправки
+ * Использует мобильный API для отправки координат
  */
 class LocationRemoteDataSourceImpl(
-    private val osmAndLocationApi: OsmAndLocationApi,
-    private val flespiLocationApi: FlespiLocationApi,
+    private val locationApi: LocationApi,
     private val logger: Logger,
 ) : LocationRemoteDataSource {
-    override suspend fun sendLocation(
-        serverLoadId: Long,
-        location: LocationDataModel,
-    ): Result<Unit> {
-        logger.debug(LogCategory.NETWORK, "RemoteLocationDataSource: Sending single location to server")
-        logger.debug(LogCategory.NETWORK, "RemoteLocationDataSource: Lat: ${location.latitude}, Lon: ${location.longitude}")
-        return osmAndLocationApi.sendLocation(serverLoadId, location)
-    }
-
     override suspend fun sendLocations(
+        token: String,
         serverLoadId: Long,
         locations: List<LocationDataModel>,
     ): Result<Unit> {
@@ -36,14 +26,13 @@ class LocationRemoteDataSourceImpl(
                 return Result.success(Unit)
             }
 
-            // Используем Flespi протокол для пакетной отправки
-            logger.debug(LogCategory.NETWORK, "RemoteLocationDataSource: Using Flespi protocol for batch sending")
-            val result = flespiLocationApi.sendLocations(serverLoadId, locations)
+            logger.debug(LogCategory.NETWORK, "RemoteLocationDataSource: Using mobile API for batch sending")
+            val result = locationApi.sendCoordinates(token, serverLoadId, locations)
 
             if (result.isSuccess) {
-                logger.debug(LogCategory.NETWORK, "RemoteLocationDataSource: ✅ Successfully sent ${locations.size} locations via Flespi protocol")
+                logger.debug(LogCategory.NETWORK, "RemoteLocationDataSource: ✅ Successfully sent ${locations.size} locations via mobile API")
             } else {
-                logger.debug(LogCategory.NETWORK, "RemoteLocationDataSource: ❌ Failed to send locations via Flespi protocol: ${result.exceptionOrNull()?.message}")
+                logger.debug(LogCategory.NETWORK, "RemoteLocationDataSource: ❌ Failed to send locations via mobile API: ${result.exceptionOrNull()?.message}")
             }
             result
         } catch (e: Exception) {

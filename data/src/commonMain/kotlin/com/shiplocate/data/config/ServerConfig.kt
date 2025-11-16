@@ -6,15 +6,8 @@ package com.shiplocate.data.config
 object ServerConfig {
     // Базовый URL сервера (без http://)
 //    const val BASE_URL = "demo.traccar.org"
-//    const val BASE_URL = "192.168.31.74"
-//    const val BASE_URL = "44.216.176.38"
+//    const val BASE_URL = "192.168.31.74:8082"
     const val BASE_URL = "api.shiplocate.com"
-
-    // URL для OsmAnd протокола (порт 5055)
-    const val OSMAND_SERVER_URL = "http://$BASE_URL"
-
-    // URL для Flespi протокола (порт 5149)
-    const val FLESPI_SERVER_URL = "http://$BASE_URL"
 
     // Таймауты для HTTP запросов
     const val CONNECT_TIMEOUT_MS = 10_000L
