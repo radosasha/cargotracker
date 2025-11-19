@@ -9,8 +9,11 @@ import com.shiplocate.domain.usecase.GetTrackingStatusUseCase
 import com.shiplocate.domain.usecase.RequestNotificationPermissionUseCase
 import com.shiplocate.domain.usecase.SendCachedTokenOnAuthUseCase
 import com.shiplocate.domain.usecase.StartTrackingUseCase
+import com.shiplocate.domain.usecase.StopTrackingUseCase
+import com.shiplocate.domain.usecase.load.DisconnectFromLoadUseCase
 import com.shiplocate.domain.usecase.load.GetCachedLoadsUseCase
 import com.shiplocate.domain.usecase.load.GetLoadsUseCase
+import com.shiplocate.domain.usecase.load.RejectLoadUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -28,6 +31,9 @@ class LoadsViewModel(
     private val getCachedLoadsUseCase: GetCachedLoadsUseCase,
     private val getTrackingStatusUseCase: GetTrackingStatusUseCase,
     private val startTrackingUseCase: StartTrackingUseCase,
+    private val stopTrackingUseCase: StopTrackingUseCase,
+    private val disconnectFromLoadUseCase: DisconnectFromLoadUseCase,
+    private val rejectLoadUseCase: RejectLoadUseCase,
     private val requestNotificationPermissionUseCase: RequestNotificationPermissionUseCase,
     private val sendCachedTokenOnAuthUseCase: SendCachedTokenOnAuthUseCase,
     private val logger: Logger,
@@ -43,6 +49,15 @@ class LoadsViewModel(
 
     private val _showRejectSuccessDialog = MutableStateFlow(false)
     val showRejectSuccessDialog: StateFlow<Boolean> = _showRejectSuccessDialog.asStateFlow()
+
+    private val _showLoadDeliveredDialog = MutableStateFlow(false)
+    val showLoadDeliveredDialog: StateFlow<Boolean> = _showLoadDeliveredDialog.asStateFlow()
+
+    private val _showRejectLoadDialog = MutableStateFlow(false)
+    val showRejectLoadDialog: StateFlow<Boolean> = _showRejectLoadDialog.asStateFlow()
+
+    private val _isLoadingAction = MutableStateFlow(false)
+    val isLoadingAction: StateFlow<Boolean> = _isLoadingAction.asStateFlow()
 
     /**
      * Set current page for pager
@@ -149,8 +164,15 @@ class LoadsViewModel(
                     // Сортируем список по дате создания (createdAt) - новые сверху
                     val sortedLoads = loads.sortedByDescending { it.createdAt }
 
+                    // Разделяем на Active (loadStatus == 1) и Upcoming (loadStatus == 0)
+                    val activeLoad = sortedLoads.firstOrNull { it.loadStatus == 1 }
+                    val upcomingLoads = sortedLoads.filter { it.loadStatus == 0 }
+
                     _isRefreshing.value = false
-                    _uiState.value = LoadsUiState.Success(sortedLoads)
+                    _uiState.value = LoadsUiState.Success(
+                        activeLoad = activeLoad,
+                        upcomingLoads = upcomingLoads,
+                    )
                 },
                 onFailure = { error ->
                     logger.error(LogCategory.UI, "LoadsViewModel: Failed to load loads: ${error.message}")
@@ -198,7 +220,14 @@ class LoadsViewModel(
                 val sortedCachedLoads = cachedLoads.sortedByDescending { it.createdAt }
                 logger.debug(LogCategory.UI, "LoadsViewModel: Sorted ${sortedCachedLoads.size} cached loads by createdAt (newest first)")
 
-                _uiState.value = LoadsUiState.Success(sortedCachedLoads)
+                // Разделяем на Active (loadStatus == 1) и Upcoming (loadStatus == 0)
+                val activeLoad = sortedCachedLoads.firstOrNull { it.loadStatus == 1 }
+                val upcomingLoads = sortedCachedLoads.filter { it.loadStatus == 0 }
+
+                _uiState.value = LoadsUiState.Success(
+                    activeLoad = activeLoad,
+                    upcomingLoads = upcomingLoads,
+                )
             } catch (e: Exception) {
                 logger.error(LogCategory.UI, "LoadsViewModel: Failed to load from cache: ${e.message}")
                 _uiState.value =
@@ -252,6 +281,118 @@ class LoadsViewModel(
             }
         }
     }
+
+    /**
+     * Show load delivered dialog
+     */
+    fun showLoadDeliveredDialog() {
+        _showLoadDeliveredDialog.value = true
+    }
+
+    /**
+     * Dismiss load delivered dialog
+     */
+    fun dismissLoadDeliveredDialog() {
+        _showLoadDeliveredDialog.value = false
+    }
+
+    /**
+     * Show reject load dialog
+     */
+    fun showRejectLoadDialog() {
+        _showRejectLoadDialog.value = true
+    }
+
+    /**
+     * Dismiss reject load dialog
+     */
+    fun dismissRejectLoadDialog() {
+        _showRejectLoadDialog.value = false
+    }
+
+    /**
+     * Confirm load delivered
+     */
+    fun confirmLoadDelivered(loadId: Long) {
+        viewModelScope.launch {
+            _showLoadDeliveredDialog.value = false
+            _isLoadingAction.value = true
+
+            try {
+                logger.info(LogCategory.UI, "LoadsViewModel: Marking load as delivered (id: $loadId)")
+
+                // Step 1: Disconnect from load (marks as delivered)
+                val disconnectResult =
+                    withContext(Dispatchers.Default) {
+                        disconnectFromLoadUseCase(loadId)
+                    }
+                if (disconnectResult.isFailure) {
+                    logger.error(
+                        LogCategory.UI,
+                        "LoadsViewModel: Failed to mark load as delivered: ${disconnectResult.exceptionOrNull()?.message}",
+                    )
+                    _isLoadingAction.value = false
+                    // Обновляем список loads после ошибки
+                    fetchLoadsFromCache()
+                    return@launch
+                }
+
+                logger.info(LogCategory.UI, "LoadsViewModel: Successfully marked load as delivered")
+
+                // Step 2: Stop tracking
+                val result = stopTrackingUseCase()
+                if (result.isFailure) {
+                    logger.error(LogCategory.UI, "LoadsViewModel: Failed to stop tracking: ${result.exceptionOrNull()?.message}")
+                } else {
+                    logger.info(LogCategory.UI, "LoadsViewModel: Successfully stopped tracking after marking load as delivered")
+                }
+
+                // Обновляем список loads
+                fetchLoadsFromCache()
+            } catch (e: Exception) {
+                logger.error(LogCategory.UI, "LoadsViewModel: Exception during mark load as delivered: ${e.message}")
+            } finally {
+                _isLoadingAction.value = false
+            }
+        }
+    }
+
+    /**
+     * Confirm reject load
+     */
+    fun confirmRejectLoad(loadId: Long) {
+        viewModelScope.launch {
+            _showRejectLoadDialog.value = false
+            _isLoadingAction.value = true
+
+            try {
+                logger.info(LogCategory.UI, "LoadsViewModel: Rejecting load (id: $loadId)")
+
+                // Reject load
+                val result =
+                    withContext(Dispatchers.Default) {
+                        rejectLoadUseCase(loadId)
+                    }
+
+                if (result.isSuccess) {
+                    logger.info(LogCategory.UI, "LoadsViewModel: Successfully rejected load")
+                    // Обновляем список loads
+                    fetchLoadsFromCache()
+                } else {
+                    logger.error(
+                        LogCategory.UI,
+                        "LoadsViewModel: Failed to reject load: ${result.exceptionOrNull()?.message}",
+                    )
+                    // Обновляем список loads даже при ошибке
+                    fetchLoadsFromCache()
+                }
+            } catch (e: Exception) {
+                logger.error(LogCategory.UI, "LoadsViewModel: Exception during reject load: ${e.message}")
+            } finally {
+                _isLoadingAction.value = false
+            }
+        }
+    }
 }
 
 /**
@@ -260,7 +401,10 @@ class LoadsViewModel(
 sealed class LoadsUiState {
     data object Loading : LoadsUiState()
 
-    data class Success(val loads: List<Load>) : LoadsUiState()
+    data class Success(
+        val activeLoad: Load? = null, // Один Load для первой вкладки (Active)
+        val upcomingLoads: List<Load> = emptyList(), // Список Load для второй вкладки (Upcoming)
+    ) : LoadsUiState()
 
     data class Error(val message: String) : LoadsUiState()
 }

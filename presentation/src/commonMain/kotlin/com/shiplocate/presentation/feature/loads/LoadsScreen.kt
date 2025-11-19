@@ -5,9 +5,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
@@ -27,7 +30,6 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -36,6 +38,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.shiplocate.domain.model.load.Load
+import com.shiplocate.presentation.component.StopsTimeline
 import com.shiplocate.presentation.util.DateFormatter
 
 /**
@@ -54,10 +57,12 @@ fun LoadsScreen(
     val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
     val currentPage by viewModel.currentPage.collectAsStateWithLifecycle()
     val showRejectSuccessDialog by viewModel.showRejectSuccessDialog.collectAsStateWithLifecycle()
+    val showLoadDeliveredDialog by viewModel.showLoadDeliveredDialog.collectAsStateWithLifecycle()
+    val showRejectLoadDialog by viewModel.showRejectLoadDialog.collectAsStateWithLifecycle()
+    val isLoadingAction by viewModel.isLoadingAction.collectAsStateWithLifecycle()
     
     // Pager state with 2 pages (Active and Upcoming)
     val pagerState = rememberPagerState(pageCount = { 2 }, initialPage = currentPage)
-    val coroutineScope = rememberCoroutineScope()
 
     // Sync pagerState with ViewModel
     LaunchedEffect(pagerState.currentPage) {
@@ -95,21 +100,33 @@ fun LoadsScreen(
                     modifier = Modifier.fillMaxSize(),
                 ) { page ->
                     when (page) {
-                        0 -> {
-                            // Active loads (loadStatus == 1)
-                            val activeLoads = state.loads.filter { it.loadStatus == 1 }
-                            LoadsListWithRefresh(
-                                loads = activeLoads,
-                                isRefreshing = isRefreshing,
-                                onRefresh = { viewModel.refresh() },
-                                onLoadClick = onLoadClick,
-                            )
+                         0 -> {
+                            // Active load (один Load из UiState)
+                            if (state.activeLoad != null) {
+                                // Показываем один Load из UiState без Card
+                                ActiveLoadListWithRefresh(
+                                    load = state.activeLoad,
+                                    isRefreshing = isRefreshing,
+                                    isLoadingAction = isLoadingAction,
+                                    onRefresh = { viewModel.refresh() },
+                                    onLoadClick = onLoadClick,
+                                    onConfirmLoadDelivered = { viewModel.showLoadDeliveredDialog() },
+                                    onRejectLoad = { viewModel.showRejectLoadDialog() },
+                                )
+                            } else {
+                                // Показываем пустое состояние
+                                LoadsListWithRefresh(
+                                    loads = emptyList(),
+                                    isRefreshing = isRefreshing,
+                                    onRefresh = { viewModel.refresh() },
+                                    onLoadClick = onLoadClick,
+                                )
+                            }
                         }
                         1 -> {
-                            // Upcoming loads (loadStatus == 0)
-                            val upcomingLoads = state.loads.filter { it.loadStatus == 0 }
+                            // Upcoming loads (список Load из UiState) - в Card
                             LoadsListWithRefresh(
-                                loads = upcomingLoads,
+                                loads = state.upcomingLoads,
                                 isRefreshing = isRefreshing,
                                 onRefresh = { viewModel.refresh() },
                                 onLoadClick = onLoadClick,
@@ -140,6 +157,77 @@ fun LoadsScreen(
             confirmButton = {
                 TextButton(onClick = { viewModel.dismissRejectSuccessDialog() }) {
                     Text("OK")
+                }
+            },
+        )
+    }
+
+    // Диалог подтверждения "Load delivered"
+    val activeLoadForDialog = (uiState as? LoadsUiState.Success)?.activeLoad
+    if (showLoadDeliveredDialog && activeLoadForDialog != null) {
+        AlertDialog(
+            onDismissRequest = { viewModel.dismissLoadDeliveredDialog() },
+            title = {
+                Text(
+                    text = "Confirm Load Delivery",
+                    style = MaterialTheme.typography.titleLarge,
+                )
+            },
+            text = {
+                Text(
+                    text = "Are you sure you want to mark this load as delivered? This will stop tracking and disconnect from the load.",
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = { viewModel.confirmLoadDelivered(activeLoadForDialog.id) },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error,
+                        contentColor = MaterialTheme.colorScheme.onError,
+                    ),
+                ) {
+                    Text("Confirm")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.dismissLoadDeliveredDialog() }) {
+                    Text("Cancel")
+                }
+            },
+        )
+    }
+
+    // Диалог подтверждения "Reject load"
+    if (showRejectLoadDialog && activeLoadForDialog != null) {
+        AlertDialog(
+            onDismissRequest = { viewModel.dismissRejectLoadDialog() },
+            title = {
+                Text(
+                    text = "Confirm Load Rejection",
+                    style = MaterialTheme.typography.titleLarge,
+                )
+            },
+            text = {
+                Text(
+                    text = "Are you sure you want to reject this load? This action cannot be undone.",
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = { viewModel.confirmRejectLoad(activeLoadForDialog.id) },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error,
+                        contentColor = MaterialTheme.colorScheme.onError,
+                    ),
+                ) {
+                    Text("Confirm")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.dismissRejectLoadDialog() }) {
+                    Text("Cancel")
                 }
             },
         )
@@ -411,6 +499,204 @@ private fun LoadItem(
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurface,
                 )
+            }
+
+        }
+    }
+}
+
+@Suppress("FunctionName")
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ActiveLoadListWithRefresh(
+    load: Load,
+    isRefreshing: Boolean,
+    isLoadingAction: Boolean,
+    onRefresh: () -> Unit,
+    onLoadClick: (Long) -> Unit,
+    onConfirmLoadDelivered: () -> Unit,
+    onRejectLoad: () -> Unit,
+) {
+    PullToRefreshBox(
+        isRefreshing = isRefreshing,
+        onRefresh = onRefresh,
+        modifier = Modifier.fillMaxSize(),
+    ) {
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            item {
+                ActiveLoadItem(
+                    load = load,
+                    isLoadingAction = isLoadingAction,
+                    onClick = { onLoadClick(load.id) },
+                    onConfirmLoadDelivered = onConfirmLoadDelivered,
+                    onRejectLoad = onRejectLoad,
+                )
+            }
+        }
+    }
+}
+
+@Suppress("FunctionName")
+@Composable
+private fun ActiveLoadItem(
+    load: Load,
+    isLoadingAction: Boolean,
+    onClick: () -> Unit,
+    onConfirmLoadDelivered: () -> Unit,
+    onRejectLoad: () -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        // Load ID
+        Row(
+            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text(
+                text = "Load ID:",
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+            )
+            Text(
+                text = load.loadName,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary,
+            )
+        }
+
+        // Description
+        load.description?.let { description ->
+            if (description.isNotBlank()) {
+                Row(
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(
+                        text = "Description:",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                    )
+                    Text(
+                        text = description,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                }
+            }
+        }
+
+        // Load Status
+        Row(
+            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text(
+                text = "Status:",
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+            )
+            Text(
+                text = formatLoadStatus(load.loadStatus),
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = getLoadStatusColor(load.loadStatus),
+            )
+        }
+
+        // Last Updated
+        load.lastUpdated?.let { lastUpdated ->
+            Row(
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(
+                    text = "Last Updated:",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                )
+                Text(
+                    text = DateFormatter.formatTimestamp(lastUpdated),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+            }
+        }
+
+        // Created At
+        Row(
+            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text(
+                text = "Created:",
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+            )
+            Text(
+                text = DateFormatter.formatTimestamp(load.createdAt),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+        }
+
+        // Stops Timeline (если есть stops)
+        if (load.stops.isNotEmpty()) {
+            Spacer(modifier = Modifier.height(16.dp))
+            StopsTimeline(stops = load.stops)
+        }
+
+        // Кнопки действий
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            // Кнопка "Confirm Load Delivery"
+            Button(
+                onClick = onConfirmLoadDelivered,
+                enabled = !isLoadingAction,
+                modifier = Modifier.weight(1f),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.error,
+                    contentColor = MaterialTheme.colorScheme.onError,
+                ),
+            ) {
+                if (isLoadingAction) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        color = MaterialTheme.colorScheme.onError,
+                    )
+                } else {
+                    Text("Confirm Delivery")
+                }
+            }
+
+            // Кнопка "Reject"
+            Button(
+                onClick = onRejectLoad,
+                enabled = !isLoadingAction,
+                modifier = Modifier.weight(1f),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.error,
+                    contentColor = MaterialTheme.colorScheme.onError,
+                ),
+            ) {
+                Text("Reject")
             }
         }
     }
