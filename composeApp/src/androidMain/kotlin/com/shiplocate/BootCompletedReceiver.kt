@@ -6,6 +6,7 @@ import android.content.Intent
 import android.os.PowerManager
 import com.shiplocate.core.logging.LogCategory
 import com.shiplocate.core.logging.Logger
+import com.shiplocate.domain.usecase.GetPermissionStatusUseCase
 import com.shiplocate.domain.usecase.StartTrackingUseCase
 import com.shiplocate.domain.usecase.auth.HasAuthSessionUseCase
 import com.shiplocate.domain.usecase.load.GetConnectedLoadUseCase
@@ -24,6 +25,7 @@ class BootCompletedReceiver : BroadcastReceiver(), KoinComponent {
     private val hasAuthSessionUseCase: HasAuthSessionUseCase by inject()
     private val getConnectedLoadUseCase: GetConnectedLoadUseCase by inject()
     private val startTrackingUseCase: StartTrackingUseCase by inject()
+    private val getPermissionStatusUseCase: GetPermissionStatusUseCase by inject()
 
     override fun onReceive(context: Context, intent: Intent) {
         // Логируем в самое начало для отладки
@@ -46,6 +48,11 @@ class BootCompletedReceiver : BroadcastReceiver(), KoinComponent {
 
             scope.launch {
                 try {
+                    // 0. проверяем минимальный набор пермишенов чтобы стартовать трекинг
+                    if(!getPermissionStatusUseCase().hasAllPermissionsForTracking){
+                        logger.info(LogCategory.LOCATION, "BootCompletedReceiver: Not all permissions granted, skipping tracking restart")
+                        return@launch
+                    }
                     // 1. Проверяем авторизацию
                     val isAuthenticated = hasAuthSessionUseCase()
                     if (!isAuthenticated) {
