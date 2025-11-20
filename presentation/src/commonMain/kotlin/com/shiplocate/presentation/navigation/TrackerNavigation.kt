@@ -239,6 +239,9 @@ fun TrackerNavigation(
                 onLoadClick = { loadId ->
                     navController.navigate(Screen.home(loadId))
                 },
+                onNavigateToPermissions = {
+                    navController.navigate(Screen.PERMISSIONS)
+                },
             )
         }
 

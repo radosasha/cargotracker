@@ -7,6 +7,7 @@ import com.shiplocate.core.logging.Logger
 import com.shiplocate.domain.model.load.LoadStatus
 import com.shiplocate.domain.usecase.GetPermissionStatusUseCase
 import com.shiplocate.domain.usecase.GetTrackingStatusUseCase
+import com.shiplocate.domain.usecase.ObservePermissionsUseCase
 import com.shiplocate.domain.usecase.RequestNotificationPermissionUseCase
 import com.shiplocate.domain.usecase.SendCachedTokenOnAuthUseCase
 import com.shiplocate.domain.usecase.StartTrackingUseCase
@@ -22,6 +23,8 @@ import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -36,6 +39,7 @@ class LoadsViewModel(
     private val startTrackingUseCase: StartTrackingUseCase,
     private val stopTrackingUseCase: StopTrackingUseCase,
     private val permissionStatusUseCase: GetPermissionStatusUseCase,
+    private val observePermissionsUseCase: ObservePermissionsUseCase,
     private val disconnectFromLoadUseCase: DisconnectFromLoadUseCase,
     private val rejectLoadUseCase: RejectLoadUseCase,
     private val requestNotificationPermissionUseCase: RequestNotificationPermissionUseCase,
@@ -62,6 +66,29 @@ class LoadsViewModel(
 
     private val _isLoadingAction = MutableStateFlow(false)
     val isLoadingAction: StateFlow<Boolean> = _isLoadingAction.asStateFlow()
+
+    init {
+        // Подписываемся на изменения разрешений из Flow
+        observePermissionsUseCase()
+            .onEach { status ->
+                logger.debug(LogCategory.PERMISSIONS, "LoadsViewModel: Received permission status update from Flow")
+                updatePermissionsWarning(status)
+            }
+            .launchIn(viewModelScope)
+    }
+
+    private fun updatePermissionsWarning(permissionStatus: com.shiplocate.domain.model.PermissionStatus) {
+        val currentState = _uiState.value
+        if (currentState is LoadsUiState.Success) {
+            val activeLoad = currentState.activeLoad
+            // Показываем красное окно, если:
+            // 1. Есть активный Load
+            // 2. Не все разрешения для трекинга получены
+            val showWarning = activeLoad != null && !permissionStatus.hasAllPermissionsForTracking
+            
+            _uiState.value = currentState.copy(showPermissionsWarning = showWarning)
+        }
+    }
 
     /**
      * Set current page for pager
@@ -182,10 +209,18 @@ class LoadsViewModel(
                     val activeLoad = sortedLoads.firstOrNull { it.loadStatus == LoadStatus.LOAD_STATUS_CONNECTED }
                     val upcomingLoads = sortedLoads.filter { it.loadStatus == LoadStatus.LOAD_STATUS_NOT_CONNECTED }
 
+                    // Получаем текущий статус разрешений для расчета showPermissionsWarning
+                    val permissionStatus = withContext(Dispatchers.Default) {
+                        permissionStatusUseCase()
+                    }
+                    val activeLoadUi = activeLoad?.toUiModel()
+                    val showWarning = activeLoadUi != null && !permissionStatus.hasAllPermissionsForTracking
+
                     _isRefreshing.value = false
                     _uiState.value = LoadsUiState.Success(
-                        activeLoad = activeLoad?.toUiModel(),
+                        activeLoad = activeLoadUi,
                         upcomingLoads = upcomingLoads.map { it.toUiModel() },
+                        showPermissionsWarning = showWarning,
                     )
                 },
                 onFailure = { error ->
@@ -238,9 +273,27 @@ class LoadsViewModel(
                 val activeLoad = sortedCachedLoads.firstOrNull { it.loadStatus == LoadStatus.LOAD_STATUS_CONNECTED }
                 val upcomingLoads = sortedCachedLoads.filter { it.loadStatus == LoadStatus.LOAD_STATUS_NOT_CONNECTED }
 
+                // Получаем текущий статус разрешений для расчета showPermissionsWarning
+                val permissionStatus = try {
+                    withContext(Dispatchers.Default) {
+                        permissionStatusUseCase()
+                    }
+                } catch (e: Exception) {
+                    logger.error(LogCategory.PERMISSIONS, "LoadsViewModel: Error getting permission status: ${e.message}")
+                    com.shiplocate.domain.model.PermissionStatus(
+                        hasLocationPermission = false,
+                        hasBackgroundLocationPermission = false,
+                        isBatteryOptimizationDisabled = false,
+                        hasNotificationPermission = false,
+                    )
+                }
+                val activeLoadUi = activeLoad?.toUiModel()
+                val showWarning = activeLoadUi != null && !permissionStatus.hasAllPermissionsForTracking
+
                 _uiState.value = LoadsUiState.Success(
-                    activeLoad = activeLoad?.toUiModel(),
+                    activeLoad = activeLoadUi,
                     upcomingLoads = upcomingLoads.map { it.toUiModel() },
+                    showPermissionsWarning = showWarning,
                 )
             } catch (e: Exception) {
                 logger.error(LogCategory.UI, "LoadsViewModel: Failed to load from cache: ${e.message}")
@@ -418,6 +471,7 @@ sealed class LoadsUiState {
     data class Success(
         val activeLoad: LoadUiModel? = null, // Один Load для первой вкладки (Active)
         val upcomingLoads: List<LoadUiModel> = emptyList(), // Список Load для второй вкладки (Upcoming)
+        val showPermissionsWarning: Boolean = false, // Показывать красное окно с предупреждением о разрешениях
     ) : LoadsUiState()
 
     data class Error(val message: String) : LoadsUiState()

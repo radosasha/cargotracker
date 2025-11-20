@@ -1,5 +1,6 @@
 package com.shiplocate.presentation.feature.loads
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -52,6 +53,7 @@ fun LoadsScreen(
     paddingValues: PaddingValues,
     viewModel: LoadsViewModel,
     onLoadClick: (Long) -> Unit,
+    onNavigateToPermissions: () -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
@@ -94,43 +96,57 @@ fun LoadsScreen(
                     onRefresh = { viewModel.refresh() },
                 )
             is LoadsUiState.Success -> {
-                // Pager with two pages
-                HorizontalPager(
-                    state = pagerState,
-                    modifier = Modifier.fillMaxSize(),
-                ) { page ->
-                    when (page) {
-                         0 -> {
-                            // Active load (один Load из UiState)
-                            if (state.activeLoad != null) {
-                                // Показываем один Load из UiState без Card
-                                ActiveLoadListWithRefresh(
-                                    load = state.activeLoad,
-                                    isRefreshing = isRefreshing,
-                                    isLoadingAction = isLoadingAction,
-                                    onRefresh = { viewModel.refresh() },
-                                    onLoadClick = onLoadClick,
-                                    onConfirmLoadDelivered = { viewModel.showLoadDeliveredDialog() },
-                                )
-                            } else {
-                                // Показываем пустое состояние
+                Box(modifier = Modifier.fillMaxSize()) {
+                    // Pager with two pages
+                    HorizontalPager(
+                        state = pagerState,
+                        modifier = Modifier.fillMaxSize(),
+                    ) { page ->
+                        when (page) {
+                             0 -> {
+                                // Active load (один Load из UiState)
+                                if (state.activeLoad != null) {
+                                    // Показываем один Load из UiState без Card
+                                    ActiveLoadListWithRefresh(
+                                        load = state.activeLoad,
+                                        isRefreshing = isRefreshing,
+                                        isLoadingAction = isLoadingAction,
+                                        onRefresh = { viewModel.refresh() },
+                                        onLoadClick = onLoadClick,
+                                        onConfirmLoadDelivered = { viewModel.showLoadDeliveredDialog() },
+                                    )
+                                } else {
+                                    // Показываем пустое состояние
+                                    LoadsListWithRefresh(
+                                        loads = emptyList(),
+                                        isRefreshing = isRefreshing,
+                                        onRefresh = { viewModel.refresh() },
+                                        onLoadClick = onLoadClick,
+                                    )
+                                }
+                            }
+                            1 -> {
+                                // Upcoming loads (список Load из UiState) - в Card
                                 LoadsListWithRefresh(
-                                    loads = emptyList(),
+                                    loads = state.upcomingLoads,
                                     isRefreshing = isRefreshing,
                                     onRefresh = { viewModel.refresh() },
                                     onLoadClick = onLoadClick,
                                 )
                             }
                         }
-                        1 -> {
-                            // Upcoming loads (список Load из UiState) - в Card
-                            LoadsListWithRefresh(
-                                loads = state.upcomingLoads,
-                                isRefreshing = isRefreshing,
-                                onRefresh = { viewModel.refresh() },
-                                onLoadClick = onLoadClick,
-                            )
-                        }
+                    }
+                    
+                    // Красное окно снизу с предупреждением о разрешениях
+                    // Показывается только на вкладке Active (page 0) когда есть activeLoad и не все разрешения получены
+                    if (currentPage == 0 && state.showPermissionsWarning && state.activeLoad != null) {
+                        PermissionsWarningBanner(
+                            modifier = Modifier
+                                .align(Alignment.BottomCenter)
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            onNavigateToPermissions = onNavigateToPermissions,
+                        )
                     }
                 }
             }
@@ -701,6 +717,52 @@ private fun getLoadStatusColor(status: com.shiplocate.presentation.model.LoadSta
         com.shiplocate.presentation.model.LoadStatus.LOAD_STATUS_DISCONNECTED -> Color(0xFFFF9800) // Orange for Disconnected
         com.shiplocate.presentation.model.LoadStatus.LOAD_STATUS_REJECTED -> MaterialTheme.colorScheme.error // Red for Rejected
         com.shiplocate.presentation.model.LoadStatus.LOAD_STATUS_UNKNOWN -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f) // Gray for Unknown
+    }
+}
+
+/**
+ * Красное окно с предупреждением о разрешениях
+ * Показывается снизу экрана, когда есть активный Load, но не все разрешения получены
+ */
+@Composable
+private fun PermissionsWarningBanner(
+    modifier: Modifier = Modifier,
+    onNavigateToPermissions: () -> Unit,
+) {
+    Box(
+        modifier = modifier
+            .background(
+                color = MaterialTheme.colorScheme.error,
+                shape = RoundedCornerShape(12.dp),
+            )
+            .padding(16.dp),
+    ) {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Text(
+                text = "Permissions Required",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onError,
+            )
+            Text(
+                text = "To continue tracking, please grant all required permissions.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onError,
+                textAlign = TextAlign.Start,
+            )
+            Button(
+                onClick = onNavigateToPermissions,
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.onError,
+                    contentColor = MaterialTheme.colorScheme.error,
+                ),
+            ) {
+                Text("Grant Permissions")
+            }
+        }
     }
 }
 
