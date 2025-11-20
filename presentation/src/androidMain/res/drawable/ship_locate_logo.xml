@@ -1,0 +1,33 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="240dp"
+    android:height="186dp"
+    android:viewportWidth="240"
+    android:viewportHeight="186">
+    
+    <!-- Внешний круг: cx="120" cy="70" r="64" -->
+    <path
+        android:pathData="M 184,70 A 64,64 0 1,1 56,70 A 64,64 0 1,1 184,70 Z"
+        android:strokeColor="#000000"
+        android:strokeWidth="4"
+        android:fillColor="#00000000"
+        android:strokeLinecap="round"/>
+    
+    <!-- Фигура "9" (пин) - верхний круг: M120 38 A32 32 0 1 1 119.9 38 Z -->
+    <path
+        android:pathData="M 120,38 A 32,32 0 1,1 119.9,38 Z"
+        android:fillColor="#000000"
+        android:fillType="evenOdd"/>
+    
+    <!-- Фигура "9" (пин) - нижний круг: M120 52 A14 14 0 1 0 120 80 A14 14 0 1 0 120 52 Z -->
+    <path
+        android:pathData="M 120,52 A 14,14 0 1,0 120,80 A 14,14 0 1,0 120,52 Z"
+        android:fillColor="#000000"
+        android:fillType="evenOdd"/>
+    
+    <!-- Фигура "9" (пин) - хвост: M132 82 L140 108 Q129 103 122 92 Z -->
+    <path
+        android:pathData="M 132,82 L 140,108 Q 129,103 122,92 Z"
+        android:fillColor="#000000"
+        android:fillType="evenOdd"/>
+</vector>
+

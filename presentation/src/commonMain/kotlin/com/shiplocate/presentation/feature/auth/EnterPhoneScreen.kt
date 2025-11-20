@@ -34,6 +34,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -44,6 +45,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.shiplocate.domain.model.auth.Country
+import com.shiplocate.presentation.component.ShipLocateLogo
 
 @Suppress("FunctionName")
 @Composable
@@ -104,12 +106,29 @@ fun EnterPhoneScreen(
                         },
                     )
                 },
-        contentAlignment = Alignment.Center,
     ) {
         Column(
+            modifier = Modifier.fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(24.dp),
         ) {
+            // Центральный контент
+            Column(
+                modifier = Modifier.weight(1f),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(24.dp),
+                ) {
+            // ShipLocate Logo
+            ShipLocateLogo(
+                iconColor = Color.Black,
+                textColor = Color.Black,
+                iconSize = 150.dp,
+            )
+
+            Spacer(Modifier.height(10.dp))
             // Title
             Text(
                 text = "Enter Your Phone Number",
@@ -124,8 +143,6 @@ fun EnterPhoneScreen(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
             )
-
-            Spacer(modifier = Modifier.height(16.dp))
 
             // Phone input with country picker
             PhoneInputField(
@@ -155,7 +172,6 @@ fun EnterPhoneScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
 
             // Send code button
             Button(
@@ -184,6 +200,34 @@ fun EnterPhoneScreen(
             if (uiState.isRateLimited) {
                 RateLimitTimer(seconds = uiState.rateLimitSeconds)
             }
+                }
+            }
+
+            // Информационные блоки внизу
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                // Первый блок - предупреждение о SMS
+                InfoBox(
+                    icon = "⚠",
+                    text = "By continuing, you agree to receive a one-time SMS verification code for login. Message and data rates may apply.",
+                    gradientColors = listOf(
+                        Color(0xFF6B46C1), // Purple
+                        Color(0xFF4C1D95), // Darker purple
+                    ),
+                )
+
+                // Второй блок - информация о коде
+                InfoBox(
+                    icon = "💡",
+                    text = "We'll send you a 6-digit code to verify your number.",
+                    gradientColors = listOf(
+                        Color(0xFF0EA5E9), // Light blue
+                        Color(0xFF06B6D4), // Cyan
+                    ),
+                )
+            }
         }
     }
 }
@@ -200,20 +244,20 @@ private fun PhoneInputField(
     var showCountryPicker by remember { mutableStateOf(false) }
     val keyboardController = LocalSoftwareKeyboardController.current
     var previousLength by remember { mutableStateOf(phoneNumber.length) }
-    
+
     // Автоматически скрываем клавиатуру, когда введен последний символ
     // Скрываем только если длина увеличилась (добавлен символ), а не уменьшилась (удален символ)
     LaunchedEffect(phoneNumber, selectedCountry.phoneLength) {
         val currentLength = phoneNumber.length
         val maxLength = selectedCountry.phoneLength
-        
+
         // Скрываем только если:
         // 1. Длина достигла максимума
         // 2. Длина увеличилась (добавлен символ, а не удален)
         if (currentLength == maxLength && currentLength > previousLength) {
             keyboardController?.hide()
         }
-        
+
         previousLength = currentLength
     }
 
@@ -368,12 +412,50 @@ private fun CountryPickerDialog(
 
 @Suppress("FunctionName")
 @Composable
+private fun InfoBox(
+    icon: String,
+    text: String,
+    gradientColors: List<Color>,
+) {
+    Box(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .background(
+                    brush = Brush.linearGradient(gradientColors),
+                    shape = RoundedCornerShape(12.dp),
+                )
+                .padding(12.dp),
+    ) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = icon,
+                fontSize = 30.sp,
+                color = Color(0xFFFFEB3B), // Yellow color for icons
+            )
+            Text(
+                text = text,
+                style = MaterialTheme.typography.bodySmall,
+                color = Color.White,
+                modifier = Modifier.weight(1f),
+            )
+        }
+    }
+}
+
+@Suppress("FunctionName")
+@Composable
 private fun RateLimitTimer(seconds: Long) {
     val hours = seconds / 3600
     val minutes = (seconds % 3600) / 60
     val secs = seconds % 60
 
-    val timeString = "${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}"
+    val timeString = "${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${
+        secs.toString().padStart(2, '0')
+    }"
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
