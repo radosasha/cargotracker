@@ -128,7 +128,7 @@ fun EnterPhoneScreen(
             ShipLocateLogo(
                 iconColor = Color.Black,
                 textColor = Color.Black,
-                iconSize = 150.dp,
+                iconSize = 130.dp,
             )
 
             Spacer(Modifier.height(7.dp))

@@ -49,7 +49,7 @@ fun ShipLocateLogo(
         Text(
             text = "SHIPLOCATE",
             style = TextStyle(
-                fontSize = 30.sp,
+                fontSize = 25.sp,
                 fontWeight = FontWeight.Bold,
                 color = textColor,
                 textAlign = TextAlign.Center,
