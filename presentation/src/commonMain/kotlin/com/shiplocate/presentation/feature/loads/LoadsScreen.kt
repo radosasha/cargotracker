@@ -111,7 +111,6 @@ fun LoadsScreen(
                                     onRefresh = { viewModel.refresh() },
                                     onLoadClick = onLoadClick,
                                     onConfirmLoadDelivered = { viewModel.showLoadDeliveredDialog() },
-                                    onRejectLoad = { viewModel.showRejectLoadDialog() },
                                 )
                             } else {
                                 // Показываем пустое состояние
@@ -515,7 +514,6 @@ private fun ActiveLoadListWithRefresh(
     onRefresh: () -> Unit,
     onLoadClick: (Long) -> Unit,
     onConfirmLoadDelivered: () -> Unit,
-    onRejectLoad: () -> Unit,
 ) {
     PullToRefreshBox(
         isRefreshing = isRefreshing,
@@ -533,7 +531,6 @@ private fun ActiveLoadListWithRefresh(
                     isLoadingAction = isLoadingAction,
                     onClick = { onLoadClick(load.id) },
                     onConfirmLoadDelivered = onConfirmLoadDelivered,
-                    onRejectLoad = onRejectLoad,
                 )
             }
         }
@@ -547,7 +544,6 @@ private fun ActiveLoadItem(
     isLoadingAction: Boolean,
     onClick: () -> Unit,
     onConfirmLoadDelivered: () -> Unit,
-    onRejectLoad: () -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -659,44 +655,26 @@ private fun ActiveLoadItem(
             StopsTimeline(stops = load.stops)
         }
 
-        // Кнопки действий
+        // Кнопка действия
         Spacer(modifier = Modifier.height(16.dp))
 
-        Row(
+        // Кнопка "Confirm Load Delivery"
+        Button(
+            onClick = onConfirmLoadDelivered,
+            enabled = !isLoadingAction,
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.error,
+                contentColor = MaterialTheme.colorScheme.onError,
+            ),
         ) {
-            // Кнопка "Confirm Load Delivery"
-            Button(
-                onClick = onConfirmLoadDelivered,
-                enabled = !isLoadingAction,
-                modifier = Modifier.weight(1f),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.error,
-                    contentColor = MaterialTheme.colorScheme.onError,
-                ),
-            ) {
-                if (isLoadingAction) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
-                        color = MaterialTheme.colorScheme.onError,
-                    )
-                } else {
-                    Text("Confirm Delivery")
-                }
-            }
-
-            // Кнопка "Reject"
-            Button(
-                onClick = onRejectLoad,
-                enabled = !isLoadingAction,
-                modifier = Modifier.weight(1f),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.error,
-                    contentColor = MaterialTheme.colorScheme.onError,
-                ),
-            ) {
-                Text("Reject")
+            if (isLoadingAction) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(24.dp),
+                    color = MaterialTheme.colorScheme.onError,
+                )
+            } else {
+                Text("Confirm Delivery")
             }
         }
     }
