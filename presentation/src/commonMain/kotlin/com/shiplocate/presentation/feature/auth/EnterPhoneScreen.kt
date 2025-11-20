@@ -132,21 +132,26 @@ fun EnterPhoneScreen(
             )
 
             Spacer(Modifier.height(7.dp))
-            // Title
-            AutoSizeText(
-                text = "Enter Your Phone Number",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth(),
-            )
+            // Title и подзаголовок плотно друг к другу
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                AutoSizeText(
+                    text = "Enter Your Phone Number",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth(),
+                )
 
-            Text(
-                text = "We'll send you a verification code",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
-            )
+                Text(
+                    text = "We'll send you a verification code",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                )
+            }
 
             // Phone input with country picker
             PhoneInputField(
