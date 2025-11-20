@@ -38,9 +38,12 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -128,13 +131,14 @@ fun EnterPhoneScreen(
                 iconSize = 150.dp,
             )
 
-            Spacer(Modifier.height(10.dp))
+            Spacer(Modifier.height(7.dp))
             // Title
-            Text(
+            AutoSizeText(
                 text = "Enter Your Phone Number",
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth(),
             )
 
             Text(
@@ -425,7 +429,7 @@ private fun InfoBox(
                     brush = Brush.linearGradient(gradientColors),
                     shape = RoundedCornerShape(12.dp),
                 )
-                .padding(12.dp),
+                .padding(8.dp),
     ) {
         Row(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -444,6 +448,50 @@ private fun InfoBox(
             )
         }
     }
+}
+
+/**
+ * Текст, который автоматически уменьшает размер шрифта, чтобы поместиться в одну строку
+ */
+@Composable
+private fun AutoSizeText(
+    text: String,
+    style: TextStyle,
+    fontWeight: FontWeight,
+    textAlign: TextAlign,
+    modifier: Modifier = Modifier,
+    minTextSize: TextUnit = 12.sp,
+) {
+    var textSize by remember(text, modifier) { mutableStateOf(style.fontSize) }
+
+    // Сбрасываем размер при изменении текста или модификатора
+    LaunchedEffect(text, modifier) {
+        textSize = style.fontSize
+    }
+
+    // Используем onTextLayout для проверки, помещается ли текст
+    Text(
+        text = text,
+        style = style.copy(
+            fontSize = textSize,
+            fontWeight = fontWeight,
+            textAlign = textAlign,
+        ),
+        modifier = modifier,
+        maxLines = 1,
+        overflow = TextOverflow.Visible,
+        onTextLayout = { textLayoutResult ->
+            if (textLayoutResult.didOverflowWidth && textSize > minTextSize) {
+                // Текст не поместился, уменьшаем размер
+                val newSize = textSize * 0.9f
+                if (newSize >= minTextSize) {
+                    textSize = newSize
+                } else {
+                    textSize = minTextSize
+                }
+            }
+        },
+    )
 }
 
 @Suppress("FunctionName")
