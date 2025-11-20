@@ -6,7 +6,7 @@ import com.shiplocate.core.logging.LogCategory
 import com.shiplocate.core.logging.Logger
 import com.shiplocate.domain.repository.LoadRepository
 import com.shiplocate.domain.usecase.GetPermissionStatusUseCase
-import com.shiplocate.domain.usecase.GetTrackingStatusUseCase
+import com.shiplocate.domain.usecase.HasActiveLoadUseCase
 import com.shiplocate.domain.usecase.ObservePermissionsUseCase
 import com.shiplocate.domain.usecase.StartTrackingUseCase
 import com.shiplocate.domain.usecase.StopTrackingUseCase
@@ -31,7 +31,7 @@ import kotlinx.coroutines.withContext
 class LoadViewModel(
     private val getPermissionStatusUseCase: GetPermissionStatusUseCase,
     private val observePermissionsUseCase: ObservePermissionsUseCase,
-    private val getTrackingStatusUseCase: GetTrackingStatusUseCase,
+    private val hasActiveLoadUseCase: HasActiveLoadUseCase,
     private val startTrackingUseCase: StartTrackingUseCase,
     private val stopTrackingUseCase: StopTrackingUseCase,
     private val connectToLoadUseCase: ConnectToLoadUseCase,
@@ -72,12 +72,12 @@ class LoadViewModel(
         viewModelScope.launch {
             try {
                 val permissionStatus = getPermissionStatusUseCase()
-                val trackingStatus = getTrackingStatusUseCase()
+                val hasActiveLoad = hasActiveLoadUseCase()
 
                 _uiState.value =
                     _uiState.value.copy(
                         permissionStatus = permissionStatus,
-                        trackingStatus = trackingStatus,
+                        hasActiveLoad = hasActiveLoad,
                         isLoading = false,
                     )
             } catch (e: Exception) {
@@ -147,10 +147,10 @@ class LoadViewModel(
                 val result = startTrackingUseCase(loadId)
                 if (result.isSuccess) {
                     // Обновляем статус трекинга
-                    val trackingStatus = getTrackingStatusUseCase()
+                    val hasActiveLoad = hasActiveLoadUseCase()
                     _uiState.value =
                         _uiState.value.copy(
-                            trackingStatus = trackingStatus,
+                            hasActiveLoad = hasActiveLoad,
                             message = "GPS трекинг запущен",
                             messageType = MessageType.SUCCESS,
                             shouldNavigateBackAfterStart = true, // Устанавливаем флаг для навигации назад
@@ -339,10 +339,10 @@ class LoadViewModel(
                 logger.info(LogCategory.UI, "HomeViewModel: Successfully stopped tracking after marking load as delivered")
 
                 // Обновляем статус трекинга
-                val trackingStatus = getTrackingStatusUseCase()
+                val hasActiveLoad = hasActiveLoadUseCase()
                 _uiState.value =
                     _uiState.value.copy(
-                        trackingStatus = trackingStatus,
+                        hasActiveLoad = hasActiveLoad,
                         message = "Load marked as delivered",
                         messageType = MessageType.SUCCESS,
                         shouldNavigateBack = true, // Устанавливаем флаг для навигации назад

@@ -2,8 +2,8 @@ package com.shiplocate.presentation.di
 
 import com.shiplocate.domain.usecase.GetDeviceInfoUseCase
 import com.shiplocate.domain.usecase.GetPermissionStatusUseCase
-import com.shiplocate.domain.usecase.GetTrackingStatusUseCase
 import com.shiplocate.domain.usecase.HandleFirebaseTokenUseCase
+import com.shiplocate.domain.usecase.HasActiveLoadUseCase
 import com.shiplocate.domain.usecase.ManageFirebaseTokensUseCase
 import com.shiplocate.domain.usecase.NotifyPermissionGrantedUseCase
 import com.shiplocate.domain.usecase.ObservePermissionsUseCase
@@ -25,10 +25,10 @@ import com.shiplocate.domain.usecase.auth.SaveAuthSessionUseCase
 import com.shiplocate.domain.usecase.auth.VerifySmsCodeUseCase
 import com.shiplocate.domain.usecase.load.ConnectToLoadUseCase
 import com.shiplocate.domain.usecase.load.DisconnectFromLoadUseCase
-import com.shiplocate.domain.usecase.load.RejectLoadUseCase
 import com.shiplocate.domain.usecase.load.GetCachedLoadsUseCase
 import com.shiplocate.domain.usecase.load.GetConnectedLoadUseCase
 import com.shiplocate.domain.usecase.load.GetLoadsUseCase
+import com.shiplocate.domain.usecase.load.RejectLoadUseCase
 import com.shiplocate.domain.usecase.logs.GetLogsClientIdUseCase
 import com.shiplocate.domain.usecase.logs.GetLogsUseCase
 import org.koin.core.module.dsl.factoryOf
@@ -56,7 +56,7 @@ val useCasesModule =
         factoryOf(::NotifyPermissionGrantedUseCase)
 
         // Tracking Use Cases
-        factoryOf(::GetTrackingStatusUseCase)
+        factoryOf(::HasActiveLoadUseCase)
         factoryOf(::StartTrackingUseCase)
         factoryOf(::StopTrackingUseCase)
 

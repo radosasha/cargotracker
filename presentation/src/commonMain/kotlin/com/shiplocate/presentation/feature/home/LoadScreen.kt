@@ -105,7 +105,7 @@ fun LoadScreen(
 
         // Кнопки в зависимости от статуса Load
         val loadStatus = uiState.load?.loadStatus
-        val isTrackingActive = uiState.trackingStatus == com.shiplocate.domain.model.TrackingStatus.ACTIVE
+        val hasActiveLoad = uiState.hasActiveLoad
         val hasPermissions = uiState.permissionStatus?.hasAllPermissionsForTracking ?: false
 
         when (loadStatus) {
@@ -151,7 +151,7 @@ fun LoadScreen(
                     },
                     enabled = !uiState.isLoading,
                     modifier = Modifier.fillMaxWidth(),
-                    colors = if (isTrackingActive) {
+                    colors = if (hasActiveLoad) {
                         // Красный цвет для кнопки "Load delivered"
                         ButtonDefaults.buttonColors(
                             containerColor = MaterialTheme.colorScheme.error,
@@ -165,7 +165,7 @@ fun LoadScreen(
                         text =
                             when {
                                 !hasPermissions -> "Start"
-                                !isTrackingActive -> "Start"
+                                !hasActiveLoad -> "Start"
                                 else -> "Load delivered"
                             },
                     )

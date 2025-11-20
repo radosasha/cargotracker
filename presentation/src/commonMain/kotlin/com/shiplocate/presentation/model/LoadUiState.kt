@@ -1,7 +1,6 @@
 package com.shiplocate.presentation.model
 
 import com.shiplocate.domain.model.PermissionStatus
-import com.shiplocate.domain.model.TrackingStatus
 
 /**
  * Presentation модель для состояния главного экрана
@@ -9,7 +8,7 @@ import com.shiplocate.domain.model.TrackingStatus
 data class LoadUiState(
     val load: LoadUiModel? = null,
     val permissionStatus: PermissionStatus? = null,
-    val trackingStatus: TrackingStatus = TrackingStatus.STOPPED,
+    val hasActiveLoad: Boolean = false,
     val isLoading: Boolean = true,
     val message: String? = null,
     val messageType: MessageType? = null,

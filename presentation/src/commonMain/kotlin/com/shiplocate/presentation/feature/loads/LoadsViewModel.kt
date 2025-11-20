@@ -6,7 +6,7 @@ import com.shiplocate.core.logging.LogCategory
 import com.shiplocate.core.logging.Logger
 import com.shiplocate.domain.model.load.LoadStatus
 import com.shiplocate.domain.usecase.GetPermissionStatusUseCase
-import com.shiplocate.domain.usecase.GetTrackingStatusUseCase
+import com.shiplocate.domain.usecase.HasActiveLoadUseCase
 import com.shiplocate.domain.usecase.ObservePermissionsUseCase
 import com.shiplocate.domain.usecase.RequestNotificationPermissionUseCase
 import com.shiplocate.domain.usecase.SendCachedTokenOnAuthUseCase
@@ -35,7 +35,7 @@ import kotlinx.coroutines.withContext
 class LoadsViewModel(
     private val getLoadsUseCase: GetLoadsUseCase,
     private val getCachedLoadsUseCase: GetCachedLoadsUseCase,
-    private val getTrackingStatusUseCase: GetTrackingStatusUseCase,
+    private val hasActiveLoadUseCase: HasActiveLoadUseCase,
     private val startTrackingUseCase: StartTrackingUseCase,
     private val stopTrackingUseCase: StopTrackingUseCase,
     private val permissionStatusUseCase: GetPermissionStatusUseCase,
@@ -141,10 +141,9 @@ class LoadsViewModel(
 
 
                 // Проверяем состояние из DataStore
-                val currentStatus = withContext(Dispatchers.Default) {
-                    getTrackingStatusUseCase()
+                val isTrackingActive = withContext(Dispatchers.Default) {
+                    hasActiveLoadUseCase()
                 }
-                val isTrackingActive = currentStatus == com.shiplocate.domain.model.TrackingStatus.ACTIVE
 
                 if (isTrackingActive) {
                     logger.info(LogCategory.LOCATION, "LoadsViewModel: Tracking was active before, restoring...")
