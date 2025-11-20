@@ -1,11 +1,12 @@
 package com.shiplocate.domain.usecase
 
 import com.shiplocate.domain.model.TrackingStatus
+import com.shiplocate.domain.model.load.LoadStatus
 import com.shiplocate.domain.repository.LoadRepository
 
 /**
  * Use Case для получения статуса трекинга
- * Проверяет loadStatus в кешированных Loads - если хотя бы один load имеет loadStatus == 1, возвращает ACTIVE
+ * Проверяет loadStatus в кешированных Loads - если хотя бы один load имеет LOAD_STATUS_CONNECTED, возвращает ACTIVE
  */
 class GetTrackingStatusUseCase(
     private val loadRepository: LoadRepository,
@@ -18,10 +19,10 @@ class GetTrackingStatusUseCase(
             val cachedLoads = loadRepository.getCachedLoads()
             println("💾 GetTrackingStatusUseCase: Found ${cachedLoads.size} cached loads")
 
-            // Проверяем, есть ли хотя бы один load с loadStatus == 1 (Connected)
+            // Проверяем, есть ли хотя бы один load с LOAD_STATUS_CONNECTED
             val hasActiveLoad =
                 cachedLoads.any { load ->
-                    val isActive = load.loadStatus == 1
+                    val isActive = load.loadStatus == LoadStatus.LOAD_STATUS_CONNECTED
                     if (isActive) {
                         println("✅ GetTrackingStatusUseCase: Found active load: ${load.loadName} (status: ${load.loadStatus})")
                     }

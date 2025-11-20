@@ -96,9 +96,9 @@ class LoadViewModel(
             _uiState.value = _uiState.value.copy(isLoading = true)
 
             try {
-                // Step 0: Check if there's already an active connected load (different from current)
-                val loads = loadRepository.getCachedLoads()
-                val activeLoad = loads.find { it.loadStatus == 1 && it.id != loadId }
+                   // Step 0: Check if there's already an active connected load (different from current)
+                   val loads = loadRepository.getCachedLoads()
+                   val activeLoad = loads.find { it.loadStatus == com.shiplocate.domain.model.load.LoadStatus.LOAD_STATUS_CONNECTED && it.id != loadId }
                 
                 if (activeLoad != null) {
                     logger.warn(LogCategory.UI, "HomeViewModel: There is already an active load: ${activeLoad.loadName} (id: ${activeLoad.id})")

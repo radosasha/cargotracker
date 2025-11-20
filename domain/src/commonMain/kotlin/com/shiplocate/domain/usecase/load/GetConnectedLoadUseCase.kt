@@ -3,6 +3,7 @@ package com.shiplocate.domain.usecase.load
 import com.shiplocate.core.logging.LogCategory
 import com.shiplocate.core.logging.Logger
 import com.shiplocate.domain.model.load.Load
+import com.shiplocate.domain.model.load.LoadStatus
 import com.shiplocate.domain.repository.AuthPreferencesRepository
 import com.shiplocate.domain.repository.LoadRepository
 
@@ -44,7 +45,7 @@ class GetConnectedLoadUseCase(
         
         return if (loadsResult.isSuccess) {
             val loads = loadsResult.getOrNull() ?: emptyList()
-            val hasConnectedLoad = loads.find { it.loadStatus == 1 }
+            val hasConnectedLoad = loads.find { it.loadStatus == LoadStatus.LOAD_STATUS_CONNECTED }
             
             if (hasConnectedLoad != null) {
                 logger.info(

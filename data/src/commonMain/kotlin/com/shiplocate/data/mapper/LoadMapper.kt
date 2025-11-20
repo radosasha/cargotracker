@@ -5,6 +5,7 @@ import com.shiplocate.core.database.entity.StopEntity
 import com.shiplocate.data.network.dto.load.LoadDto
 import com.shiplocate.data.network.dto.load.StopDto
 import com.shiplocate.domain.model.load.Load
+import com.shiplocate.domain.model.load.LoadStatus
 import com.shiplocate.domain.model.load.Stop
 
 fun LoadDto.toDomain(): Load {
@@ -15,9 +16,19 @@ fun LoadDto.toDomain(): Load {
         description = description,
         lastUpdated = lastUpdated,
         createdAt = createdAt,
-        loadStatus = loadStatus,
+        loadStatus = loadStatus.toLoadStatus(),
         stops = stops.map { it.toDomain() },
     )
+}
+
+fun Int.toLoadStatus(): LoadStatus {
+    return when (this) {
+        1 -> LoadStatus.LOAD_STATUS_NOT_CONNECTED
+        4 -> LoadStatus.LOAD_STATUS_CONNECTED
+        5 -> LoadStatus.LOAD_STATUS_DISCONNECTED
+        3 -> LoadStatus.LOAD_STATUS_REJECTED
+        else -> LoadStatus.LOAD_STATUS_UNKNOWN
+    }
 }
 
 fun LoadDto.toEntity(): LoadEntity {
@@ -108,7 +119,7 @@ fun LoadEntity.toDomain(): Load {
         description = description,
         lastUpdated = lastUpdated,
         createdAt = createdAt,
-        loadStatus = loadStatus,
+        loadStatus = loadStatus.toLoadStatus(),
         stops = emptyList(), // Stops загружаются отдельно через StopsLocalDataSource
     )
 }

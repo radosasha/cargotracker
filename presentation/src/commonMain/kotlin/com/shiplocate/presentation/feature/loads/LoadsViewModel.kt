@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.shiplocate.core.logging.LogCategory
 import com.shiplocate.core.logging.Logger
-import com.shiplocate.domain.model.load.Load
+import com.shiplocate.domain.model.load.LoadStatus
 import com.shiplocate.domain.usecase.GetTrackingStatusUseCase
 import com.shiplocate.domain.usecase.RequestNotificationPermissionUseCase
 import com.shiplocate.domain.usecase.SendCachedTokenOnAuthUseCase
@@ -14,6 +14,8 @@ import com.shiplocate.domain.usecase.load.DisconnectFromLoadUseCase
 import com.shiplocate.domain.usecase.load.GetCachedLoadsUseCase
 import com.shiplocate.domain.usecase.load.GetLoadsUseCase
 import com.shiplocate.domain.usecase.load.RejectLoadUseCase
+import com.shiplocate.presentation.mapper.toUiModel
+import com.shiplocate.presentation.model.LoadUiModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -164,14 +166,14 @@ class LoadsViewModel(
                     // Сортируем список по дате создания (createdAt) - новые сверху
                     val sortedLoads = loads.sortedByDescending { it.createdAt }
 
-                    // Разделяем на Active (loadStatus == 1) и Upcoming (loadStatus == 0)
-                    val activeLoad = sortedLoads.firstOrNull { it.loadStatus == 1 }
-                    val upcomingLoads = sortedLoads.filter { it.loadStatus == 0 }
+                    // Разделяем на Active (LOAD_STATUS_CONNECTED) и Upcoming (LOAD_STATUS_NOT_CONNECTED)
+                    val activeLoad = sortedLoads.firstOrNull { it.loadStatus == LoadStatus.LOAD_STATUS_CONNECTED }
+                    val upcomingLoads = sortedLoads.filter { it.loadStatus == LoadStatus.LOAD_STATUS_NOT_CONNECTED }
 
                     _isRefreshing.value = false
                     _uiState.value = LoadsUiState.Success(
-                        activeLoad = activeLoad,
-                        upcomingLoads = upcomingLoads,
+                        activeLoad = activeLoad?.toUiModel(),
+                        upcomingLoads = upcomingLoads.map { it.toUiModel() },
                     )
                 },
                 onFailure = { error ->
@@ -220,13 +222,13 @@ class LoadsViewModel(
                 val sortedCachedLoads = cachedLoads.sortedByDescending { it.createdAt }
                 logger.debug(LogCategory.UI, "LoadsViewModel: Sorted ${sortedCachedLoads.size} cached loads by createdAt (newest first)")
 
-                // Разделяем на Active (loadStatus == 1) и Upcoming (loadStatus == 0)
-                val activeLoad = sortedCachedLoads.firstOrNull { it.loadStatus == 1 }
-                val upcomingLoads = sortedCachedLoads.filter { it.loadStatus == 0 }
+                // Разделяем на Active (LOAD_STATUS_CONNECTED) и Upcoming (LOAD_STATUS_NOT_CONNECTED)
+                val activeLoad = sortedCachedLoads.firstOrNull { it.loadStatus == LoadStatus.LOAD_STATUS_CONNECTED }
+                val upcomingLoads = sortedCachedLoads.filter { it.loadStatus == LoadStatus.LOAD_STATUS_NOT_CONNECTED }
 
                 _uiState.value = LoadsUiState.Success(
-                    activeLoad = activeLoad,
-                    upcomingLoads = upcomingLoads,
+                    activeLoad = activeLoad?.toUiModel(),
+                    upcomingLoads = upcomingLoads.map { it.toUiModel() },
                 )
             } catch (e: Exception) {
                 logger.error(LogCategory.UI, "LoadsViewModel: Failed to load from cache: ${e.message}")
@@ -402,8 +404,8 @@ sealed class LoadsUiState {
     data object Loading : LoadsUiState()
 
     data class Success(
-        val activeLoad: Load? = null, // Один Load для первой вкладки (Active)
-        val upcomingLoads: List<Load> = emptyList(), // Список Load для второй вкладки (Upcoming)
+        val activeLoad: LoadUiModel? = null, // Один Load для первой вкладки (Active)
+        val upcomingLoads: List<LoadUiModel> = emptyList(), // Список Load для второй вкладки (Upcoming)
     ) : LoadsUiState()
 
     data class Error(val message: String) : LoadsUiState()

@@ -12,6 +12,7 @@ import com.shiplocate.data.mapper.toEntity
 import com.shiplocate.data.mapper.toStopEntity
 import com.shiplocate.data.network.dto.load.LoadDto
 import com.shiplocate.domain.model.load.Load
+import com.shiplocate.domain.model.load.LoadStatus
 import com.shiplocate.domain.model.load.Stop
 import com.shiplocate.domain.repository.LoadRepository
 import kotlinx.coroutines.flow.Flow
@@ -95,7 +96,7 @@ class LoadRepositoryImpl(
     }
 
     override suspend fun getConnectedLoad(): Load? {
-        return getCachedLoads().find { it.loadStatus == 1 }
+        return getCachedLoads().find { it.loadStatus == LoadStatus.LOAD_STATUS_CONNECTED }
     }
 
     override suspend fun connectToLoad(

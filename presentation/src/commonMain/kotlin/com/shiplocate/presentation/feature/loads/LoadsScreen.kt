@@ -37,8 +37,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.shiplocate.domain.model.load.Load
 import com.shiplocate.presentation.component.StopsTimeline
+import com.shiplocate.presentation.model.LoadUiModel
 import com.shiplocate.presentation.util.DateFormatter
 
 /**
@@ -348,7 +348,7 @@ private fun ErrorContentWithRefresh(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun LoadsListWithRefresh(
-    loads: List<Load>,
+    loads: List<LoadUiModel>,
     isRefreshing: Boolean,
     onRefresh: () -> Unit,
     onLoadClick: (Long) -> Unit,
@@ -382,7 +382,7 @@ private fun LoadsListWithRefresh(
 @Suppress("FunctionName")
 @Composable
 private fun LoadItem(
-    load: Load,
+    load: LoadUiModel,
     onClick: () -> Unit,
 ) {
     Card(
@@ -509,7 +509,7 @@ private fun LoadItem(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ActiveLoadListWithRefresh(
-    load: Load,
+    load: LoadUiModel,
     isRefreshing: Boolean,
     isLoadingAction: Boolean,
     onRefresh: () -> Unit,
@@ -543,7 +543,7 @@ private fun ActiveLoadListWithRefresh(
 @Suppress("FunctionName")
 @Composable
 private fun ActiveLoadItem(
-    load: Load,
+    load: LoadUiModel,
     isLoadingAction: Boolean,
     onClick: () -> Unit,
     onConfirmLoadDelivered: () -> Unit,
@@ -702,29 +702,27 @@ private fun ActiveLoadItem(
     }
 }
 
-private fun formatLoadStatus(status: Int): String {
+private fun formatLoadStatus(status: com.shiplocate.presentation.model.LoadStatus): String {
     return when (status) {
-        0 -> "Not connected"
-        1 -> "Connected"
-        2 -> "Disconnected"
-        else -> "Unknown ($status)"
+        com.shiplocate.presentation.model.LoadStatus.LOAD_STATUS_NOT_CONNECTED -> "Not connected"
+        com.shiplocate.presentation.model.LoadStatus.LOAD_STATUS_CONNECTED -> "Connected"
+        com.shiplocate.presentation.model.LoadStatus.LOAD_STATUS_DISCONNECTED -> "Disconnected"
+        com.shiplocate.presentation.model.LoadStatus.LOAD_STATUS_REJECTED -> "Rejected"
+        com.shiplocate.presentation.model.LoadStatus.LOAD_STATUS_UNKNOWN -> "Unknown"
     }
 }
 
 /**
  * Get color for load status
- * 0 = Not connected (Gray)
- * 1 = Connected (Green)
- * 2 = Disconnected (Orange)
- * Other = Unknown (Gray)
  */
 @Composable
-private fun getLoadStatusColor(status: Int): Color {
+private fun getLoadStatusColor(status: com.shiplocate.presentation.model.LoadStatus): Color {
     return when (status) {
-        0 -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f) // Gray for Not connected
-        1 -> Color(0xFF4CAF50) // Green for Connected
-        2 -> Color(0xFFFF9800) // Orange for Disconnected
-        else -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f) // Gray for Unknown
+        com.shiplocate.presentation.model.LoadStatus.LOAD_STATUS_NOT_CONNECTED -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f) // Gray for Not connected
+        com.shiplocate.presentation.model.LoadStatus.LOAD_STATUS_CONNECTED -> Color(0xFF4CAF50) // Green for Connected
+        com.shiplocate.presentation.model.LoadStatus.LOAD_STATUS_DISCONNECTED -> Color(0xFFFF9800) // Orange for Disconnected
+        com.shiplocate.presentation.model.LoadStatus.LOAD_STATUS_REJECTED -> MaterialTheme.colorScheme.error // Red for Rejected
+        com.shiplocate.presentation.model.LoadStatus.LOAD_STATUS_UNKNOWN -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f) // Gray for Unknown
     }
 }
 
