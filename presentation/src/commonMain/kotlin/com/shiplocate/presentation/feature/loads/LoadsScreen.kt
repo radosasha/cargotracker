@@ -62,6 +62,7 @@ fun LoadsScreen(
     val showLoadDeliveredDialog by viewModel.showLoadDeliveredDialog.collectAsStateWithLifecycle()
     val showRejectLoadDialog by viewModel.showRejectLoadDialog.collectAsStateWithLifecycle()
     val isLoadingAction by viewModel.isLoadingAction.collectAsStateWithLifecycle()
+    val showTrackingStartedSuccessDialog by viewModel.showTrackingStartedSuccessDialog.collectAsStateWithLifecycle()
     
     // Pager state with 2 pages (Active and Upcoming)
     val pagerState = rememberPagerState(pageCount = { 2 }, initialPage = currentPage)
@@ -243,6 +244,30 @@ fun LoadsScreen(
             dismissButton = {
                 TextButton(onClick = { viewModel.dismissRejectLoadDialog() }) {
                     Text("Cancel")
+                }
+            },
+        )
+    }
+
+    // Диалог успешного запуска трекинга
+    if (showTrackingStartedSuccessDialog) {
+        AlertDialog(
+            onDismissRequest = { viewModel.dismissTrackingStartedSuccessDialog() },
+            title = {
+                Text(
+                    text = "Tracking Started",
+                    style = MaterialTheme.typography.titleLarge,
+                )
+            },
+            text = {
+                Text(
+                    text = "All required permissions have been granted and tracking has been started successfully.",
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { viewModel.dismissTrackingStartedSuccessDialog() }) {
+                    Text("OK")
                 }
             },
         )

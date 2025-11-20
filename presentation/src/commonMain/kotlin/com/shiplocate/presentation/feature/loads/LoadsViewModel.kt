@@ -67,6 +67,9 @@ class LoadsViewModel(
     private val _isLoadingAction = MutableStateFlow(false)
     val isLoadingAction: StateFlow<Boolean> = _isLoadingAction.asStateFlow()
 
+    private val _showTrackingStartedSuccessDialog = MutableStateFlow(false)
+    val showTrackingStartedSuccessDialog: StateFlow<Boolean> = _showTrackingStartedSuccessDialog.asStateFlow()
+
     init {
         // Подписываемся на изменения разрешений из Flow
         observePermissionsUseCase()
@@ -85,8 +88,48 @@ class LoadsViewModel(
             // 1. Есть активный Load
             // 2. Не все разрешения для трекинга получены
             val showWarning = activeLoad != null && !permissionStatus.hasAllPermissionsForTracking
-            
+
             _uiState.value = currentState.copy(showPermissionsWarning = showWarning)
+        }
+    }
+
+    /**
+     * Стартует трекинг для активного Load
+     * Вызывается когда пользователь вернулся с экрана разрешений после выдачи всех разрешений
+     */
+    fun startTrackingForActiveLoad() {
+        viewModelScope.launch {
+            try {
+                val currentState = _uiState.value
+                if (currentState is LoadsUiState.Success) {
+                    val activeLoad = currentState.activeLoad
+                    if (activeLoad != null) {
+                        logger.info(LogCategory.UI, "LoadsViewModel: Starting tracking for active load ${activeLoad.id}")
+
+                        val result = withContext(Dispatchers.Default) {
+                            startTrackingUseCase(activeLoad.id)
+                        }
+                        if (result.isSuccess) {
+                            logger.info(LogCategory.UI, "LoadsViewModel: Successfully started tracking for load ${activeLoad.id}")
+                            // Показываем диалог успешного запуска трекинга
+                            _showTrackingStartedSuccessDialog.value = true
+                            // Скрываем предупреждение о разрешениях, так как трекинг запущен
+                            val updatedState = currentState.copy(showPermissionsWarning = false)
+                            _uiState.value = updatedState
+                        } else {
+                            logger.error(
+                                LogCategory.UI,
+                                "LoadsViewModel: Failed to start tracking: ${result.exceptionOrNull()?.message}",
+                            )
+                        }
+
+                    } else {
+                        logger.warn(LogCategory.UI, "LoadsViewModel: No active load to start tracking")
+                    }
+                }
+            } catch (e: Exception) {
+                logger.error(LogCategory.UI, "LoadsViewModel: Exception during start tracking: ${e.message}")
+            }
         }
     }
 
@@ -151,7 +194,7 @@ class LoadsViewModel(
                     // Получаем первый load из кеша для восстановления трекинга
                     val loads = getCachedLoadsUseCase()
                     val firstLoad = loads.firstOrNull()
-                    
+
                     if (firstLoad != null) {
                         // Автоматически запускаем трекинг с loadId
                         val result =
@@ -374,6 +417,13 @@ class LoadsViewModel(
      */
     fun dismissRejectLoadDialog() {
         _showRejectLoadDialog.value = false
+    }
+
+    /**
+     * Dismiss tracking started success dialog
+     */
+    fun dismissTrackingStartedSuccessDialog() {
+        _showTrackingStartedSuccessDialog.value = false
     }
 
     /**

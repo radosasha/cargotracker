@@ -230,6 +230,12 @@ fun TrackerNavigation(
                         viewModel.setCurrentPage(0) // Переключаемся на вкладку Active (страница 0)
                         savedStateHandle?.remove<Boolean>("switchToActive")
                     }
+                    // Проверяем, нужно ли стартовать трекинг после возврата с экрана разрешений
+                    val startTracking = savedStateHandle?.get<Boolean>("startTracking") ?: false
+                    if (startTracking) {
+                        viewModel.startTrackingForActiveLoad()
+                        savedStateHandle?.remove<Boolean>("startTracking")
+                    }
                 }
             }
 
@@ -310,10 +316,17 @@ fun TrackerNavigation(
             val viewModel: PermissionsViewModel = viewModel(
                 factory = permissionsViewModelFactory,
             )
+            
+            // Получаем savedStateHandle из LoadsScreen для передачи флага старта трекинга
+            val loadsEntry = navController.getBackStackEntry(Screen.LOADS)
+            
             PermissionsScreen(
                 paddingValues = paddingValues,
                 viewModel = viewModel,
                 onContinue = {
+                    // Устанавливаем флаг для автоматического старта трекинга
+                    // Это сработает только если пользователь пришел с LoadsScreen
+                    loadsEntry.savedStateHandle["startTracking"] = true
                     navController.popBackStack()
                 },
             )
