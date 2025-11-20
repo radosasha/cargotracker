@@ -125,6 +125,21 @@ fun LoadScreen(
                 ) {
                     Text("Start")
                 }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Кнопка Reject
+                Button(
+                    onClick = { viewModel.showRejectLoadDialog() },
+                    enabled = !uiState.isLoading,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error,
+                        contentColor = MaterialTheme.colorScheme.onError,
+                    ),
+                ) {
+                    Text("Reject")
+                }
             }
 
             LoadStatus.LOAD_STATUS_CONNECTED -> {
@@ -154,21 +169,6 @@ fun LoadScreen(
                                 else -> "Load delivered"
                             },
                     )
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Кнопка Reject
-                Button(
-                    onClick = { viewModel.showRejectLoadDialog() },
-                    enabled = !uiState.isLoading,
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.error,
-                        contentColor = MaterialTheme.colorScheme.onError,
-                    ),
-                ) {
-                    Text("Reject")
                 }
             }
 
