@@ -21,7 +21,7 @@ class StartTrackingUseCase(
         // Проверяем разрешения перед запуском
         val permissionStatus = permissionRepository.getPermissionStatus()
 
-        return if (permissionStatus.hasAllPermissions) {
+        return if (permissionStatus.hasAllPermissionsForTracking) {
             // Проверяем, не активен ли уже трекинг
             val currentStatus = trackingRepository.getTrackingStatus()
             if (currentStatus == TrackingStatus.ACTIVE) {

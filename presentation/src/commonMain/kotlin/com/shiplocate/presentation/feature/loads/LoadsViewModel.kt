@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.shiplocate.core.logging.LogCategory
 import com.shiplocate.core.logging.Logger
 import com.shiplocate.domain.model.load.LoadStatus
+import com.shiplocate.domain.usecase.GetPermissionStatusUseCase
 import com.shiplocate.domain.usecase.GetTrackingStatusUseCase
 import com.shiplocate.domain.usecase.RequestNotificationPermissionUseCase
 import com.shiplocate.domain.usecase.SendCachedTokenOnAuthUseCase
@@ -34,6 +35,7 @@ class LoadsViewModel(
     private val getTrackingStatusUseCase: GetTrackingStatusUseCase,
     private val startTrackingUseCase: StartTrackingUseCase,
     private val stopTrackingUseCase: StopTrackingUseCase,
+    private val permissionStatusUseCase: GetPermissionStatusUseCase,
     private val disconnectFromLoadUseCase: DisconnectFromLoadUseCase,
     private val rejectLoadUseCase: RejectLoadUseCase,
     private val requestNotificationPermissionUseCase: RequestNotificationPermissionUseCase,
@@ -100,11 +102,21 @@ class LoadsViewModel(
             try {
                 logger.info(LogCategory.LOCATION, "LoadsViewModel: Checking if tracking was active before...")
 
+                // првоеряем пермишены требуемые для трекинга
+                val permissions = permissionStatusUseCase()
+                if (!permissions.hasAllPermissionsForTracking) {
+                    logger.info(
+                        LogCategory.LOCATION,
+                        "LoadsViewModel: Can't automatically start tracking. Need some permissions for tracking"
+                    )
+                    return@launch
+                }
+
+
                 // Проверяем состояние из DataStore
-                val currentStatus =
-                    withContext(Dispatchers.Default) {
-                        getTrackingStatusUseCase()
-                    }
+                val currentStatus = withContext(Dispatchers.Default) {
+                    getTrackingStatusUseCase()
+                }
                 val isTrackingActive = currentStatus == com.shiplocate.domain.model.TrackingStatus.ACTIVE
 
                 if (isTrackingActive) {

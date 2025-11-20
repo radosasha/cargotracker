@@ -106,7 +106,7 @@ fun LoadScreen(
         // Кнопки в зависимости от статуса Load
         val loadStatus = uiState.load?.loadStatus
         val isTrackingActive = uiState.trackingStatus == com.shiplocate.domain.model.TrackingStatus.ACTIVE
-        val hasPermissions = uiState.permissionStatus?.hasAllPermissions ?: false
+        val hasPermissions = uiState.permissionStatus?.hasAllPermissionsForTracking ?: false
 
         when (loadStatus) {
             LoadStatus.LOAD_STATUS_NOT_CONNECTED -> {
