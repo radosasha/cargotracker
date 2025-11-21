@@ -17,6 +17,7 @@ import com.shiplocate.domain.usecase.RequestNotificationPermissionUseCase
 import com.shiplocate.domain.usecase.SavePhoneNumberUseCase
 import com.shiplocate.domain.usecase.SendCachedTokenOnAuthUseCase
 import com.shiplocate.domain.usecase.StartTrackingUseCase
+import com.shiplocate.domain.usecase.StopTrackingIfLoadUnlinkedUseCase
 import com.shiplocate.domain.usecase.StopTrackingUseCase
 import com.shiplocate.domain.usecase.TestServerUseCase
 import com.shiplocate.domain.usecase.auth.ClearAuthSessionUseCase
@@ -82,6 +83,7 @@ val useCasesModule =
         factoryOf(::DisconnectFromLoadUseCase)
         factoryOf(::RejectLoadUseCase)
         factoryOf(::GetConnectedLoadUseCase)
+        factoryOf(::StopTrackingIfLoadUnlinkedUseCase)
 
         // Firebase Token Use Cases
         factoryOf(::HandleFirebaseTokenUseCase)

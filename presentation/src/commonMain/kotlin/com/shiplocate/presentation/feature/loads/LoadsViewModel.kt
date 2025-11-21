@@ -12,6 +12,7 @@ import com.shiplocate.domain.usecase.ObserveReceivedPushesUseCase
 import com.shiplocate.domain.usecase.RequestNotificationPermissionUseCase
 import com.shiplocate.domain.usecase.SendCachedTokenOnAuthUseCase
 import com.shiplocate.domain.usecase.StartTrackingUseCase
+import com.shiplocate.domain.usecase.StopTrackingIfLoadUnlinkedUseCase
 import com.shiplocate.domain.usecase.StopTrackingUseCase
 import com.shiplocate.domain.usecase.load.DisconnectFromLoadUseCase
 import com.shiplocate.domain.usecase.load.GetCachedLoadsUseCase
@@ -46,6 +47,7 @@ class LoadsViewModel(
     private val requestNotificationPermissionUseCase: RequestNotificationPermissionUseCase,
     private val sendCachedTokenOnAuthUseCase: SendCachedTokenOnAuthUseCase,
     private val observeReceivedPushesUseCase: ObserveReceivedPushesUseCase,
+    private val stopTrackingIfLoadUnlinkedUseCase: StopTrackingIfLoadUnlinkedUseCase,
     private val logger: Logger,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow<LoadsUiState>(LoadsUiState.Loading)
@@ -245,15 +247,16 @@ class LoadsViewModel(
         }
 
         viewModelScope.launch {
-            val result =
-                withContext(Dispatchers.Default) {
-                    getLoadsUseCase()
-                }
+            val cachedLoads = getCachedLoadsUseCase()
+            val result = withContext(Dispatchers.Default) {
+                getLoadsUseCase()
+            }
 
             result.fold(
                 onSuccess = { loads ->
                     logger.info(LogCategory.UI, "LoadsViewModel: Successfully loaded ${loads.size} loads")
 
+                    stopTrackingIfLoadUnlinkedUseCase(cachedLoads)
                     // Сортируем список по дате создания (createdAt) - новые сверху
                     val sortedLoads = loads.sortedByDescending { it.createdAt }
 
