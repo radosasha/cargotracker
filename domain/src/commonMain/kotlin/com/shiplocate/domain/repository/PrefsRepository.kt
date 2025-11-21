@@ -7,20 +7,6 @@ import kotlinx.coroutines.flow.Flow
  * Domain слой - абстракция над DataStore
  */
 interface PrefsRepository {
-    /**
-     * Сохраняет состояние трекинга
-     */
-    suspend fun saveTrackingState(isTracking: Boolean)
-
-    /**
-     * Получает состояние трекинга
-     */
-    suspend fun getTrackingState(): Boolean?
-
-    /**
-     * Получает поток состояния трекинга
-     */
-    fun getTrackingStateFlow(): Flow<Boolean?>
 
     /**
      * Сохраняет настройки точности GPS

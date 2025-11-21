@@ -12,23 +12,10 @@ class PrefsRepositoryImpl(
     private val prefsDataSource: PrefsDataSource,
 ) : PrefsRepository {
     companion object {
-        private const val TRACKING_STATE_KEY = "tracking_state"
         private const val GPS_ACCURACY_KEY = "gps_accuracy"
         private const val GPS_INTERVAL_KEY = "gps_interval"
         private const val DISTANCE_FILTER_KEY = "distance_filter"
         private const val PHONE_KEY = "phone_number"
-    }
-
-    override suspend fun saveTrackingState(isTracking: Boolean) {
-        prefsDataSource.saveBoolean(TRACKING_STATE_KEY, isTracking)
-    }
-
-    override suspend fun getTrackingState(): Boolean? {
-        return prefsDataSource.getBoolean(TRACKING_STATE_KEY)
-    }
-
-    override fun getTrackingStateFlow(): Flow<Boolean?> {
-        return prefsDataSource.getBooleanFlow(TRACKING_STATE_KEY)
     }
 
     override suspend fun saveGpsAccuracy(accuracy: String) {

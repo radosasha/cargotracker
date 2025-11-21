@@ -26,8 +26,6 @@ class StartTrackingUseCase(
             val currentStatus = trackingRepository.getTrackingStatus()
             if (currentStatus == TrackingStatus.ACTIVE) {
                 logger.info(LogCategory.LOCATION, "StartTrackingUseCase: Tracking is already active, no need to start")
-                // Убеждаемся, что состояние в DataStore корректное
-                prefsRepository.saveTrackingState(true)
                 return Result.success(Unit)
             }
 

@@ -2,7 +2,6 @@ package com.shiplocate.domain.usecase
 
 import com.shiplocate.core.logging.LogCategory
 import com.shiplocate.core.logging.Logger
-import com.shiplocate.domain.repository.PrefsRepository
 import com.shiplocate.domain.repository.TrackingRepository
 
 /**
@@ -11,7 +10,6 @@ import com.shiplocate.domain.repository.TrackingRepository
  */
 class StopTrackingUseCase(
     private val trackingRepository: TrackingRepository,
-    private val prefsRepository: PrefsRepository,
     private val logger: Logger,
 ) {
     suspend operator fun invoke(): Result<Unit> {
@@ -19,8 +17,6 @@ class StopTrackingUseCase(
         val currentStatus = trackingRepository.getTrackingStatus()
         if (currentStatus == com.shiplocate.domain.model.TrackingStatus.STOPPED) {
             logger.info(LogCategory.LOCATION, "StopTrackingUseCase: Tracking is already stopped, no need to stop")
-            // Убеждаемся, что состояние в DataStore корректное
-            prefsRepository.saveTrackingState(false)
             return Result.success(Unit)
         }
 
@@ -31,7 +27,6 @@ class StopTrackingUseCase(
 
         // Если трекинг успешно остановлен, сохраняем состояние в DataStore
         if (result.isSuccess) {
-            prefsRepository.saveTrackingState(false)
             logger.info(LogCategory.LOCATION, "StopTrackingUseCase: Tracking stopped and state saved to DataStore")
         }
 
