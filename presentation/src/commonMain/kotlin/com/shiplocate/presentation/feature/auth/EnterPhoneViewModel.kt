@@ -54,6 +54,11 @@ class EnterPhoneViewModel(
         }
     }
 
+    fun onAgreementChanged(agreed: Boolean) {
+        logger.debug(LogCategory.AUTH, "EnterPhoneViewModel: Agreement changed: $agreed")
+        _uiState.update { it.copy(agreedToSms = agreed) }
+    }
+
     fun onSendCodeClicked() {
         val state = _uiState.value
 
@@ -241,6 +246,7 @@ class EnterPhoneViewModel(
 data class EnterPhoneUiState(
     val selectedCountry: Country = Country.US,
     val phoneNumber: String = "",
+    val agreedToSms: Boolean = false,
     val isLoading: Boolean = false,
     val isRateLimited: Boolean = false,
     val rateLimitSeconds: Long = 0,
@@ -257,7 +263,7 @@ data class EnterPhoneUiState(
         get() = phoneNumber.length == selectedCountry.phoneLength
 
     val canSendCode: Boolean
-        get() = isPhoneValid && !isLoading && !isRateLimited
+        get() = isPhoneValid && agreedToSms && !isLoading && !isRateLimited
 
     val remainingDigits: Int
         get() = selectedCountry.phoneLength - phoneNumber.length

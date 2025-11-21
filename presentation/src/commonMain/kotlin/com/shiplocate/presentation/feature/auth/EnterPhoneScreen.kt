@@ -6,10 +6,10 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -20,6 +20,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -42,6 +43,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
@@ -49,6 +51,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.shiplocate.domain.model.auth.Country
 import com.shiplocate.presentation.component.ShipLocateLogo
+import com.shiplocate.presentation.util.rememberEmailLauncher
 
 @Suppress("FunctionName")
 @Composable
@@ -96,7 +99,7 @@ fun EnterPhoneScreen(
         )
     }
 
-    Box(
+    BoxWithConstraints(
         modifier =
             Modifier
                 .fillMaxSize()
@@ -110,122 +113,158 @@ fun EnterPhoneScreen(
                     )
                 },
     ) {
+        val screenHeight = maxHeight
+        val logoHeight = screenHeight * 0.2f // 2% экрана
+
         Column(
             modifier = Modifier.fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            // Центральный контент
-            Column(
-                modifier = Modifier.weight(1f),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
+            // Иконка - 25% экрана
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(logoHeight),
+                contentAlignment = Alignment.Center,
+            ) {
+                ShipLocateLogo(
+                    iconColor = Color.Black,
+                    textColor = Color.Black,
+                )
+            }
+
+            // Центральный контент - всё остальное пространство, выровнено по центру
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+                contentAlignment = Alignment.Center,
             ) {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(24.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-            // ShipLocate Logo
-            ShipLocateLogo(
-                iconColor = Color.Black,
-                textColor = Color.Black,
-                iconSize = 130.dp,
-            )
-
-            Spacer(Modifier.height(7.dp))
-            // Title и подзаголовок плотно друг к другу
-                AutoSizeText(
-                    text = "Enter Your Phone Number",
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-
-
-            // Phone input with country picker
-            PhoneInputField(
-                selectedCountry = uiState.selectedCountry,
-                phoneNumber = uiState.phoneNumber,
-                onCountrySelected = viewModel::onCountrySelected,
-                onPhoneNumberChanged = viewModel::onPhoneNumberChanged,
-                enabled = !uiState.isLoading && !uiState.isRateLimited,
-            )
-
-            // Validation hint
-            if (uiState.phoneNumber.isNotEmpty() && !uiState.isPhoneValid) {
-                Text(
-                    text = "Enter ${uiState.remainingDigits} more digit${if (uiState.remainingDigits != 1) "s" else ""}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.primary,
-                )
-            }
-
-            // Error message
-            if (uiState.errorMessage != null && !uiState.isRateLimited) {
-                Text(
-                    text = uiState.errorMessage!!,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.error,
-                    textAlign = TextAlign.Center,
-                )
-            }
-
-
-            // Send code button
-            Button(
-                onClick = viewModel::onSendCodeClicked,
-                enabled = uiState.canSendCode,
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .height(56.dp),
-                shape = RoundedCornerShape(12.dp),
-            ) {
-                if (uiState.isLoading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
-                        color = MaterialTheme.colorScheme.onPrimary,
+                    // Title и подзаголовок плотно друг к другу
+                    AutoSizeText(
+                        text = "Sign in with your phone",
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth(),
                     )
-                } else {
+
                     Text(
-                        text = "Get Code",
-                        style = MaterialTheme.typography.titleMedium,
+                        text = "Enter your mobile number to receive a one-time SMS verification code.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth(),
                     )
+
+                    Column(modifier = Modifier.padding(top = 15.dp)) {
+
+                        // Phone input with country picker
+                        PhoneInputField(
+                            selectedCountry = uiState.selectedCountry,
+                            phoneNumber = uiState.phoneNumber,
+                            onCountrySelected = viewModel::onCountrySelected,
+                            onPhoneNumberChanged = viewModel::onPhoneNumberChanged,
+                            enabled = !uiState.isLoading && !uiState.isRateLimited,
+                        )
+                    }
+
+                    // SMS agreement checkbox
+                    Row(
+                        modifier = Modifier,
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Start
+                    ) {
+                        Checkbox(
+                            checked = uiState.agreedToSms,
+                            onCheckedChange = viewModel::onAgreementChanged,
+                            enabled = !uiState.isLoading && !uiState.isRateLimited,
+                        )
+                        Text(
+                            text = "I agree to receive one-time SMS verification codes for login.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+
+                    // SMS disclaimer text
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 4.dp, bottom = 8.dp),
+                    ) {
+                        Text(
+                            text = "Message and data rates may apply. Message frequency may vary.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        Text(
+                            text = "Text STOP to opt out. Text HELP for support.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        Text(
+                            text = "We will not share your private information with third parties for marketing purposes.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+
+                    // Validation hint
+                    if (uiState.phoneNumber.isNotEmpty() && !uiState.isPhoneValid) {
+                        Text(
+                            text = "Enter ${uiState.remainingDigits} more digit${if (uiState.remainingDigits != 1) "s" else ""}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.primary,
+                        )
+                    }
+
+                    // Error message
+                    if (uiState.errorMessage != null && !uiState.isRateLimited) {
+                        Text(
+                            text = uiState.errorMessage!!,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error,
+                            textAlign = TextAlign.Center,
+                        )
+                    }
+
+                    // Send code button
+                    Button(
+                        onClick = viewModel::onSendCodeClicked,
+                        enabled = uiState.canSendCode,
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .height(56.dp),
+                        shape = RoundedCornerShape(12.dp),
+                    ) {
+                        if (uiState.isLoading) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp),
+                                color = MaterialTheme.colorScheme.onPrimary,
+                            )
+                        } else {
+                            Text(
+                                text = "Get Code",
+                                style = MaterialTheme.typography.titleMedium,
+                            )
+                        }
+                    }
+
+                    // Rate limit timer
+                    if (uiState.isRateLimited) {
+                        RateLimitTimer(seconds = uiState.rateLimitSeconds)
+                    }
                 }
             }
 
-            // Rate limit timer
-            if (uiState.isRateLimited) {
-                RateLimitTimer(seconds = uiState.rateLimitSeconds)
-            }
-                }
-            }
-
-            // Информационные блоки внизу
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                // Первый блок - предупреждение о SMS
-                InfoBox(
-                    icon = "⚠",
-                    text = "By continuing, you agree to receive a one-time SMS verification code for login. Message and data rates may apply.",
-                    gradientColors = listOf(
-                        Color(0xFF6B46C1), // Purple
-                        Color(0xFF4C1D95), // Darker purple
-                    ),
-                )
-
-                // Второй блок - информация о коде
-                InfoBox(
-                    icon = "💡",
-                    text = "We'll send you a 6-digit code to verify your number.",
-                    gradientColors = listOf(
-                        Color(0xFF0EA5E9), // Light blue
-                        Color(0xFF06B6D4), // Cyan
-                    ),
-                )
-            }
+            // Support text внизу - занимает минимально требуемое пространство
+            SupportText()
         }
     }
 }
@@ -486,6 +525,37 @@ private fun AutoSizeText(
             }
         },
     )
+}
+
+@Suppress("FunctionName")
+@Composable
+private fun SupportText() {
+    val emailLauncher = rememberEmailLauncher()
+    val email = "support@shiplocate.com"
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = "Having troubles? ",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Text(
+            text = email,
+            style = MaterialTheme.typography.bodySmall.copy(
+                color = MaterialTheme.colorScheme.primary,
+                textDecoration = TextDecoration.Underline,
+            ),
+            modifier = Modifier.clickable {
+                emailLauncher.openEmail(email)
+            },
+        )
+    }
 }
 
 @Suppress("FunctionName")
