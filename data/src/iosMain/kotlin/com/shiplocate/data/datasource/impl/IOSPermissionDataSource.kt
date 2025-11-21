@@ -27,7 +27,6 @@ class IOSPermissionDataSource(
             hasLocationPermission = permissionManager.hasLocationPermissions(),
             hasBackgroundLocationPermission = permissionManager.hasBackgroundLocationPermission(),
             hasNotificationPermission = permissionManager.hasNotificationPermission(),
-            hasActivityRecognitionPermission = permissionManager.hasActivityRecognitionPermission(),
             isBatteryOptimizationDisabled = permissionManager.isBatteryOptimizationDisabled(),
         )
     }
@@ -43,7 +42,7 @@ class IOSPermissionDataSource(
             // Получаем финальный статус разрешений
             val status = getPermissionStatus()
 
-            if (status.hasLocationPermission && status.hasBackgroundLocationPermission && status.hasNotificationPermission && status.hasActivityRecognitionPermission) {
+            if (status.hasLocationPermission && status.hasBackgroundLocationPermission && status.hasNotificationPermission) {
                 Result.success(status)
             } else {
                 Result.failure(Exception("Не все разрешения получены"))
