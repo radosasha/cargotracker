@@ -5,8 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.shiplocate.core.logging.LogCategory
 import com.shiplocate.core.logging.Logger
 import com.shiplocate.domain.model.load.LoadStatus
+import com.shiplocate.domain.usecase.GetActiveLoadUseCase
 import com.shiplocate.domain.usecase.GetPermissionStatusUseCase
-import com.shiplocate.domain.usecase.HasActiveLoadUseCase
 import com.shiplocate.domain.usecase.ObservePermissionsUseCase
 import com.shiplocate.domain.usecase.ObserveReceivedPushesUseCase
 import com.shiplocate.domain.usecase.RequestNotificationPermissionUseCase
@@ -37,7 +37,7 @@ import kotlinx.coroutines.withContext
 class LoadsViewModel(
     private val getLoadsUseCase: GetLoadsUseCase,
     private val getCachedLoadsUseCase: GetCachedLoadsUseCase,
-    private val hasActiveLoadUseCase: HasActiveLoadUseCase,
+    private val getActiveLoadUseCase: GetActiveLoadUseCase,
     private val startTrackingUseCase: StartTrackingUseCase,
     private val stopTrackingUseCase: StopTrackingUseCase,
     private val permissionStatusUseCase: GetPermissionStatusUseCase,
@@ -197,7 +197,7 @@ class LoadsViewModel(
 
                 // Проверяем состояние из DataStore
                 val isTrackingActive = withContext(Dispatchers.Default) {
-                    hasActiveLoadUseCase()
+                    getActiveLoadUseCase() != null
                 }
 
                 if (isTrackingActive) {
@@ -247,7 +247,7 @@ class LoadsViewModel(
         }
 
         viewModelScope.launch {
-            val cachedLoads = getCachedLoadsUseCase()
+            val activeLoad = getActiveLoadUseCase()
             val result = withContext(Dispatchers.Default) {
                 getLoadsUseCase()
             }
@@ -256,7 +256,9 @@ class LoadsViewModel(
                 onSuccess = { loads ->
                     logger.info(LogCategory.UI, "LoadsViewModel: Successfully loaded ${loads.size} loads")
 
-                    stopTrackingIfLoadUnlinkedUseCase(cachedLoads)
+                    if (activeLoad != null) {
+                        stopTrackingIfLoadUnlinkedUseCase(activeLoad)
+                    }
                     // Сортируем список по дате создания (createdAt) - новые сверху
                     val sortedLoads = loads.sortedByDescending { it.createdAt }
 

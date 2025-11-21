@@ -5,8 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.shiplocate.core.logging.LogCategory
 import com.shiplocate.core.logging.Logger
 import com.shiplocate.domain.repository.LoadRepository
+import com.shiplocate.domain.usecase.GetActiveLoadUseCase
 import com.shiplocate.domain.usecase.GetPermissionStatusUseCase
-import com.shiplocate.domain.usecase.HasActiveLoadUseCase
 import com.shiplocate.domain.usecase.ObservePermissionsUseCase
 import com.shiplocate.domain.usecase.StartTrackingUseCase
 import com.shiplocate.domain.usecase.StopTrackingUseCase
@@ -31,7 +31,7 @@ import kotlinx.coroutines.withContext
 class LoadViewModel(
     private val getPermissionStatusUseCase: GetPermissionStatusUseCase,
     private val observePermissionsUseCase: ObservePermissionsUseCase,
-    private val hasActiveLoadUseCase: HasActiveLoadUseCase,
+    private val getActiveLoadUseCase: GetActiveLoadUseCase,
     private val startTrackingUseCase: StartTrackingUseCase,
     private val stopTrackingUseCase: StopTrackingUseCase,
     private val connectToLoadUseCase: ConnectToLoadUseCase,
@@ -72,7 +72,7 @@ class LoadViewModel(
         viewModelScope.launch {
             try {
                 val permissionStatus = getPermissionStatusUseCase()
-                val hasActiveLoad = hasActiveLoadUseCase()
+                val hasActiveLoad = getActiveLoadUseCase() != null
 
                 _uiState.value =
                     _uiState.value.copy(
@@ -147,7 +147,7 @@ class LoadViewModel(
                 val result = startTrackingUseCase(loadId)
                 if (result.isSuccess) {
                     // Обновляем статус трекинга
-                    val hasActiveLoad = hasActiveLoadUseCase()
+                    val hasActiveLoad = getActiveLoadUseCase() != null
                     _uiState.value =
                         _uiState.value.copy(
                             hasActiveLoad = hasActiveLoad,
@@ -339,7 +339,7 @@ class LoadViewModel(
                 logger.info(LogCategory.UI, "HomeViewModel: Successfully stopped tracking after marking load as delivered")
 
                 // Обновляем статус трекинга
-                val hasActiveLoad = hasActiveLoadUseCase()
+                val hasActiveLoad = getActiveLoadUseCase() != null
                 _uiState.value =
                     _uiState.value.copy(
                         hasActiveLoad = hasActiveLoad,

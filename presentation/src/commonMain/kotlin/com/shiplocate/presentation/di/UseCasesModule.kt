@@ -1,10 +1,10 @@
 package com.shiplocate.presentation.di
 
+import com.shiplocate.domain.usecase.GetActiveLoadUseCase
 import com.shiplocate.domain.usecase.GetDeviceInfoUseCase
 import com.shiplocate.domain.usecase.GetPermissionStatusUseCase
 import com.shiplocate.domain.usecase.HandleFirebaseTokenUseCase
 import com.shiplocate.domain.usecase.HandlePushNotificationWhenAppKilledUseCase
-import com.shiplocate.domain.usecase.HasActiveLoadUseCase
 import com.shiplocate.domain.usecase.ManageFirebaseTokensUseCase
 import com.shiplocate.domain.usecase.NotifyPermissionGrantedUseCase
 import com.shiplocate.domain.usecase.ObservePermissionsUseCase
@@ -60,7 +60,7 @@ val useCasesModule =
         factoryOf(::NotifyPermissionGrantedUseCase)
 
         // Tracking Use Cases
-        factoryOf(::HasActiveLoadUseCase)
+        factoryOf(::GetActiveLoadUseCase)
         factoryOf(::StartTrackingUseCase)
         factoryOf(::StopTrackingUseCase)
 

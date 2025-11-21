@@ -13,18 +13,15 @@ class StopTrackingIfLoadUnlinkedUseCase(
     private val trackingRepository: TrackingRepository,
 ) {
 
-    suspend operator fun invoke(cachedLoads: List<Load>) {
-        val connectedLoad = loadsRepository.getConnectedLoad()
-        if (connectedLoad != null) {
-            val loads = loadsRepository.getCachedLoads()
-            val stillInActive = loads.any { it.id == connectedLoad.id && it.loadStatus == LoadStatus.LOAD_STATUS_CONNECTED }
-            if (!stillInActive) {
-                logger.info(
-                    LogCategory.GENERAL,
-                    "HandlePushNotificationWhenAppKilledUseCase: Load was IN_TRANSIT, but now it's not, Stop tracking"
-                )
-                trackingRepository.stopTracking()
-            }
+    suspend operator fun invoke(activeLoad: Load) {
+        val loads = loadsRepository.getCachedLoads()
+        val stillInActive = loads.any { it.id == activeLoad.id && it.loadStatus == LoadStatus.LOAD_STATUS_CONNECTED }
+        if (!stillInActive) {
+            logger.info(
+                LogCategory.GENERAL,
+                "HandlePushNotificationWhenAppKilledUseCase: Load was IN_TRANSIT, but now it's not, Stop tracking"
+            )
+            trackingRepository.stopTracking()
         }
     }
 }
