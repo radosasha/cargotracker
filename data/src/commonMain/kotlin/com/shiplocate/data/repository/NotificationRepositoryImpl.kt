@@ -109,4 +109,16 @@ class NotificationRepositoryImpl(
     override fun observeReceivedPushes(): Flow<Unit> {
         return firebaseTokenRemoteDataSource.observeReceivedPushes()
     }
+
+    override suspend fun onNewTokenReceived(token: String) {
+        firebaseTokenService.onNewTokenReceived(token)
+    }
+
+    override fun onPushNotificationReceived(userInfo: Map<String, Any>) {
+        firebaseTokenService.onPushNotificationReceived(userInfo)
+    }
+
+    override suspend fun pushReceived() {
+        firebaseTokenRemoteDataSource.pushReceived()
+    }
 }

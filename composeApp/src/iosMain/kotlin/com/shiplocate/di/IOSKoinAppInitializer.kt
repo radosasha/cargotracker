@@ -2,7 +2,7 @@ package com.shiplocate.di
 
 import com.shiplocate.core.logging.LogCategory
 import com.shiplocate.core.logging.Logger
-import com.shiplocate.data.datasource.FirebaseTokenServiceDataSource
+import com.shiplocate.domain.repository.NotificationRepository
 import com.shiplocate.domain.usecase.ManageFirebaseTokensUseCase
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -18,7 +18,7 @@ import org.koin.core.component.inject
 class IOSKoinAppInitializer : KoinComponent {
     
     private val manageFirebaseTokensUseCase: ManageFirebaseTokensUseCase by inject()
-    private val firebaseTokenServiceDataSource: FirebaseTokenServiceDataSource by inject()
+    private val notificationRepository: NotificationRepository by inject()
     private val logger: Logger by inject()
     
     /**
@@ -30,7 +30,7 @@ class IOSKoinAppInitializer : KoinComponent {
             // Устанавливаем зависимости в IOSKoinApp
             IOSKoinApp.setDependencies(
                 manageFirebaseTokensUseCase = manageFirebaseTokensUseCase,
-                firebaseTokenServiceDataSource = firebaseTokenServiceDataSource,
+                notificationRepository = notificationRepository,
                 logger = logger
             )
             

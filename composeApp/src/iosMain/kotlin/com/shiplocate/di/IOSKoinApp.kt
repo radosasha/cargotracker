@@ -4,8 +4,7 @@ package com.shiplocate.di
 
 import com.shiplocate.core.logging.LogCategory
 import com.shiplocate.core.logging.Logger
-import com.shiplocate.data.datasource.FirebaseTokenRemoteDataSource
-import com.shiplocate.data.datasource.FirebaseTokenServiceDataSource
+import com.shiplocate.domain.repository.NotificationRepository
 import com.shiplocate.domain.usecase.HandlePushNotificationWhenAppKilledUseCase
 import com.shiplocate.domain.usecase.ManageFirebaseTokensUseCase
 import com.shiplocate.trackingsdk.di.trackingSDKModule
@@ -33,7 +32,7 @@ object IOSKoinApp {
 
     // Зависимости внедряются через конструкторы (Clean Architecture)
     private var manageFirebaseTokensUseCase: ManageFirebaseTokensUseCase? = null
-    private var firebaseTokenServiceDataSource: FirebaseTokenServiceDataSource? = null
+    private var notificationRepository: NotificationRepository? = null
     private var logger: Logger? = null
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
@@ -66,11 +65,11 @@ object IOSKoinApp {
      */
     fun setDependencies(
         manageFirebaseTokensUseCase: ManageFirebaseTokensUseCase,
-        firebaseTokenServiceDataSource: FirebaseTokenServiceDataSource,
+        notificationRepository: NotificationRepository,
         logger: Logger,
     ) {
         this.manageFirebaseTokensUseCase = manageFirebaseTokensUseCase
-        this.firebaseTokenServiceDataSource = firebaseTokenServiceDataSource
+        this.notificationRepository = notificationRepository
         this.logger = logger
         logger.info(LogCategory.GENERAL, "IOSKoinApp: Dependencies set successfully")
     }
@@ -110,17 +109,17 @@ object IOSKoinApp {
             return
         }
 
-        val dataSource = firebaseTokenServiceDataSource
-        if (dataSource == null) {
-            logger?.warn(LogCategory.GENERAL, "IOSKoinApp: FirebaseTokenServiceDataSource not set, skipping")
+        val repository = notificationRepository
+        if (repository == null) {
+            logger?.warn(LogCategory.GENERAL, "IOSKoinApp: NotificationRepository not set, skipping")
             return
         }
 
         try {
             scope.launch {
-                dataSource.onNewTokenReceived(token)
+                repository.onNewTokenReceived(token)
             }
-            logger?.info(LogCategory.GENERAL, "IOSKoinApp: Token passed to data source successfully")
+            logger?.info(LogCategory.GENERAL, "IOSKoinApp: Token passed to repository successfully")
         } catch (e: Exception) {
             logger?.error(LogCategory.GENERAL, "IOSKoinApp: Failed to pass token: ${e.message}")
         }
@@ -128,6 +127,7 @@ object IOSKoinApp {
 
     /**
      * Получение текущего Firebase токена от iOS
+     * Сохраняет токен в локальное хранилище
      */
     fun onCurrentTokenReceived(token: String?) {
         if (!isInitialized) {
@@ -135,17 +135,21 @@ object IOSKoinApp {
             return
         }
 
-        val dataSource = firebaseTokenServiceDataSource
-        if (dataSource == null) {
-            logger?.warn(LogCategory.GENERAL, "IOSKoinApp: FirebaseTokenServiceDataSource not set, skipping")
+        val repository = notificationRepository
+        if (repository == null) {
+            logger?.warn(LogCategory.GENERAL, "IOSKoinApp: NotificationRepository not set, skipping")
             return
         }
 
         try {
-            dataSource.onTokenReceived(token)
-            logger?.info(LogCategory.GENERAL, "IOSKoinApp: Current token passed to data source successfully")
+            if (token != null) {
+                scope.launch {
+                    repository.saveToken(token)
+                }
+                logger?.info(LogCategory.GENERAL, "IOSKoinApp: Current token saved to repository successfully")
+            }
         } catch (e: Exception) {
-            logger?.error(LogCategory.GENERAL, "IOSKoinApp: Failed to pass current token: ${e.message}")
+            logger?.error(LogCategory.GENERAL, "IOSKoinApp: Failed to save current token: ${e.message}")
         }
     }
 
@@ -167,10 +171,15 @@ object IOSKoinApp {
                 return
             }
             
-            val firebaseTokenRemoteDataSource: FirebaseTokenRemoteDataSource = koin.get()
+            val repository: NotificationRepository = koin.get()
+            
+            // Передаем уведомление в Repository
+            repository.onPushNotificationReceived(emptyMap())
             
             // Уведомляем о получении push (для случая когда приложение запущено)
-            firebaseTokenRemoteDataSource.pushReceived()
+            scope.launch {
+                repository.pushReceived()
+            }
             
             // Обрабатываем push когда приложение не запущено
             val handlePushUseCase: HandlePushNotificationWhenAppKilledUseCase = koin.get()
@@ -195,7 +204,7 @@ object IOSKoinApp {
         applicationScope?.cancel()
         applicationScope = null
         manageFirebaseTokensUseCase = null
-        firebaseTokenServiceDataSource = null
+        notificationRepository = null
         stopKoin()
         isInitialized = false
         logger?.info(LogCategory.GENERAL, "IOSKoinApp: Stopped successfully")

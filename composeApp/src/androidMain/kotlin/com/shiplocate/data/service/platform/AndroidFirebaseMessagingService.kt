@@ -9,8 +9,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
-import com.shiplocate.data.datasource.FirebaseTokenRemoteDataSource
-import com.shiplocate.data.datasource.FirebaseTokenServiceDataSource
+import com.shiplocate.domain.repository.NotificationRepository
 import com.shiplocate.domain.usecase.HandlePushNotificationWhenAppKilledUseCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -25,8 +24,7 @@ import kotlin.random.Random
  * Только получает события от Firebase и передает в DataSource
  */
 class AndroidFirebaseMessagingService : FirebaseMessagingService(), KoinComponent {
-    private val firebaseTokenServiceDataSource: FirebaseTokenServiceDataSource by inject()
-    private val firebaseTokenRemoteDataSource: FirebaseTokenRemoteDataSource by inject()
+    private val notificationRepository: NotificationRepository by inject()
     private val handlePushNotificationWhenAppKilledUseCase: HandlePushNotificationWhenAppKilledUseCase by inject()
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -36,8 +34,8 @@ class AndroidFirebaseMessagingService : FirebaseMessagingService(), KoinComponen
         println("Android: New Firebase token received: $token")
 
         scope.launch {
-            // Передаем токен в DataSource (Data Layer)
-            firebaseTokenServiceDataSource.onNewTokenReceived(token)
+            // Передаем токен в Repository
+            notificationRepository.onNewTokenReceived(token)
         }
     }
 
@@ -45,12 +43,12 @@ class AndroidFirebaseMessagingService : FirebaseMessagingService(), KoinComponen
         super.onMessageReceived(remoteMessage)
         println("Android: Firebase message received: ${remoteMessage.data}")
 
-        // Передаем уведомление в DataSource (Data Layer)
-        firebaseTokenServiceDataSource.onPushNotificationReceived(remoteMessage.data)
+        // Передаем уведомление в Repository
+        notificationRepository.onPushNotificationReceived(remoteMessage.data)
 
         // Уведомляем о получении push (для случая когда приложение запущено)
         scope.launch {
-            firebaseTokenRemoteDataSource.pushReceived()
+            notificationRepository.pushReceived()
         }
 
         // Обрабатываем push когда приложение не запущено (onMessageReceived вызывается даже когда app killed, если есть data payload)
