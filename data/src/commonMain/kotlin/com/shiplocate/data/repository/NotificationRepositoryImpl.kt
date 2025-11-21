@@ -105,4 +105,8 @@ class NotificationRepositoryImpl(
     override suspend fun saveToken(token: String) {
         firebaseTokenLocalDataSource.saveToken(token)
     }
+
+    override fun observeReceivedPushes(): Flow<Unit> {
+        return firebaseTokenRemoteDataSource.observeReceivedPushes()
+    }
 }

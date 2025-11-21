@@ -9,7 +9,9 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
+import com.shiplocate.data.datasource.FirebaseTokenRemoteDataSource
 import com.shiplocate.data.datasource.FirebaseTokenServiceDataSource
+import com.shiplocate.domain.usecase.HandlePushNotificationWhenAppKilledUseCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -24,6 +26,8 @@ import kotlin.random.Random
  */
 class AndroidFirebaseMessagingService : FirebaseMessagingService(), KoinComponent {
     private val firebaseTokenServiceDataSource: FirebaseTokenServiceDataSource by inject()
+    private val firebaseTokenRemoteDataSource: FirebaseTokenRemoteDataSource by inject()
+    private val handlePushNotificationWhenAppKilledUseCase: HandlePushNotificationWhenAppKilledUseCase by inject()
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
@@ -43,6 +47,20 @@ class AndroidFirebaseMessagingService : FirebaseMessagingService(), KoinComponen
 
         // Передаем уведомление в DataSource (Data Layer)
         firebaseTokenServiceDataSource.onPushNotificationReceived(remoteMessage.data)
+
+        // Уведомляем о получении push (для случая когда приложение запущено)
+        scope.launch {
+            firebaseTokenRemoteDataSource.pushReceived()
+        }
+
+        // Обрабатываем push когда приложение не запущено (onMessageReceived вызывается даже когда app killed, если есть data payload)
+        scope.launch {
+            try {
+                handlePushNotificationWhenAppKilledUseCase()
+            } catch (e: Exception) {
+                println("Android: Failed to handle push notification when app killed: ${e.message}")
+            }
+        }
 
         // Показываем уведомление в foreground вручную
         try {

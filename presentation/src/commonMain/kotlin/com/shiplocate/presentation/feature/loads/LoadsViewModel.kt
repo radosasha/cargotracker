@@ -8,6 +8,7 @@ import com.shiplocate.domain.model.load.LoadStatus
 import com.shiplocate.domain.usecase.GetPermissionStatusUseCase
 import com.shiplocate.domain.usecase.HasActiveLoadUseCase
 import com.shiplocate.domain.usecase.ObservePermissionsUseCase
+import com.shiplocate.domain.usecase.ObserveReceivedPushesUseCase
 import com.shiplocate.domain.usecase.RequestNotificationPermissionUseCase
 import com.shiplocate.domain.usecase.SendCachedTokenOnAuthUseCase
 import com.shiplocate.domain.usecase.StartTrackingUseCase
@@ -44,6 +45,7 @@ class LoadsViewModel(
     private val rejectLoadUseCase: RejectLoadUseCase,
     private val requestNotificationPermissionUseCase: RequestNotificationPermissionUseCase,
     private val sendCachedTokenOnAuthUseCase: SendCachedTokenOnAuthUseCase,
+    private val observeReceivedPushesUseCase: ObserveReceivedPushesUseCase,
     private val logger: Logger,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow<LoadsUiState>(LoadsUiState.Loading)
@@ -76,6 +78,14 @@ class LoadsViewModel(
             .onEach { status ->
                 logger.debug(LogCategory.PERMISSIONS, "LoadsViewModel: Received permission status update from Flow")
                 updatePermissionsWarning(status)
+            }
+            .launchIn(viewModelScope)
+
+        // Подписываемся на push-уведомления когда приложение запущено
+        observeReceivedPushesUseCase()
+            .onEach {
+                logger.info(LogCategory.GENERAL, "LoadsViewModel: Received push notification, refreshing loads")
+                refresh()
             }
             .launchIn(viewModelScope)
     }

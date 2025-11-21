@@ -49,8 +49,8 @@ class AppDelegate: NSObject, UIApplicationDelegate, MessagingDelegate, UNUserNot
                               withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
         print("iOS: Received notification in foreground: \(notification.request.content.userInfo)")
         
-        // TODO: Передать уведомление в KMP модуль
-        // Пока просто логируем
+        // Передаем уведомление в KMP модуль
+        IOSKoinAppKt.handleIOSPushNotification()
         
         completionHandler([[.alert, .sound, .badge]])
     }
@@ -60,8 +60,8 @@ class AppDelegate: NSObject, UIApplicationDelegate, MessagingDelegate, UNUserNot
                               withCompletionHandler completionHandler: @escaping () -> Void) {
         print("iOS: User tapped notification: \(response.notification.request.content.userInfo)")
         
-        // TODO: Передать уведомление в KMP модуль
-        // Пока просто логируем
+        // Передаем уведомление в KMP модуль
+        IOSKoinAppKt.handleIOSPushNotification()
         
         completionHandler()
     }

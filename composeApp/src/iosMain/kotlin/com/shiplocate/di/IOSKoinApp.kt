@@ -4,7 +4,9 @@ package com.shiplocate.di
 
 import com.shiplocate.core.logging.LogCategory
 import com.shiplocate.core.logging.Logger
+import com.shiplocate.data.datasource.FirebaseTokenRemoteDataSource
 import com.shiplocate.data.datasource.FirebaseTokenServiceDataSource
+import com.shiplocate.domain.usecase.HandlePushNotificationWhenAppKilledUseCase
 import com.shiplocate.domain.usecase.ManageFirebaseTokensUseCase
 import com.shiplocate.trackingsdk.di.trackingSDKModule
 import kotlinx.coroutines.CoroutineScope
@@ -13,6 +15,8 @@ import kotlinx.coroutines.IO
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 
@@ -146,6 +150,45 @@ object IOSKoinApp {
     }
 
     /**
+     * Обработка push-уведомления когда приложение запущено
+     * Вызывается из iOS кода
+     */
+    fun onPushNotificationReceived() {
+        if (!isInitialized) {
+            logger?.warn(LogCategory.GENERAL, "IOSKoinApp: Not initialized, skipping push notification")
+            return
+        }
+
+        try {
+            // Получаем зависимости через GlobalContext (единственный способ в top-level функции)
+            val koin = org.koin.core.context.GlobalContext.getOrNull()
+            if (koin == null) {
+                logger?.warn(LogCategory.GENERAL, "IOSKoinApp: Koin not initialized, skipping push notification")
+                return
+            }
+            
+            val firebaseTokenRemoteDataSource: FirebaseTokenRemoteDataSource = koin.get()
+            
+            // Уведомляем о получении push (для случая когда приложение запущено)
+            firebaseTokenRemoteDataSource.pushReceived()
+            
+            // Обрабатываем push когда приложение не запущено
+            val handlePushUseCase: HandlePushNotificationWhenAppKilledUseCase = koin.get()
+            scope.launch {
+                try {
+                    handlePushUseCase()
+                } catch (e: Exception) {
+                    logger?.error(LogCategory.GENERAL, "IOSKoinApp: Failed to handle push notification when app killed: ${e.message}")
+                }
+            }
+            
+            logger?.info(LogCategory.GENERAL, "IOSKoinApp: Push notification processed successfully")
+        } catch (e: Exception) {
+            logger?.error(LogCategory.GENERAL, "IOSKoinApp: Failed to process push notification: ${e.message}")
+        }
+    }
+
+    /**
      * Остановка Koin
      */
     fun stop() {
@@ -182,4 +225,8 @@ fun handleIOSNewToken(token: String) {
 
 fun handleIOSCurrentToken(token: String?) {
     IOSKoinApp.onCurrentTokenReceived(token)
+}
+
+fun handleIOSPushNotification() {
+    IOSKoinApp.onPushNotificationReceived()
 }

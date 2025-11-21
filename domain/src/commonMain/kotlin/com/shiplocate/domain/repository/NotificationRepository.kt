@@ -18,4 +18,10 @@ interface NotificationRepository {
     suspend fun getCurrentTokenFromFirebase(): String?
 
     suspend fun saveToken(token: String)
+
+    /**
+     * Наблюдать за получением push-уведомлений
+     * Возвращает Flow<Unit> который эмитит Unit при получении push
+     */
+    fun observeReceivedPushes(): Flow<Unit>
 }

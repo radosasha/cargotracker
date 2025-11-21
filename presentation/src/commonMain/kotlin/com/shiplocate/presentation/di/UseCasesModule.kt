@@ -3,10 +3,12 @@ package com.shiplocate.presentation.di
 import com.shiplocate.domain.usecase.GetDeviceInfoUseCase
 import com.shiplocate.domain.usecase.GetPermissionStatusUseCase
 import com.shiplocate.domain.usecase.HandleFirebaseTokenUseCase
+import com.shiplocate.domain.usecase.HandlePushNotificationWhenAppKilledUseCase
 import com.shiplocate.domain.usecase.HasActiveLoadUseCase
 import com.shiplocate.domain.usecase.ManageFirebaseTokensUseCase
 import com.shiplocate.domain.usecase.NotifyPermissionGrantedUseCase
 import com.shiplocate.domain.usecase.ObservePermissionsUseCase
+import com.shiplocate.domain.usecase.ObserveReceivedPushesUseCase
 import com.shiplocate.domain.usecase.RequestAllPermissionsUseCase
 import com.shiplocate.domain.usecase.RequestBackgroundLocationPermissionUseCase
 import com.shiplocate.domain.usecase.RequestBatteryOptimizationDisableUseCase
@@ -53,6 +55,7 @@ val useCasesModule =
         factoryOf(::RequestBackgroundLocationPermissionUseCase)
         factoryOf(::RequestBatteryOptimizationDisableUseCase)
         factoryOf(::ObservePermissionsUseCase)
+        factoryOf(::ObserveReceivedPushesUseCase)
         factoryOf(::NotifyPermissionGrantedUseCase)
 
         // Tracking Use Cases
@@ -84,6 +87,7 @@ val useCasesModule =
         factoryOf(::HandleFirebaseTokenUseCase)
         factoryOf(::ManageFirebaseTokensUseCase)
         factoryOf(::SendCachedTokenOnAuthUseCase)
+        factoryOf(::HandlePushNotificationWhenAppKilledUseCase)
 
         // Device Use Cases
         factoryOf(::GetDeviceInfoUseCase)

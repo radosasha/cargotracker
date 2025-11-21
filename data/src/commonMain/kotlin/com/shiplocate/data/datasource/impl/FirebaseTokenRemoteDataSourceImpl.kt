@@ -4,6 +4,8 @@ import com.shiplocate.data.datasource.FirebaseTokenRemoteDataSource
 import com.shiplocate.data.network.api.FirebaseTokenApi
 import com.shiplocate.data.network.dto.firebase.FirebaseTokenRequestDto
 import com.shiplocate.domain.repository.AuthPreferencesRepository
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 
 /**
  * Реализация FirebaseTokenRemoteDataSource
@@ -13,6 +15,8 @@ class FirebaseTokenRemoteDataSourceImpl(
     private val firebaseTokenApi: FirebaseTokenApi,
     private val authPreferencesRepository: AuthPreferencesRepository,
 ) : FirebaseTokenRemoteDataSource {
+    
+    private val _pushedFlow = MutableSharedFlow<Unit>(replay = 0)
     override suspend fun sendTokenToServer(token: String) {
         println("Sending Firebase token to server: $token")
 
@@ -56,5 +60,13 @@ class FirebaseTokenRemoteDataSourceImpl(
             println("Error clearing token: ${e.message}")
             throw e
         }
+    }
+
+    override suspend fun pushReceived() {
+        _pushedFlow.emit(Unit)
+    }
+
+    override fun observeReceivedPushes(): Flow<Unit> {
+        return _pushedFlow
     }
 }
