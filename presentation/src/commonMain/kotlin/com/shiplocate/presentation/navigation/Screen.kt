@@ -8,11 +8,11 @@ object Screen {
     const val ENTER_PHONE = "enter_phone"
     const val ENTER_PIN = "enter_pin/{phone}"
     const val LOADS = "loads"
-    const val HOME = "home/{loadId}"
+    const val LOAD = "load/{loadId}"
     const val LOGS = "logs"
     const val PERMISSIONS = "permissions"
 
     fun enterPin(phone: String) = "enter_pin/$phone"
 
-    fun home(loadId: Long) = "home/$loadId"
+    fun load(loadId: Long) = "load/$loadId"
 }

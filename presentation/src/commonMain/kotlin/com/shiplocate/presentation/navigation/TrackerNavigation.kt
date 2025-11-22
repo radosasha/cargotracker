@@ -215,7 +215,8 @@ fun TrackerNavigation(
             // Обновляем данные из кеша когда текущий экран - LoadsScreen
             // Это сработает при первом открытии и при возврате на экран
             LaunchedEffect(currentBackStackEntry?.destination?.route) {
-                if (currentBackStackEntry?.destination?.route == Screen.LOADS) {
+                val currentRoute = currentBackStackEntry?.destination?.route
+                if (currentRoute == Screen.LOADS) {
                     viewModel.fetchLoadsFromCache()
                     // Проверяем, был ли возврат после reject
                     val savedStateHandle = currentBackStackEntry?.savedStateHandle
@@ -243,7 +244,7 @@ fun TrackerNavigation(
                 paddingValues = paddingValues,
                 viewModel = viewModel,
                 onLoadClick = { loadId ->
-                    navController.navigate(Screen.home(loadId))
+                    navController.navigate(Screen.load(loadId))
                 },
                 onNavigateToPermissions = {
                     navController.navigate(Screen.PERMISSIONS)
@@ -252,7 +253,7 @@ fun TrackerNavigation(
         }
 
         composable(
-            route = Screen.HOME,
+            route = Screen.LOAD,
             arguments =
                 listOf(
                     navArgument("loadId") { type = NavType.LongType },
@@ -274,6 +275,24 @@ fun TrackerNavigation(
             val viewModel: LoadViewModel = viewModel(
                 factory = loadViewModelFactory,
             )
+
+            // Обновляем данные из кеша когда текущий экран - LoadsScreen
+            // Это сработает при первом открытии и при возврате на экран
+            val currentBackStackEntry by navController.currentBackStackEntryAsState()
+            LaunchedEffect(currentBackStackEntry?.destination?.route) {
+                val currentRoute = currentBackStackEntry?.destination?.route
+                if (currentRoute == Screen.LOAD) {
+                    if (currentRoute == Screen.LOAD) {
+                        val savedStateHandle = currentBackStackEntry?.savedStateHandle
+                        val startTracking = savedStateHandle?.get<Boolean>("startTracking") ?: false
+                        if (startTracking) {
+                            viewModel.startTracking()
+                            savedStateHandle?.remove<Boolean>("startTracking")
+                        }
+                    }
+                }
+            }
+
             LoadScreen(
                 paddingValues = paddingValues,
                 loadId = loadId,
@@ -316,17 +335,17 @@ fun TrackerNavigation(
             val viewModel: PermissionsViewModel = viewModel(
                 factory = permissionsViewModelFactory,
             )
-            
-            // Получаем savedStateHandle из LoadsScreen для передачи флага старта трекинга
-            val loadsEntry = navController.getBackStackEntry(Screen.LOADS)
-            
+
+
             PermissionsScreen(
                 paddingValues = paddingValues,
                 viewModel = viewModel,
                 onContinue = {
+                    // Получаем savedStateHandle из LoadsScreen для передачи флага старта трекинга
+                    val previousBackStackEntry = navController.previousBackStackEntry
                     // Устанавливаем флаг для автоматического старта трекинга
                     // Это сработает только если пользователь пришел с LoadsScreen
-                    loadsEntry.savedStateHandle["startTracking"] = true
+                    previousBackStackEntry?.savedStateHandle["startTracking"] = true
                     navController.popBackStack()
                 },
             )

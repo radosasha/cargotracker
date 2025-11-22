@@ -40,8 +40,8 @@ fun TrackerTopAppBar(
 
     // Определяем заголовок в зависимости от текущего маршрута
     val title = when {
-        currentRoute?.startsWith(Screen.HOME) == true -> "Manage load"
-        currentRoute == Screen.LOADS -> "Loads"
+        currentRoute?.startsWith(Screen.LOAD) == true -> "Manage load"
+        currentRoute == Screen.LOADS -> "ShipLocate"
         currentRoute == Screen.LOGS -> "Logs"
         else -> "ShipLocate"
     }
