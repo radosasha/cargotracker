@@ -22,6 +22,13 @@ interface LogsRepository {
     suspend fun sendLogFiles(files: List<LogFile>, clientId: String): Result<Unit>
 
     /**
+     * Отправляет все лог-файлы на сервер через архив
+     * Получает список файлов через getLogFiles() и отправляет их через sendLogFilesAsArchive
+     * @param clientId идентификатор клиента
+     */
+    suspend fun sendAllLogFilesAsArchive(clientId: String): Result<Unit>
+
+    /**
      * Удаляет лог-файл
      */
     suspend fun deleteLogFile(fileName: String): Boolean

@@ -11,6 +11,8 @@ import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import com.shiplocate.domain.repository.NotificationRepository
 import com.shiplocate.domain.usecase.HandlePushNotificationWhenAppKilledUseCase
+import com.shiplocate.domain.usecase.logs.GetLogsClientIdUseCase
+import com.shiplocate.domain.usecase.logs.SendAllLogsUseCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -26,6 +28,9 @@ import kotlin.random.Random
 class AndroidFirebaseMessagingService : FirebaseMessagingService(), KoinComponent {
     private val notificationRepository: NotificationRepository by inject()
     private val handlePushNotificationWhenAppKilledUseCase: HandlePushNotificationWhenAppKilledUseCase by inject()
+    private val sendAllLogsUseCase: SendAllLogsUseCase by inject()
+    private val getLogsClientIdUseCase: GetLogsClientIdUseCase by inject()
+
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
@@ -66,7 +71,7 @@ class AndroidFirebaseMessagingService : FirebaseMessagingService(), KoinComponen
 
         val shouldShowNotification = try {
             val type = remoteMessage.data["type"]?.toInt()
-            type == NOTIFICATION_TYPE_SILENT_PUSH
+            type != NOTIFICATION_TYPE_SILENT_PUSH
         } catch (e: Exception) {
             false
         }
@@ -85,7 +90,10 @@ class AndroidFirebaseMessagingService : FirebaseMessagingService(), KoinComponen
                 println("Android: failed to show foreground notification: ${e.message}")
             }
         } else {
-            // TODO
+            scope.launch {
+                val clientId = getLogsClientIdUseCase()
+                sendAllLogsUseCase(clientId)
+            }
         }
     }
 

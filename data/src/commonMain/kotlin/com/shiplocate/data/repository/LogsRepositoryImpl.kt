@@ -92,6 +92,28 @@ class LogsRepositoryImpl(
         }
     }
 
+    override suspend fun sendAllLogFilesAsArchive(clientId: String): Result<Unit> {
+        return try {
+            logger.info(LogCategory.GENERAL, "LogsRepository: Getting all log files to send as archive")
+
+            // Получаем все лог-файлы
+            val allFiles = getLogFiles()
+
+            if (allFiles.isEmpty()) {
+                logger.warn(LogCategory.GENERAL, "LogsRepository: No log files found to send")
+                return Result.failure(IllegalStateException("No log files found"))
+            }
+
+            logger.info(LogCategory.GENERAL, "LogsRepository: Found ${allFiles.size} log files, sending as archive")
+
+            // Отправляем все файлы через sendLogFilesAsArchive
+            sendLogFilesAsArchive(allFiles, clientId)
+        } catch (e: Exception) {
+            logger.error(LogCategory.GENERAL, "LogsRepository: Error sending all log files as archive: ${e.message}", e)
+            Result.failure(e)
+        }
+    }
+
     override suspend fun deleteLogFile(fileName: String): Boolean {
         return try {
             logger.debug(LogCategory.GENERAL, "LogsRepository: Deleting log file: $fileName")

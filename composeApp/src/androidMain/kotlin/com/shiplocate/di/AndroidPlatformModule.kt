@@ -3,6 +3,7 @@ package com.shiplocate.di
 import com.shiplocate.data.datasource.FirebaseTokenService
 import com.shiplocate.data.datasource.FirebaseTokenServiceAdapter
 import com.shiplocate.data.datasource.FirebaseTokenServiceDataSource
+import com.shiplocate.domain.usecase.logs.SendAllLogsUseCase
 import com.shiplocate.domain.usecase.logs.SendLogsUseCase
 import org.koin.dsl.module
 
@@ -18,7 +19,8 @@ val androidPlatformModule = module {
     single<FirebaseTokenService> { FirebaseTokenServiceAdapter(get()) }
     
     // Регистрируем SendLogsUseCase для Android
-    single<SendLogsUseCase> { 
-        SendLogsUseCase(get(), get()) 
+    single<SendLogsUseCase> {
+        SendLogsUseCase(get(), get())
     }
+    single<SendAllLogsUseCase> { SendAllLogsUseCase(get(), get()) }
 }
