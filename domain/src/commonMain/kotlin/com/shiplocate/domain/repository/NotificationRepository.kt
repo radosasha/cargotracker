@@ -31,11 +31,6 @@ interface NotificationRepository {
     suspend fun onNewTokenReceived(token: String)
 
     /**
-     * Обработка push-уведомления (вызывается системой Firebase)
-     */
-    fun onPushNotificationReceived(userInfo: Map<String, Any>)
-
-    /**
      * Уведомить о получении push-уведомления
      * Вызывается когда приложение запущено и получает push
      */

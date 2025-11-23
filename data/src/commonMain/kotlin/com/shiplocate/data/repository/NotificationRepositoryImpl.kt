@@ -114,10 +114,6 @@ class NotificationRepositoryImpl(
         firebaseTokenService.onNewTokenReceived(token)
     }
 
-    override fun onPushNotificationReceived(userInfo: Map<String, Any>) {
-        firebaseTokenService.onPushNotificationReceived(userInfo)
-    }
-
     override suspend fun pushReceived() {
         firebaseTokenRemoteDataSource.pushReceived()
     }

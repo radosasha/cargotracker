@@ -1,11 +1,10 @@
 package com.shiplocate.data.datasource
 
+import com.google.firebase.messaging.FirebaseMessaging
 import com.shiplocate.core.logging.LogCategory
 import com.shiplocate.core.logging.Logger
-import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.tasks.await
 
 /**
@@ -36,10 +35,5 @@ actual class FirebaseTokenServiceDataSource(
     actual suspend fun onNewTokenReceived(token: String) {
         logger.info(LogCategory.GENERAL, "Android: New Firebase token received: ${token.take(20)}...")
         _newTokenFlow.emit(token)
-    }
-    
-    actual fun onPushNotificationReceived(userInfo: Map<String, Any>) {
-        logger.info(LogCategory.GENERAL, "Android: Push notification received: $userInfo")
-        // TODO: Implement push notification handling
     }
 }

@@ -1,6 +1,5 @@
 package com.shiplocate.data.datasource
 
-import com.shiplocate.data.datasource.FirebaseTokenService
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -20,9 +19,5 @@ class FirebaseTokenServiceAdapter(
     
     override suspend fun onNewTokenReceived(token: String) {
         firebaseTokenServiceDataSource.onNewTokenReceived(token)
-    }
-    
-    override fun onPushNotificationReceived(userInfo: Map<String, Any>) {
-        firebaseTokenServiceDataSource.onPushNotificationReceived(userInfo)
     }
 }

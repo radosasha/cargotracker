@@ -29,6 +29,13 @@ class AndroidFirebaseMessagingService : FirebaseMessagingService(), KoinComponen
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
+    private val NOTIFICATION_TYPE_NEW_LOAD: Int = 0
+    private val NOTIFICATION_TYPE_LOAD_ASSIGNED: Int = 1
+    private val NOTIFICATION_TYPE_LOAD_UPDATED: Int = 2
+    private val NOTIFICATION_TYPE_STOP_ENTERED: Int = 3
+    private val NOTIFICATION_TYPE_LOAD_UNAVAILABLE: Int = 4
+    private val NOTIFICATION_TYPE_SILENT_PUSH: Int = 5
+
     override fun onNewToken(token: String) {
         super.onNewToken(token)
         println("Android: New Firebase token received: $token")
@@ -42,9 +49,6 @@ class AndroidFirebaseMessagingService : FirebaseMessagingService(), KoinComponen
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
         super.onMessageReceived(remoteMessage)
         println("Android: Firebase message received: ${remoteMessage.data}")
-
-        // Передаем уведомление в Repository
-        notificationRepository.onPushNotificationReceived(remoteMessage.data)
 
         // Уведомляем о получении push (для случая когда приложение запущено)
         scope.launch {
@@ -60,19 +64,28 @@ class AndroidFirebaseMessagingService : FirebaseMessagingService(), KoinComponen
             }
         }
 
-        // Показываем уведомление в foreground вручную
-        try {
-            val title = remoteMessage.notification?.title
-                ?: remoteMessage.data["title"]
-                ?: "Notification"
-            val body = remoteMessage.notification?.body
-                ?: remoteMessage.data["body"]
-                ?: remoteMessage.data["command"]
-                ?: ""
-
-            showForegroundNotification(title, body)
+        val shouldShowNotification = try {
+            val type = remoteMessage.data["type"]?.toInt()
+            type == NOTIFICATION_TYPE_SILENT_PUSH
         } catch (e: Exception) {
-            println("Android: failed to show foreground notification: ${e.message}")
+            false
+        }
+        if (shouldShowNotification) { // Показываем уведомление в foreground вручную
+            try {
+                val title = remoteMessage.notification?.title
+                    ?: remoteMessage.data["title"]
+                    ?: "Notification"
+                val body = remoteMessage.notification?.body
+                    ?: remoteMessage.data["body"]
+                    ?: remoteMessage.data["command"]
+                    ?: ""
+
+                showForegroundNotification(title, body)
+            } catch (e: Exception) {
+                println("Android: failed to show foreground notification: ${e.message}")
+            }
+        } else {
+            // TODO
         }
     }
 

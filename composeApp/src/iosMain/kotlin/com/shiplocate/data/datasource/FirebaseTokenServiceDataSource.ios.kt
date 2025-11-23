@@ -43,17 +43,4 @@ actual class FirebaseTokenServiceDataSource(
         logger.info(LogCategory.GENERAL, "iOS: New Firebase token received: ${token.take(20)}...")
         _newTokenFlow.emit(token)
     }
-    
-    actual fun onPushNotificationReceived(userInfo: Map<String, Any>) {
-        logger.info(LogCategory.GENERAL, "iOS: Push notification received: $userInfo")
-        // TODO: Implement push notification handling
-    }
-    
-    /**
-     * Вызывается из Swift кода для передачи токена
-     */
-    fun onTokenReceived(token: String?) {
-        tokenCallback?.invoke(token)
-        tokenCallback = null
-    }
 }
