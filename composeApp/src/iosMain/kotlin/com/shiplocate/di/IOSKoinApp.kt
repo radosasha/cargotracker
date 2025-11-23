@@ -33,6 +33,7 @@ object IOSKoinApp {
     // Зависимости внедряются через конструкторы (Clean Architecture)
     private var manageFirebaseTokensUseCase: ManageFirebaseTokensUseCase? = null
     private var notificationRepository: NotificationRepository? = null
+    private var handlePushNotificationWhenAppKilledUseCase: HandlePushNotificationWhenAppKilledUseCase? = null
     private var logger: Logger? = null
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
@@ -66,10 +67,12 @@ object IOSKoinApp {
     fun setDependencies(
         manageFirebaseTokensUseCase: ManageFirebaseTokensUseCase,
         notificationRepository: NotificationRepository,
+        handlePushNotificationWhenAppKilledUseCase: HandlePushNotificationWhenAppKilledUseCase,
         logger: Logger,
     ) {
         this.manageFirebaseTokensUseCase = manageFirebaseTokensUseCase
         this.notificationRepository = notificationRepository
+        this.handlePushNotificationWhenAppKilledUseCase = handlePushNotificationWhenAppKilledUseCase
         this.logger = logger
         logger.info(LogCategory.GENERAL, "IOSKoinApp: Dependencies set successfully")
     }
@@ -164,14 +167,11 @@ object IOSKoinApp {
         }
 
         try {
-            // Получаем зависимости через GlobalContext (единственный способ в top-level функции)
-            val koin = org.koin.core.context.GlobalContext.getOrNull()
-            if (koin == null) {
-                logger?.warn(LogCategory.GENERAL, "IOSKoinApp: Koin not initialized, skipping push notification")
+            val repository = notificationRepository
+            if (repository == null) {
+                logger?.warn(LogCategory.GENERAL, "IOSKoinApp: NotificationRepository not set, skipping push notification")
                 return
             }
-            
-            val repository: NotificationRepository = koin.get()
             
             // Передаем уведомление в Repository
             repository.onPushNotificationReceived(emptyMap())
@@ -182,13 +182,17 @@ object IOSKoinApp {
             }
             
             // Обрабатываем push когда приложение не запущено
-            val handlePushUseCase: HandlePushNotificationWhenAppKilledUseCase = koin.get()
-            scope.launch {
-                try {
-                    handlePushUseCase()
-                } catch (e: Exception) {
-                    logger?.error(LogCategory.GENERAL, "IOSKoinApp: Failed to handle push notification when app killed: ${e.message}")
+            val handlePushUseCase = handlePushNotificationWhenAppKilledUseCase
+            if (handlePushUseCase != null) {
+                scope.launch {
+                    try {
+                        handlePushUseCase()
+                    } catch (e: Exception) {
+                        logger?.error(LogCategory.GENERAL, "IOSKoinApp: Failed to handle push notification when app killed: ${e.message}")
+                    }
                 }
+            } else {
+                logger?.warn(LogCategory.GENERAL, "IOSKoinApp: HandlePushNotificationWhenAppKilledUseCase not set, skipping")
             }
             
             logger?.info(LogCategory.GENERAL, "IOSKoinApp: Push notification processed successfully")
@@ -205,6 +209,7 @@ object IOSKoinApp {
         applicationScope = null
         manageFirebaseTokensUseCase = null
         notificationRepository = null
+        handlePushNotificationWhenAppKilledUseCase = null
         stopKoin()
         isInitialized = false
         logger?.info(LogCategory.GENERAL, "IOSKoinApp: Stopped successfully")

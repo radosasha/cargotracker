@@ -1,8 +1,11 @@
 package com.shiplocate.presentation.component
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.painter.Painter
 
@@ -12,8 +15,8 @@ import androidx.compose.ui.graphics.painter.Painter
 @Composable
 actual fun rememberShipLocateLogoPainter(): Painter {
     return object : Painter() {
-        override val intrinsicSize: androidx.compose.ui.geometry.Size
-            get() = androidx.compose.ui.geometry.Size(240f, 186f)
+        override val intrinsicSize: Size
+            get() = Size(240f, 186f)
 
         override fun DrawScope.onDraw() {
                 val svgWidth = 240f
@@ -30,7 +33,7 @@ actual fun rememberShipLocateLogoPainter(): Painter {
                 drawCircle(
                     color = Color.Black,
                     radius = circleRadius,
-                    center = androidx.compose.ui.geometry.Offset(centerX, iconCenterY),
+                    center = Offset(centerX, iconCenterY),
                     style = Stroke(width = strokeWidth),
                 )
 
@@ -45,11 +48,11 @@ actual fun rememberShipLocateLogoPainter(): Painter {
                     startAngle = -90f,
                     sweepAngle = 359.5f,
                     useCenter = true,
-                    topLeft = androidx.compose.ui.geometry.Offset(
+                    topLeft = Offset(
                         topCircleCenterX - topCircleRadius,
                         topCircleCenterY - topCircleRadius,
                     ),
-                    size = androidx.compose.ui.geometry.Size(
+                    size = Size(
                         topCircleRadius * 2,
                         topCircleRadius * 2,
                     ),
@@ -65,11 +68,11 @@ actual fun rememberShipLocateLogoPainter(): Painter {
                     startAngle = -90f,
                     sweepAngle = 180f,
                     useCenter = true,
-                    topLeft = androidx.compose.ui.geometry.Offset(
+                    topLeft = Offset(
                         bottomCircleCenterX - bottomCircleRadius,
                         bottomCircleCenterY - bottomCircleRadius,
                     ),
-                    size = androidx.compose.ui.geometry.Size(
+                    size = Size(
                         bottomCircleRadius * 2,
                         bottomCircleRadius * 2,
                     ),
@@ -79,11 +82,11 @@ actual fun rememberShipLocateLogoPainter(): Painter {
                     startAngle = 90f,
                     sweepAngle = 180f,
                     useCenter = true,
-                    topLeft = androidx.compose.ui.geometry.Offset(
+                    topLeft = Offset(
                         bottomCircleCenterX - bottomCircleRadius,
                         bottomCircleCenterY - bottomCircleRadius,
                     ),
-                    size = androidx.compose.ui.geometry.Size(
+                    size = Size(
                         bottomCircleRadius * 2,
                         bottomCircleRadius * 2,
                     ),
@@ -93,7 +96,7 @@ actual fun rememberShipLocateLogoPainter(): Painter {
                 val pinPath = Path().apply {
                     moveTo(132f * scaleX, 82f * scaleY)
                     lineTo(140f * scaleX, 108f * scaleY)
-                    quadraticBezierTo(
+                    quadraticTo(
                         x1 = 129f * scaleX,
                         y1 = 103f * scaleY,
                         x2 = 122f * scaleX,
