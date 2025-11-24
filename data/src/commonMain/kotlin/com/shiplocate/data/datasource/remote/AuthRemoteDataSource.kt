@@ -101,44 +101,65 @@ class AuthRemoteDataSource(
      * Parse client error (4xx) from API response
      */
     private suspend fun parseClientError(e: ClientRequestException): AuthError {
-        return try {
-            val errorBody = e.response.body<String>()
-            val errorDto = json.decodeFromString<ErrorResponseDto>(errorBody)
-            errorDto.toAuthError()
-        } catch (parseError: Exception) {
-            // Fallback if we can't parse the error response
-            when (e.response.status) {
-                HttpStatusCode.BadRequest ->
-                    AuthError.ValidationError(
-                        message = "Invalid request data",
-                    )
-                HttpStatusCode.Unauthorized ->
-                    AuthError.CodeInvalid(
-                        message = "Invalid verification code",
-                    )
-                HttpStatusCode.NotFound ->
-                    AuthError.CodeNotFound(
-                        message = "Verification code not found or expired",
-                    )
-                HttpStatusCode.Forbidden ->
-                    AuthError.UserBlocked(
-                        message = "Account is blocked",
-                    )
-                HttpStatusCode.TooManyRequests ->
-                    AuthError.RateLimitError(
-                        message = "Too many requests. Please try again later.",
-                        retryAfterSeconds = 60,
-                    )
-                HttpStatusCode.ServiceUnavailable ->
-                    AuthError.ServiceUnavailable(
-                        message = "Service temporarily unavailable. Please try again later.",
-                    )
-                else ->
-                    AuthError.UnknownError(
-                        code = "CLIENT_ERROR",
-                        message = "Request failed: ${e.response.status}",
-                    )
+        // Step 1: Try to read response body
+        val errorBody: String? = try {
+            e.response.body<String>()
+        } catch (bodyError: Exception) {
+            println("🌐 AuthRemoteDataSource: Failed to read error response body: ${bodyError.message}")
+            null
+        }
+
+        // Step 2: If we have a body, try to parse it
+        if (errorBody != null) {
+            return try {
+                val errorDto = json.decodeFromString<ErrorResponseDto>(errorBody)
+                errorDto.toAuthError()
+            } catch (parseError: Exception) {
+                println("🌐 AuthRemoteDataSource: Failed to parse error response body: ${parseError.message}, body: $errorBody")
+                // Fallback to status code-based error
+                createErrorFromStatusCode(e.response.status)
             }
+        }
+
+        // Step 3: Fallback to status code-based error if body couldn't be read
+        return createErrorFromStatusCode(e.response.status)
+    }
+
+    /**
+     * Create AuthError from HTTP status code when response body cannot be parsed
+     */
+    private fun createErrorFromStatusCode(status: HttpStatusCode): AuthError {
+        return when (status) {
+            HttpStatusCode.BadRequest ->
+                AuthError.ValidationError(
+                    message = "Invalid request data",
+                )
+            HttpStatusCode.Unauthorized ->
+                AuthError.CodeInvalid(
+                    message = "Invalid verification code",
+                )
+            HttpStatusCode.NotFound ->
+                AuthError.CodeNotFound(
+                    message = "Verification code not found or expired",
+                )
+            HttpStatusCode.Forbidden ->
+                AuthError.UserBlocked(
+                    message = "Account is blocked",
+                )
+            HttpStatusCode.TooManyRequests ->
+                AuthError.RateLimitError(
+                    message = "Too many requests. Please try again later.",
+                    retryAfterSeconds = 60,
+                )
+            HttpStatusCode.ServiceUnavailable ->
+                AuthError.ServiceUnavailable(
+                    message = "Service temporarily unavailable. Please try again later.",
+                )
+            else ->
+                AuthError.UnknownError(
+                    code = "CLIENT_ERROR",
+                    message = "Request failed: $status",
+                )
         }
     }
 }
