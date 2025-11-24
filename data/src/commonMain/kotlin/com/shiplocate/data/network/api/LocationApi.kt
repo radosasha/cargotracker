@@ -75,13 +75,12 @@ class LocationApi(
             logger.debug(LogCategory.NETWORK, "LocationApi: Sending ${locations.size} coordinates to $baseUrl/api/mobile/loads/coordinates")
             logger.debug(LogCategory.NETWORK, "LocationApi: Load ID: $serverLoadId")
 
-            val response =
-                httpClient.post {
-                    url("$baseUrl/api/mobile/loads/coordinates")
-                    contentType(ContentType.Application.Json)
-                    bearerAuth(token)
-                    setBody(request)
-                }
+            val response = httpClient.post {
+                url("$baseUrl/api/mobile/loads/coordinates")
+                contentType(ContentType.Application.Json)
+                bearerAuth(token)
+                setBody(request)
+            }
 
             logger.debug(LogCategory.NETWORK, "LocationApi: Response status: ${response.status}")
 
@@ -90,6 +89,7 @@ class LocationApi(
                     logger.debug(LogCategory.NETWORK, "LocationApi: ✅ Successfully sent ${locations.size} coordinates")
                     Result.success(Unit)
                 }
+
                 else -> {
                     val errorMessage = "HTTP ${response.status.value}: ${response.status.description}"
                     logger.debug(LogCategory.NETWORK, "LocationApi: ❌ Error: $errorMessage")

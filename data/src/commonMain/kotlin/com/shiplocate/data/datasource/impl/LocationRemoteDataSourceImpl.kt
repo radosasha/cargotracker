@@ -36,7 +36,7 @@ class LocationRemoteDataSourceImpl(
             }
             result
         } catch (e: Exception) {
-            logger.debug(LogCategory.NETWORK, "RemoteLocationDataSource: ❌ Network error: ${e.message}")
+            logger.error(LogCategory.NETWORK, "RemoteLocationDataSource: ❌ Network error: ${e.message}")
             Result.failure(e)
         }
     }
