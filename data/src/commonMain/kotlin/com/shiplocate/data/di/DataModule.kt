@@ -30,9 +30,9 @@ import com.shiplocate.data.network.api.FirebaseTokenApi
 import com.shiplocate.data.network.api.FirebaseTokenApiImpl
 import com.shiplocate.data.network.api.LoadApi
 import com.shiplocate.data.network.api.LoadApiImpl
+import com.shiplocate.data.network.api.LocationApi
 import com.shiplocate.data.network.api.LogsApi
 import com.shiplocate.data.network.api.LogsApiImpl
-import com.shiplocate.data.network.api.LocationApi
 import com.shiplocate.data.repository.AuthPreferencesRepositoryImpl
 import com.shiplocate.data.repository.AuthRepositoryImpl
 import com.shiplocate.data.repository.DeviceRepositoryImpl

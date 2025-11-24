@@ -22,7 +22,7 @@ class ManageFirebaseTokensUseCase(
     suspend fun startManaging() {
         logger.info(LogCategory.GENERAL, "ManageFirebaseTokensUseCase: Starting Firebase token management")
 
-        // 1. Запускаем прослушивание новых токенов от Firebase
+        // 1. Запускаем прослушивание новых токенов от Firebase и сохранение локально
         notificationRepository.startTokenUpdates()
 
         // 2. Получаем текущий токен напрямую от Firebase (решает проблему с задержкой onNewToken)
@@ -42,7 +42,11 @@ class ManageFirebaseTokensUseCase(
             // Если пользователь авторизован - отправляем на сервер
             if (authPreferencesRepository.hasSession()) {
                 logger.info(LogCategory.GENERAL, "ManageFirebaseTokensUseCase: User is authenticated, sending current token to server")
-                notificationRepository.sendTokenToServer(currentToken)
+                try {
+                    notificationRepository.sendTokenToServer(currentToken)
+                } catch (e: Exception) {
+                    logger.error(LogCategory.NETWORK, "ManageFirebaseTokensUseCase:(case#1) Error sending firebase token: ${e.message}", e)
+                }
             } else {
                 logger.info(
                     LogCategory.GENERAL,
@@ -62,7 +66,15 @@ class ManageFirebaseTokensUseCase(
                     // Если пользователь авторизован - отправляем на сервер
                     if (authPreferencesRepository.hasSession()) {
                         logger.info(LogCategory.GENERAL, "ManageFirebaseTokensUseCase: User is authenticated, sending token to server")
-                        notificationRepository.sendTokenToServer(token)
+                        try {
+                            notificationRepository.sendTokenToServer(token)
+                        } catch (e: Exception) {
+                            logger.error(
+                                LogCategory.NETWORK,
+                                "ManageFirebaseTokensUseCase:(case#2) Error sending firebase token: ${e.message}",
+                                e
+                            )
+                        }
                     } else {
                         logger.info(LogCategory.GENERAL, "ManageFirebaseTokensUseCase: User not authenticated, token cached for later")
                     }

@@ -46,7 +46,11 @@ class TrackerApplication : Application(), KoinComponent {
         // Запускаем управление Firebase токенами
         // Используем Application-scoped CoroutineScope
         applicationScope.launch {
-            manageFirebaseTokensUseCase.startManaging()
+            try {
+                manageFirebaseTokensUseCase.startManaging()
+            }catch (e: Exception){
+                logger.error(LogCategory.NETWORK, "LogsApi: Error sending files: ${e.message}", e)
+            }
         }
 
         if (BuildConfig.DEBUG) {
