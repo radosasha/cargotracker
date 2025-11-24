@@ -37,7 +37,7 @@ class NotificationRepositoryImpl(
 
         try {
             firebaseTokenRemoteDataSource.sendTokenToServer(token)
-        } catch (e: Throwable){
+        } catch (e: Throwable) {
             logger.error(LogCategory.UI, "NotificationRepositoryImpl: Error sending firebase token: ${e.message}")
         }
         
@@ -67,7 +67,11 @@ class NotificationRepositoryImpl(
     }
 
     override suspend fun clearToken() {
-        firebaseTokenRemoteDataSource.clearToken()
+        try {
+            firebaseTokenRemoteDataSource.clearToken()
+        } catch (e: Exception) {
+            logger.error(LogCategory.GENERAL, "NotificationRepositoryImpl: Failed to clear firebase token${e.message}", e)
+        }
     }
 
     override suspend fun startTokenUpdates() {
