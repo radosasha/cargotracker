@@ -15,6 +15,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
@@ -97,6 +98,8 @@ class TrackingManager(
                     // TODO отключаем алгоритм парковки
 //                    addToParkingTracker(result)
                     trackingState.emit(TrackingStateEvent.LocationProcessed(result = result))
+                }.catch { exception ->
+                    logger.info(LogCategory.LOCATION, "Location flow exception: $exception")
                 }.launchIn(scope)
 
                 // Подписываемся на статус парковки

@@ -54,11 +54,9 @@ class TripRecorder(
                 val result = processLocation(connectedLoad.serverId, location)
 
                 if (result.shouldSend) {
-                    logger.info(LogCategory.LOCATION, "TripRecorder: ✅ Successfully processed location")
-                    logger.info(LogCategory.LOCATION, "TripRecorder: Reason: ${result.reason}")
+                    logger.info(LogCategory.LOCATION, "TripRecorder: ✅ Successfully processed location\nTripRecorder: Reason: ${result.reason}")
                 } else {
-                    logger.info(LogCategory.LOCATION, "TripRecorder: ⏭️ Location filtered out")
-                    logger.info(LogCategory.LOCATION, "TripRecorder: Reason: ${result.reason}")
+                    logger.info(LogCategory.LOCATION, "TripRecorder: ⏭️ Location filtered out\nTripRecorder: Reason: ${result.reason}")
                 }
                 result
             }
