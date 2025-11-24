@@ -35,7 +35,11 @@ class NotificationRepositoryImpl(
             return
         }
 
-        firebaseTokenRemoteDataSource.sendTokenToServer(token)
+        try {
+            firebaseTokenRemoteDataSource.sendTokenToServer(token)
+        } catch (e: Throwable){
+            logger.error(LogCategory.UI, "NotificationRepositoryImpl: Error sending firebase token: ${e.message}")
+        }
         
         // Помечаем токен как отправленный
         firebaseTokenLocalDataSource.saveToken(token)

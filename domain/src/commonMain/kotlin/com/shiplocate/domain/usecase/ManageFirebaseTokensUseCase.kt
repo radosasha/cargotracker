@@ -42,11 +42,7 @@ class ManageFirebaseTokensUseCase(
             // Если пользователь авторизован - отправляем на сервер
             if (authPreferencesRepository.hasSession()) {
                 logger.info(LogCategory.GENERAL, "ManageFirebaseTokensUseCase: User is authenticated, sending current token to server")
-                try {
-                    notificationRepository.sendTokenToServer(currentToken)
-                } catch (e: Exception) {
-                    logger.error(LogCategory.NETWORK, "ManageFirebaseTokensUseCase:(case#1) Error sending firebase token: ${e.message}", e)
-                }
+                notificationRepository.sendTokenToServer(currentToken)
             } else {
                 logger.info(
                     LogCategory.GENERAL,
@@ -66,15 +62,7 @@ class ManageFirebaseTokensUseCase(
                     // Если пользователь авторизован - отправляем на сервер
                     if (authPreferencesRepository.hasSession()) {
                         logger.info(LogCategory.GENERAL, "ManageFirebaseTokensUseCase: User is authenticated, sending token to server")
-                        try {
-                            notificationRepository.sendTokenToServer(token)
-                        } catch (e: Exception) {
-                            logger.error(
-                                LogCategory.NETWORK,
-                                "ManageFirebaseTokensUseCase:(case#2) Error sending firebase token: ${e.message}",
-                                e
-                            )
-                        }
+                        notificationRepository.sendTokenToServer(token)
                     } else {
                         logger.info(LogCategory.GENERAL, "ManageFirebaseTokensUseCase: User not authenticated, token cached for later")
                     }
