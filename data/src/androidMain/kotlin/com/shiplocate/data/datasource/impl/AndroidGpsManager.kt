@@ -35,7 +35,8 @@ class AndroidGpsManager(
     private val fusedLocationClient: FusedLocationProviderClient =
         LocationServices.getFusedLocationProviderClient(context)
 
-    private val gpsLocationFlow = MutableSharedFlow<GpsLocation>(replay = 1)
+    // TODO replay 0, onBufferOverflow
+    private val gpsLocationFlow = MutableSharedFlow<GpsLocation>(replay = 1, extraBufferCapacity = 5)
     private var isTracking = false
 
     // Coroutine scope for emitting to flow

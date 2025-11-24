@@ -107,4 +107,10 @@ interface LoadRepository {
      * @return Flow of stops where enter == 0
      */
     fun observeNotEnteredStopIdsUpdates(): Flow<List<Stop>>
+
+    /**
+     * Clear all data from database (loads, stops, etc.)
+     * Used during logout to remove all cached data
+     */
+    suspend fun clearAllData()
 }

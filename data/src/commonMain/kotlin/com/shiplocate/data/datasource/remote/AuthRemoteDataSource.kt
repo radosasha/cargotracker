@@ -43,6 +43,7 @@ class AuthRemoteDataSource(
                         AuthError.ServiceUnavailable(
                             message = "Service temporarily unavailable. Please try again later.",
                         )
+
                     else ->
                         AuthError.UnknownError(
                             code = "SERVER_ERROR",
@@ -80,6 +81,7 @@ class AuthRemoteDataSource(
                         AuthError.ServiceUnavailable(
                             message = "Service temporarily unavailable. Please try again later.",
                         )
+
                     else ->
                         AuthError.UnknownError(
                             code = "SERVER_ERROR",
@@ -126,6 +128,43 @@ class AuthRemoteDataSource(
     }
 
     /**
+     * Logout user
+     */
+    suspend fun logout(token: String): Result<Unit> {
+        println("🌐 AuthRemoteDataSource: Logging out user")
+        return try {
+            authApi.logout(token)
+            println("🌐 AuthRemoteDataSource: ✅ Logout successful")
+            Result.success(Unit)
+        } catch (e: ClientRequestException) {
+            println("🌐 AuthRemoteDataSource: ❌ Client error: ${e.response.status}")
+            Result.failure(parseClientError(e))
+        } catch (e: ServerResponseException) {
+            println("🌐 AuthRemoteDataSource: ❌ Server error: ${e.response.status}")
+            val error = when (e.response.status) {
+                HttpStatusCode.ServiceUnavailable ->
+                    AuthError.ServiceUnavailable(
+                        message = "Service temporarily unavailable. Please try again later.",
+                    )
+
+                else ->
+                    AuthError.UnknownError(
+                        code = "SERVER_ERROR",
+                        message = "Server error: ${e.response.status}",
+                    )
+            }
+            Result.failure(error)
+        } catch (e: Exception) {
+            println("🌐 AuthRemoteDataSource: ❌ Network error: ${e.message}")
+            Result.failure(
+                AuthError.NetworkError(
+                    message = e.message ?: "Network error occurred",
+                ),
+            )
+        }
+    }
+
+    /**
      * Create AuthError from HTTP status code when response body cannot be parsed
      */
     private fun createErrorFromStatusCode(status: HttpStatusCode): AuthError {
@@ -134,27 +173,33 @@ class AuthRemoteDataSource(
                 AuthError.ValidationError(
                     message = "Invalid request data",
                 )
+
             HttpStatusCode.Unauthorized ->
                 AuthError.CodeInvalid(
                     message = "Invalid verification code",
                 )
+
             HttpStatusCode.NotFound ->
                 AuthError.CodeNotFound(
                     message = "Verification code not found or expired",
                 )
+
             HttpStatusCode.Forbidden ->
                 AuthError.UserBlocked(
                     message = "Account is blocked",
                 )
+
             HttpStatusCode.TooManyRequests ->
                 AuthError.RateLimitError(
                     message = "Too many requests. Please try again later.",
                     retryAfterSeconds = 60,
                 )
+
             HttpStatusCode.ServiceUnavailable ->
                 AuthError.ServiceUnavailable(
                     message = "Service temporarily unavailable. Please try again later.",
                 )
+
             else ->
                 AuthError.UnknownError(
                     code = "CLIENT_ERROR",

@@ -59,6 +59,7 @@ fun TrackerNavigation(
     paddingValues: PaddingValues,
     onNavControllerReady: (NavController, String?) -> Unit = { _, _ -> },
     onBottomBarStateChanged: (BottomBarState) -> Unit = {},
+    onLogoutCallbackReady: ((() -> Unit)?) -> Unit = {},
 ) {
     val navController = rememberNavController()
     val hasAuthSessionUseCase: HasAuthSessionUseCase = koinInject()
@@ -69,6 +70,14 @@ fun TrackerNavigation(
 
     // Отслеживаем текущий route для передачи наружу
     var currentRoute by remember { mutableStateOf<String?>(null) }
+
+    // Состояние для хранения callback logout
+    var logoutCallback by remember { mutableStateOf<(() -> Unit)?>(null) }
+
+    // Передаем callback наружу когда он готов
+    LaunchedEffect(logoutCallback) {
+        onLogoutCallbackReady(logoutCallback)
+    }
 
     // Отслеживаем изменения в navigation state через listener для надежности
     DisposableEffect(navController) {
@@ -190,6 +199,11 @@ fun TrackerNavigation(
                 factory = loadsViewModelFactory,
             )
 
+            // Устанавливаем callback для logout
+            LaunchedEffect(Unit) {
+                logoutCallback = { viewModel.showLogoutDialog() }
+            }
+
             // Отслеживаем текущую страницу для bottomBar
             val currentPage by viewModel.currentPage.collectAsStateWithLifecycle()
 
@@ -237,6 +251,18 @@ fun TrackerNavigation(
                         viewModel.startTrackingForActiveLoad()
                         savedStateHandle?.remove<Boolean>("startTracking")
                     }
+                }
+            }
+
+            // Обработка навигации на EnterPhoneScreen после logout
+            val shouldNavigateToLogin by viewModel.shouldNavigateToLogin.collectAsStateWithLifecycle()
+            LaunchedEffect(shouldNavigateToLogin) {
+                if (shouldNavigateToLogin) {
+                    // Очищаем весь back stack и переходим на экран входа
+                    navController.navigate(Screen.ENTER_PHONE) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                    viewModel.resetNavigateToLoginFlag()
                 }
             }
 

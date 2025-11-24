@@ -125,6 +125,7 @@ class TripRecorder(
                 // Отправляем все координаты через мобильный API
                 logger.debug(LogCategory.LOCATION, "TripRecorder: Sending ${unsentLocations.size} locations via mobile API")
                 val locations = unsentLocations.map { it.second }
+                // TODO send chunks
                 val uploadResult = locationRepository.sendLocations(authSession.token, serverId, locations)
 
                 if (uploadResult.isSuccess) {

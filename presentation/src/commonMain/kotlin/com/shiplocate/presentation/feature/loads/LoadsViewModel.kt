@@ -14,6 +14,7 @@ import com.shiplocate.domain.usecase.SendCachedTokenOnAuthUseCase
 import com.shiplocate.domain.usecase.StartTrackingUseCase
 import com.shiplocate.domain.usecase.StopTrackingIfLoadUnlinkedUseCase
 import com.shiplocate.domain.usecase.StopTrackingUseCase
+import com.shiplocate.domain.usecase.auth.LogoutUseCase
 import com.shiplocate.domain.usecase.load.DisconnectFromLoadUseCase
 import com.shiplocate.domain.usecase.load.GetCachedLoadsUseCase
 import com.shiplocate.domain.usecase.load.GetLoadsUseCase
@@ -48,6 +49,7 @@ class LoadsViewModel(
     private val sendCachedTokenOnAuthUseCase: SendCachedTokenOnAuthUseCase,
     private val observeReceivedPushesUseCase: ObserveReceivedPushesUseCase,
     private val stopTrackingIfLoadUnlinkedUseCase: StopTrackingIfLoadUnlinkedUseCase,
+    private val logoutUseCase: LogoutUseCase,
     private val logger: Logger,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow<LoadsUiState>(LoadsUiState.Loading)
@@ -73,6 +75,18 @@ class LoadsViewModel(
 
     private val _showTrackingStartedSuccessDialog = MutableStateFlow(false)
     val showTrackingStartedSuccessDialog: StateFlow<Boolean> = _showTrackingStartedSuccessDialog.asStateFlow()
+
+    private val _showLogoutDialog = MutableStateFlow(false)
+    val showLogoutDialog: StateFlow<Boolean> = _showLogoutDialog.asStateFlow()
+
+    private val _isLoggingOut = MutableStateFlow(false)
+    val isLoggingOut: StateFlow<Boolean> = _isLoggingOut.asStateFlow()
+
+    private val _shouldNavigateToLogin = MutableStateFlow(false)
+    val shouldNavigateToLogin: StateFlow<Boolean> = _shouldNavigateToLogin.asStateFlow()
+
+    private val _logoutError = MutableStateFlow<String?>(null)
+    val logoutError: StateFlow<String?> = _logoutError.asStateFlow()
 
     init {
         // Подписываемся на изменения разрешений из Flow
@@ -439,6 +453,70 @@ class LoadsViewModel(
      */
     fun dismissTrackingStartedSuccessDialog() {
         _showTrackingStartedSuccessDialog.value = false
+    }
+
+    /**
+     * Show logout confirmation dialog
+     */
+    fun showLogoutDialog() {
+        _showLogoutDialog.value = true
+    }
+
+    /**
+     * Dismiss logout dialog
+     */
+    fun dismissLogoutDialog() {
+        _showLogoutDialog.value = false
+    }
+
+    /**
+     * Confirm logout and perform logout process
+     */
+    fun confirmLogout() {
+        viewModelScope.launch {
+            _showLogoutDialog.value = false
+            _isLoggingOut.value = true
+            _logoutError.value = null
+
+            try {
+                logger.info(LogCategory.AUTH, "LoadsViewModel: Starting logout process")
+                val result = withContext(Dispatchers.Default) {
+                    logoutUseCase()
+                }
+
+                if (result.isSuccess) {
+                    logger.info(LogCategory.AUTH, "LoadsViewModel: Logout successful, navigating to login")
+                    _shouldNavigateToLogin.value = true
+                } else {
+                    val errorMessage = result.exceptionOrNull()?.message ?: "Logout failed"
+                    logger.error(
+                        LogCategory.AUTH,
+                        "LoadsViewModel: Logout failed: $errorMessage",
+                    )
+                    _logoutError.value = errorMessage
+                }
+            } catch (e: Exception) {
+                val errorMessage = e.message ?: "An unexpected error occurred during logout"
+                logger.error(LogCategory.AUTH, "LoadsViewModel: Exception during logout: $errorMessage", e)
+                _logoutError.value = errorMessage
+            } finally {
+                _isLoggingOut.value = false
+            }
+        }
+    }
+
+    /**
+     * Reset navigation flag after navigation
+     */
+    fun resetNavigateToLoginFlag() {
+        _shouldNavigateToLogin.value = false
+    }
+
+    /**
+     * Dismiss logout error dialog
+     */
+    fun dismissLogoutError() {
+        _logoutError.value = null
     }
 
     /**

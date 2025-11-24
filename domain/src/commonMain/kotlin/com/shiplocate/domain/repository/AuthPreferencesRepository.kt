@@ -13,4 +13,6 @@ interface AuthPreferencesRepository {
     suspend fun clearSession()
 
     suspend fun hasSession(): Boolean
+
+    suspend fun logout(token: String): Result<Unit>
 }

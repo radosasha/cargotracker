@@ -7,6 +7,7 @@ import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.shiplocate.core.logging.LogCategory
 import com.shiplocate.core.logging.Logger
+import com.shiplocate.data.datasource.remote.AuthRemoteDataSource
 import com.shiplocate.domain.model.auth.AuthSession
 import com.shiplocate.domain.model.auth.AuthUser
 import com.shiplocate.domain.repository.AuthPreferencesRepository
@@ -19,6 +20,7 @@ import kotlinx.coroutines.flow.map
 class AuthPreferencesRepositoryImpl(
     private val dataStore: DataStore<Preferences>,
     private val logger: Logger,
+    private val authRemoteDataSource: AuthRemoteDataSource,
 ) : AuthPreferencesRepository {
     companion object {
         private val KEY_TOKEN = stringPreferencesKey("auth_token")
@@ -87,5 +89,21 @@ class AuthPreferencesRepositoryImpl(
             }.first()
         logger.info(LogCategory.AUTH, "🔍 AuthPreferencesRepository: Has session = $has")
         return has
+    }
+
+    override suspend fun logout(token: String): Result<Unit> {
+        logger.info(LogCategory.AUTH, "🌐 AuthPreferencesRepository: Logging out user")
+        return try {
+            val result = authRemoteDataSource.logout(token)
+            if (result.isSuccess) {
+                logger.info(LogCategory.AUTH, "🌐 AuthPreferencesRepository: ✅ Logout successful")
+            } else {
+                logger.error(LogCategory.AUTH, "🌐 AuthPreferencesRepository: ❌ Logout failed: ${result.exceptionOrNull()?.message}")
+            }
+            result
+        } catch (e: Exception) {
+            logger.error(LogCategory.AUTH, "🌐 AuthPreferencesRepository: ❌ Logout error: ${e.message}", e)
+            Result.failure(e)
+        }
     }
 }

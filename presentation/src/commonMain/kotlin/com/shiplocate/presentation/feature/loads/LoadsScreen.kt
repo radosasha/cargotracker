@@ -63,6 +63,9 @@ fun LoadsScreen(
     val showRejectLoadDialog by viewModel.showRejectLoadDialog.collectAsStateWithLifecycle()
     val isLoadingAction by viewModel.isLoadingAction.collectAsStateWithLifecycle()
     val showTrackingStartedSuccessDialog by viewModel.showTrackingStartedSuccessDialog.collectAsStateWithLifecycle()
+    val showLogoutDialog by viewModel.showLogoutDialog.collectAsStateWithLifecycle()
+    val isLoggingOut by viewModel.isLoggingOut.collectAsStateWithLifecycle()
+    val logoutError by viewModel.logoutError.collectAsStateWithLifecycle()
     
     // Pager state with 2 pages (Active and Upcoming)
     val pagerState = rememberPagerState(pageCount = { 2 }, initialPage = currentPage)
@@ -87,6 +90,28 @@ fun LoadsScreen(
                 .fillMaxSize()
                 .padding(paddingValues),
     ) {
+        // Блокируем весь UI во время logout
+        if (isLoggingOut) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.7f)),
+                contentAlignment = Alignment.Center,
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                ) {
+                    CircularProgressIndicator()
+                    Text(
+                        text = "Logging out...",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                }
+            }
+        }
+
         when (val state = uiState) {
             is LoadsUiState.Loading -> LoadingContent()
             is LoadsUiState.Error ->
@@ -267,6 +292,87 @@ fun LoadsScreen(
             },
             confirmButton = {
                 TextButton(onClick = { viewModel.dismissTrackingStartedSuccessDialog() }) {
+                    Text("OK")
+                }
+            },
+        )
+    }
+
+    // Logout confirmation dialog
+    if (showLogoutDialog) {
+        AlertDialog(
+            onDismissRequest = {
+                if (!isLoggingOut) {
+                    viewModel.dismissLogoutDialog()
+                }
+            },
+            title = {
+                Text(
+                    text = "Confirm Logout",
+                    style = MaterialTheme.typography.titleLarge,
+                )
+            },
+            text = {
+                Text(
+                    text = "Are you sure you want to logout? All your data will be cleared.",
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = { viewModel.confirmLogout() },
+                    enabled = !isLoggingOut,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error,
+                        contentColor = MaterialTheme.colorScheme.onError,
+                    ),
+                ) {
+                    if (isLoggingOut) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            color = MaterialTheme.colorScheme.onError,
+                        )
+                    } else {
+                        Text("Logout")
+                    }
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { viewModel.dismissLogoutDialog() },
+                    enabled = !isLoggingOut,
+                ) {
+                    Text("Cancel")
+                }
+            },
+        )
+    }
+
+    // Logout error dialog
+    logoutError?.let { error ->
+        AlertDialog(
+            onDismissRequest = { viewModel.dismissLogoutError() },
+            title = {
+                Text(
+                    text = "Logout Failed",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.error,
+                )
+            },
+            text = {
+                Text(
+                    text = error,
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = { viewModel.dismissLogoutError() },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error,
+                        contentColor = MaterialTheme.colorScheme.onError,
+                    ),
+                ) {
                     Text("OK")
                 }
             },

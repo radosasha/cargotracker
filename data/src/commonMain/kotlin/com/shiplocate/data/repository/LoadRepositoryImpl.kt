@@ -355,4 +355,16 @@ class LoadRepositoryImpl(
             }
         }
     }
+
+    override suspend fun clearAllData() {
+        logger.info(LogCategory.GENERAL, "🔄 LoadRepositoryImpl: Clearing all data from database")
+        try {
+            loadsLocalDataSource.removeLoads()
+            stopsLocalDataSource.clearCache()
+            logger.info(LogCategory.GENERAL, "✅ LoadRepositoryImpl: Successfully cleared all data")
+        } catch (e: Exception) {
+            logger.error(LogCategory.GENERAL, "❌ LoadRepositoryImpl: Failed to clear data: ${e.message}")
+            throw e
+        }
+    }
 }

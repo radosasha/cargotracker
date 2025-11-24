@@ -25,6 +25,7 @@ import com.shiplocate.presentation.navigation.TrackerNavigation
 fun MainScreen() {
     var navController by remember { mutableStateOf<NavController?>(null) }
     var currentRoute by remember { mutableStateOf<String?>(null) }
+    var logoutCallback by remember { mutableStateOf<(() -> Unit)?>(null) }
 
     MaterialTheme {
         // Состояние bottomBar, управляемое через callback из TrackerNavigation
@@ -44,6 +45,8 @@ fun MainScreen() {
                             } else {
                                 null
                             },
+                        // Logout callback для LoadsScreen
+                        onLogoutClick = logoutCallback,
                     )
                 }
             },
@@ -69,6 +72,9 @@ fun MainScreen() {
                 },
                 onBottomBarStateChanged = { state ->
                     bottomBarState = state
+                },
+                onLogoutCallbackReady = { callback ->
+                    logoutCallback = callback
                 },
             )
         }
