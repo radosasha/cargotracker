@@ -4,8 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.shiplocate.core.logging.LogCategory
 import com.shiplocate.core.logging.Logger
-import com.shiplocate.domain.model.auth.AuthError
 import com.shiplocate.domain.model.auth.Country
+import com.shiplocate.domain.model.auth.SmsRequestError
 import com.shiplocate.domain.usecase.auth.RequestSmsCodeUseCase
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -94,21 +94,22 @@ class EnterPhoneViewModel(
                 }
                 .onFailure { error ->
                     when (error) {
-                        is AuthError.RateLimitError -> {
+                        is SmsRequestError.RateLimitExceeded -> {
                             // Уже обработано: показываем таймер
-                            logger.warn(LogCategory.AUTH, "EnterPhoneViewModel: Rate limited: retry after ${error.retryAfterSeconds}s")
+                            val retrySeconds = error.retryAfterSeconds ?: 60
+                            logger.warn(LogCategory.AUTH, "EnterPhoneViewModel: Rate limited: retry after ${retrySeconds}s")
                             _uiState.update {
                                 it.copy(
                                     isLoading = false,
                                     isRateLimited = true,
-                                    rateLimitSeconds = error.retryAfterSeconds,
+                                    rateLimitSeconds = retrySeconds,
                                     errorMessage = null, // Очищаем, т.к. таймер уже показывает состояние
                                 )
                             }
-                            startRateLimitTimer(error.retryAfterSeconds)
+                            startRateLimitTimer(retrySeconds)
                         }
 
-                        is AuthError.ValidationError -> {
+                        is SmsRequestError.ValidationError -> {
                             // Показываем диалог с ошибкой валидации
                             logger.error(LogCategory.AUTH, "EnterPhoneViewModel: Validation error: ${error.message}")
                             _uiState.update {
@@ -121,10 +122,9 @@ class EnterPhoneViewModel(
                             }
                         }
 
-                        is AuthError.ServiceUnavailable -> {
+                        is SmsRequestError.SmsServiceError -> {
                             // Показываем диалог с ошибкой недоступности сервиса
-
-                            logger.error(LogCategory.AUTH, "EnterPhoneViewModel: Service unavailable: ${error.message}")
+                            logger.error(LogCategory.AUTH, "EnterPhoneViewModel: SMS service error: ${error.message}")
                             _uiState.update {
                                 it.copy(
                                     isLoading = false,
@@ -137,24 +137,9 @@ class EnterPhoneViewModel(
                             }
                         }
 
-                        is AuthError.NetworkError -> {
-                            // Показываем диалог с сетевой ошибкой
-                            logger.error(LogCategory.AUTH, "EnterPhoneViewModel: Network error: ${error.message}")
-                            _uiState.update {
-                                it.copy(
-                                    isLoading = false,
-                                    showErrorDialog = true,
-                                    errorDialogTitle = "Network Error",
-                                    errorDialogMessage =
-                                        "Could not connect to server. " +
-                                            "Please check your internet connection and try again.",
-                                )
-                            }
-                        }
-
-                        is AuthError -> {
+                        is SmsRequestError -> {
                             // Показываем диалог для других ошибок
-                            logger.error(LogCategory.AUTH, "EnterPhoneViewModel: Auth error: ${error.code} - ${error.message}")
+                            logger.error(LogCategory.AUTH, "EnterPhoneViewModel: SMS request error: ${error.code} - ${error.message}")
                             _uiState.update {
                                 it.copy(
                                     isLoading = false,

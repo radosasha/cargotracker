@@ -1,9 +1,11 @@
 package com.shiplocate.data.network.mapper
 
 import com.shiplocate.data.network.dto.auth.AuthResponseDto
-import com.shiplocate.data.network.dto.auth.ErrorResponseDto
+import com.shiplocate.data.network.dto.auth.LogoutErrorResponseDto
 import com.shiplocate.data.network.dto.auth.MobileUserDto
 import com.shiplocate.data.network.dto.auth.SmsRequestDto
+import com.shiplocate.data.network.dto.auth.SmsRequestErrorResponseDto
+import com.shiplocate.data.network.dto.auth.SmsRequestRateLimitErrorResponseDto
 import com.shiplocate.data.network.dto.auth.SmsRequestResponseDto
 import com.shiplocate.data.network.dto.auth.SmsVerifyDto
 import com.shiplocate.domain.model.auth.AuthError
@@ -12,7 +14,7 @@ import com.shiplocate.domain.model.auth.AuthUser
 import com.shiplocate.domain.model.auth.SmsCodeRequest
 import com.shiplocate.domain.model.auth.SmsCodeResponse
 import com.shiplocate.domain.model.auth.SmsCodeVerify
-import kotlinx.datetime.Clock
+import com.shiplocate.domain.model.auth.SmsRequestError
 
 /**
  * Mappers for Auth DTOs <-> Domain models
@@ -46,57 +48,52 @@ fun MobileUserDto.toDomain() =
         name = name,
     )
 
-fun ErrorResponseDto.toAuthError(): AuthError {
-    val now = Clock.System.now().toEpochMilliseconds()
+/**
+ * Converts SmsRequestErrorResponseDto to SmsRequestError
+ */
+fun SmsRequestErrorResponseDto.toSmsRequestError(): SmsRequestError {
     return when (error) {
-        "VALIDATION_ERROR" ->
-            AuthError.ValidationError(
-                message = message,
-                timestamp = timestamp ?: now,
-            )
-        "RATE_LIMIT_EXCEEDED" ->
-            AuthError.RateLimitError(
-                message = message,
-                retryAfterSeconds = retryAfterSeconds ?: 0,
-                nextRetryAt = nextRetryAt,
-                timestamp = timestamp ?: now,
-            )
-        "CODE_INVALID" ->
-            AuthError.CodeInvalid(
-                message = message,
-                remainingAttempts = remainingAttempts,
-                timestamp = timestamp ?: now,
-            )
-        "CODE_EXPIRED" ->
-            AuthError.CodeExpired(
-                message = message,
-                timestamp = timestamp ?: now,
-            )
-        "CODE_NOT_FOUND" ->
-            AuthError.CodeNotFound(
-                message = message,
-                timestamp = timestamp ?: now,
-            )
-        "TOO_MANY_ATTEMPTS" ->
-            AuthError.TooManyAttempts(
-                message = message,
-                timestamp = timestamp ?: now,
-            )
-        "CODE_ALREADY_USED" ->
-            AuthError.CodeAlreadyUsed(
-                message = message,
-                timestamp = timestamp ?: now,
-            )
-        "USER_BLOCKED" ->
-            AuthError.UserBlocked(
-                message = message,
-                timestamp = timestamp ?: now,
-            )
-        else ->
-            AuthError.UnknownError(
-                code = error,
-                message = message,
-                timestamp = timestamp ?: now,
-            )
+        SmsRequestError.VALIDATION_ERROR -> SmsRequestError.ValidationError(message = message)
+        SmsRequestError.SMS_SERVICE_ERROR -> SmsRequestError.SmsServiceError(message = message)
+        else -> SmsRequestError.SmsServiceError(
+            message = "Unknown error: $error - $message",
+        )
+    }
+}
+
+/**
+ * Converts SmsRequestRateLimitErrorResponseDto to SmsRequestError
+ */
+fun SmsRequestRateLimitErrorResponseDto.toSmsRequestError(): SmsRequestError {
+    return SmsRequestError.RateLimitExceeded(
+        message = message,
+        retryAfterSeconds = retryAfterSeconds ?: 10,
+        nextRetryAt = nextRetryAt,
+    )
+}
+
+/**
+ * Converts LogoutErrorResponseDto to AuthError
+ */
+fun LogoutErrorResponseDto.toAuthError(): AuthError {
+    return when (error) {
+        "INVALID_REQUEST" -> AuthError.ValidationError(message = message)
+        "INVALID_TOKEN" -> AuthError.CodeInvalid(message = message)
+        "DATABASE_ERROR" -> AuthError.UnknownError(
+            code = "DATABASE_ERROR",
+            message = message,
+        )
+        "INTERNAL_ERROR" -> AuthError.UnknownError(
+            code = "INTERNAL_ERROR",
+            message = message,
+        )
+        "SUCCESS" -> AuthError.UnknownError(
+            code = "SUCCESS",
+            message = message,
+        )
+        else -> AuthError.UnknownError(
+            code = error,
+            message = message,
+        )
     }
 }

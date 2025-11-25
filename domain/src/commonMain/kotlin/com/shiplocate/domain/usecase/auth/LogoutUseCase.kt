@@ -2,6 +2,7 @@ package com.shiplocate.domain.usecase.auth
 
 import com.shiplocate.core.logging.LogCategory
 import com.shiplocate.core.logging.Logger
+import com.shiplocate.domain.model.auth.AuthError
 import com.shiplocate.domain.repository.AuthPreferencesRepository
 import com.shiplocate.domain.repository.LoadRepository
 import com.shiplocate.domain.repository.NotificationRepository
@@ -30,8 +31,24 @@ class LogoutUseCase(
             logger.info(LogCategory.AUTH, "LogoutUseCase: Calling logout API")
             val logoutResult = authPreferencesRepository.logout(token)
             if (logoutResult.isFailure) {
-                logger.error(LogCategory.AUTH, "LogoutUseCase: Logout API failed: ${logoutResult.exceptionOrNull()?.message}")
-                return logoutResult
+                val exception = logoutResult.exceptionOrNull()
+                
+                // Check if error is 401 Unauthorized - treat as success (token already invalidated)
+                val isUnauthorized = when (exception) {
+                    is AuthError.CodeInvalid -> {
+                        // Fallback: CodeInvalid is created for 401 when response body can't be parsed
+                        true
+                    }
+                    else -> false
+                }
+                
+                if (isUnauthorized) {
+                    logger.info(LogCategory.AUTH, "LogoutUseCase: Received 401 Unauthorized - token already invalidated, treating as success")
+                    // Continue with logout process
+                } else {
+                    logger.error(LogCategory.AUTH, "LogoutUseCase: Logout API failed: ${exception?.message}")
+                    return logoutResult
+                }
             } else {
                 logger.info(LogCategory.AUTH, "LogoutUseCase: Logout API succeeded")
             }

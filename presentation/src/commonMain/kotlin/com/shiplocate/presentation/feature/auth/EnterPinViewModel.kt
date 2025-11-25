@@ -4,13 +4,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.shiplocate.core.logging.LogCategory
 import com.shiplocate.core.logging.Logger
-import com.shiplocate.domain.model.auth.AuthError
 import com.shiplocate.domain.model.auth.AuthSession
+import com.shiplocate.domain.model.auth.SmsVerificationError
 import com.shiplocate.domain.usecase.GetDeviceInfoUseCase
+import com.shiplocate.domain.usecase.SavePhoneNumberUseCase
 import com.shiplocate.domain.usecase.SendCachedTokenOnAuthUseCase
 import com.shiplocate.domain.usecase.auth.SaveAuthSessionUseCase
 import com.shiplocate.domain.usecase.auth.VerifySmsCodeUseCase
-import com.shiplocate.domain.usecase.SavePhoneNumberUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -70,7 +70,7 @@ class EnterPinViewModel(
     fun onPinValueChanged(pin: String) {
         // Фильтруем только цифры и ограничиваем длину до 6 символов
         val filtered = pin.filter { it.isDigit() }.take(6)
-        
+
         // Преобразуем строку в список символов
         val newPinDigits = filtered.map { it.toString() }.toMutableList()
         // Дополняем до 6 элементов пустыми строками
@@ -151,7 +151,7 @@ class EnterPinViewModel(
                 }
                 .onFailure { error ->
                     when (error) {
-                        is AuthError.CodeInvalid -> {
+                        is SmsVerificationError.CodeInvalid -> {
                             // Уже обработано: показываем inline с remainingAttempts
                             val attempts = error.remainingAttempts ?: 0
                             logger.warn(LogCategory.AUTH, "EnterPinViewModel: Invalid code: $attempts attempts remaining")
@@ -159,12 +159,14 @@ class EnterPinViewModel(
                                 it.copy(
                                     isVerifying = false,
                                     errorMessage = error.message,
+                                    navigateBackWithError = if (attempts == 0) error.message else null,
                                     remainingAttempts = attempts,
                                     pinDigits = List(6) { "" }, // Clear PIN
                                 )
                             }
                         }
-                        is AuthError.TooManyAttempts -> {
+
+                        is SmsVerificationError.TooManyAttempts -> {
                             // Уже обработано: возврат на EnterPhoneScreen с диалогом
                             logger.warn(LogCategory.AUTH, "EnterPinViewModel: Too many attempts - navigating back")
                             _uiState.update {
@@ -174,10 +176,11 @@ class EnterPinViewModel(
                                 )
                             }
                         }
-                        is AuthError.CodeExpired,
-                        is AuthError.CodeNotFound,
-                        is AuthError.CodeAlreadyUsed,
-                        -> {
+
+                        is SmsVerificationError.CodeExpired,
+                        is SmsVerificationError.CodeNotFound,
+                        is SmsVerificationError.CodeAlreadyUsed,
+                            -> {
                             // Критические ошибки - возврат на EnterPhoneScreen с диалогом
                             logger.error(LogCategory.AUTH, "EnterPinViewModel: Critical error: ${error.code} - navigating back")
                             _uiState.update {
@@ -187,7 +190,8 @@ class EnterPinViewModel(
                                 )
                             }
                         }
-                        is AuthError.UserBlocked -> {
+
+                        is SmsVerificationError.UserBlocked -> {
                             // Блокировка пользователя - показываем диалог
                             logger.error(LogCategory.AUTH, "EnterPinViewModel: User blocked")
                             _uiState.update {
@@ -200,9 +204,10 @@ class EnterPinViewModel(
                                 )
                             }
                         }
-                        is AuthError.ServiceUnavailable -> {
-                            // Ошибка недоступности сервиса - показываем диалог
-                            logger.error(LogCategory.AUTH, "EnterPinViewModel: Service unavailable")
+
+                        is SmsVerificationError.VerificationServiceError -> {
+                            // Ошибка сервиса верификации - показываем диалог
+                            logger.error(LogCategory.AUTH, "EnterPinViewModel: Verification service error")
                             _uiState.update {
                                 it.copy(
                                     isVerifying = false,
@@ -215,24 +220,24 @@ class EnterPinViewModel(
                                 )
                             }
                         }
-                        is AuthError.NetworkError -> {
-                            // Сетевая ошибка - показываем диалог
-                            logger.error(LogCategory.AUTH, "EnterPinViewModel: Network error")
+
+                        is SmsVerificationError.RateLimitExceeded -> {
+                            // Rate limit - показываем диалог
+                            logger.error(LogCategory.AUTH, "EnterPinViewModel: Rate limit exceeded")
                             _uiState.update {
                                 it.copy(
                                     isVerifying = false,
                                     showErrorDialog = true,
-                                    errorDialogTitle = "Network Error",
-                                    errorDialogMessage =
-                                        "Could not connect to server. " +
-                                            "Please check your internet connection and try again.",
+                                    errorDialogTitle = "Too Many Requests",
+                                    errorDialogMessage = error.message,
                                     pinDigits = List(6) { "" },
                                 )
                             }
                         }
-                        is AuthError -> {
-                            // Другие ошибки - показываем диалог
-                            logger.error(LogCategory.AUTH, "EnterPinViewModel: Auth error: ${error.code} - ${error.message}")
+
+                        is SmsVerificationError -> {
+                            // Другие ошибки верификации - показываем диалог
+                            logger.error(LogCategory.AUTH, "EnterPinViewModel: Verification error: ${error.code} - ${error.message}")
                             _uiState.update {
                                 it.copy(
                                     isVerifying = false,
@@ -243,6 +248,7 @@ class EnterPinViewModel(
                                 )
                             }
                         }
+
                         else -> {
                             // Неизвестные ошибки - показываем диалог
                             logger.error(LogCategory.AUTH, "EnterPinViewModel: Unknown error: ${error.message}")
