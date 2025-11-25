@@ -97,11 +97,13 @@ val dataModule =
                 }
             }
 
+            val baseUrl = "https://${ServerConfig.BASE_URL}"
             // Network API
             single {
                 LocationApi(
                     httpClient = get(),
-                    baseUrl = "https://${ServerConfig.BASE_URL}",
+                    baseUrl = baseUrl,
+//                    baseUrl = "https://${ServerConfig.BASE_URL}",
                     logger = get(),
                 )
             }
@@ -110,7 +112,8 @@ val dataModule =
             single<AuthApi> {
                 AuthApiImpl(
                     httpClient = get(),
-                    baseUrl = "https://${ServerConfig.BASE_URL}",
+                    baseUrl = baseUrl,
+//                    baseUrl = "https://${ServerConfig.BASE_URL}",
                 )
             }
 
@@ -118,7 +121,8 @@ val dataModule =
             single<FirebaseTokenApi> {
                 FirebaseTokenApiImpl(
                     httpClient = get(),
-                    baseUrl = "https://${ServerConfig.BASE_URL}",
+                    baseUrl = baseUrl,
+//                    baseUrl = "https://${ServerConfig.BASE_URL}",
                 )
             }
 
@@ -126,7 +130,8 @@ val dataModule =
             single<LoadApi> {
                 LoadApiImpl(
                     httpClient = get(),
-                    baseUrl = "https://${ServerConfig.BASE_URL}",
+                    baseUrl = baseUrl,
+//                    baseUrl = "https://${ServerConfig.BASE_URL}",
                     logger = get(),
                 )
             }
@@ -135,7 +140,8 @@ val dataModule =
             single<LogsApi> {
                 LogsApiImpl(
                     httpClient = get(),
-                    baseUrl = "https://${ServerConfig.BASE_URL}",
+                    baseUrl = baseUrl,
+//                    baseUrl = "https://${ServerConfig.BASE_URL}",
                     filesManager = get(),
                     logger = get(),
                 )
@@ -146,7 +152,7 @@ val dataModule =
             single<LocationRemoteDataSource> { LocationRemoteDataSourceImpl(get(), get()) }
             single<TrackingDataSource> { TrackingDataSourceImpl(get()) }
             single<PrefsDataSource> { PrefsDataSourceImpl(get()) }
-            single<AuthRemoteDataSource> { AuthRemoteDataSource(get(), get()) }
+            single<AuthRemoteDataSource> { AuthRemoteDataSource(get()) }
             single { LoadsRemoteDataSource(get()) }
             single { StopsLocalDataSource(get()) }
             single { LoadsLocalDataSource(get(), get<StopsLocalDataSource>()) }
@@ -165,7 +171,7 @@ val dataModule =
             single<PrefsRepository> { PrefsRepositoryImpl(get()) }
             single<TrackingRepository> { TrackingRepositoryImpl(get()) }
             single<AuthRepository> { AuthRepositoryImpl(get()) }
-            single<AuthPreferencesRepository> { AuthPreferencesRepositoryImpl(get(), get()) }
+            single<AuthPreferencesRepository> { AuthPreferencesRepositoryImpl(get(), get(), get()) }
             single<LoadRepository> { LoadRepositoryImpl(get(), get(), get(), get()) }
             single<LogsRepository> { LogsRepositoryImpl(get(), get(), get()) }
             single<NotificationRepository> { NotificationRepositoryImpl(get(), get(), get(), get()) }
