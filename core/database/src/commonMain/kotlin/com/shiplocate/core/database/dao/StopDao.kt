@@ -18,6 +18,9 @@ interface StopDao {
     @Query("SELECT * FROM stops WHERE loadId = :loadId AND enter = 0 ORDER BY stopIndex ASC")
     suspend fun getNotEnteredStopsByLoad(loadId: Long): List<StopEntity>
 
+    @Query("SELECT * FROM stops WHERE serverId = :serverId LIMIT 1")
+    suspend fun getStopByServerId(serverId: Long): StopEntity?
+
     @Query("SELECT * FROM stops")
     suspend fun getAllStops(): List<StopEntity>
 

@@ -18,7 +18,7 @@ import com.shiplocate.core.database.entity.StopEntity
  */
 @Database(
     entities = [LocationEntity::class, LoadEntity::class, StopEntity::class, EnterStopQueueEntity::class],
-    version = 4,
+    version = 5,
     exportSchema = true,
 )
 @ConstructedBy(TrackerDatabaseConstructor::class)

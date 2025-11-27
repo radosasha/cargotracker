@@ -8,8 +8,12 @@ import com.shiplocate.data.network.dto.load.DisconnectLoadRequest
 import com.shiplocate.data.network.dto.load.EnterStopRequest
 import com.shiplocate.data.network.dto.load.LoadDto
 import com.shiplocate.data.network.dto.load.PingLoadRequest
+import com.shiplocate.data.network.dto.load.StopDto
+import com.shiplocate.data.network.dto.load.UpdateStopCompletionRequest
 import io.ktor.client.HttpClient
+import io.ktor.client.call.body
 import io.ktor.client.plugins.ClientRequestException
+import io.ktor.client.plugins.ResponseException
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.post
@@ -100,6 +104,22 @@ interface LoadApi {
         token: String,
         serverLoadId: Long,
     ): List<LoadDto>
+
+    /**
+     * Update stop completion status
+     * Updates the completion field for a stop
+     *
+     * @param token JWT token for authentication
+     * @param stopId Stop ID to update
+     * @param completion Completion status (0 = NOT_COMPLETED, 1 = COMPLETED)
+     * @return Updated StopDto
+     * @throws Exception if request fails
+     */
+    suspend fun updateStopCompletion(
+        token: String,
+        stopId: Long,
+        completion: Int,
+    ): StopDto
 }
 
 /**
@@ -216,7 +236,7 @@ class LoadApiImpl(
             }
 
         logger.debug(LogCategory.NETWORK, "🌐 LoadApi: Reject response status: ${response.status}")
-        
+
         // Обрабатываем 200 OK или 400 Bad Request как успех
         val statusCode = response.status.value
         if (statusCode == HttpStatusCode.OK.value || statusCode == HttpStatusCode.BadRequest.value) {
@@ -233,6 +253,39 @@ class LoadApiImpl(
             }
         } else {
             return response.bodyOrThrow()
+        }
+    }
+
+    override suspend fun updateStopCompletion(
+        token: String,
+        stopId: Long,
+        completion: Int,
+    ): StopDto {
+        logger.debug(LogCategory.NETWORK, "🌐 LoadApi: Updating stop completion for stop $stopId to $completion")
+
+        val request = UpdateStopCompletionRequest(stopId = stopId, completion = completion)
+
+        return try {
+            val response = httpClient.post("$baseUrl/api/mobile/loads/stopcompletion") {
+                header(HttpHeaders.Authorization, "Bearer $token")
+                contentType(ContentType.Application.Json)
+                setBody(request)
+            }
+
+            logger.debug(LogCategory.NETWORK, "🌐 LoadApi: Update stop completion response status: ${response.status}")
+            response.bodyOrThrow<StopDto>()
+        } catch (e: ResponseException) {
+            logger.debug(LogCategory.NETWORK, "🌐 LoadApi: ❌ Update stop completion error: ${e.response.status}")
+            val errorMessage = try {
+                e.response.body<String>()
+            } catch (parseError: Exception) {
+                logger.debug(LogCategory.NETWORK, "🌐 LoadApi: Failed to parse error response: ${parseError.message}")
+                "Stop ID and completion are required"
+            }
+            throw Exception(errorMessage)
+        } catch (e: Exception) {
+            logger.debug(LogCategory.NETWORK, "🌐 LoadApi: ❌ Network error: ${e.message}")
+            throw e
         }
     }
 }

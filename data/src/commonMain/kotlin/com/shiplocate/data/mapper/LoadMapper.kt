@@ -57,7 +57,8 @@ fun LoadDto.toStopEntities(loadId: Long): List<StopEntity> {
             latitude = stopDto.latitude,
             longitude = stopDto.longitude,
             enter = stopDto.enter,
-            note = stopDto.note
+            note = stopDto.note,
+            completion = stopDto.completion
         )
     }
 }
@@ -74,7 +75,8 @@ fun StopDto.toDomain(): Stop {
         latitude = latitude,
         longitude = longitude,
         enter = enter,
-        note = note
+        note = note,
+        completion = completion
     )
 }
 
@@ -91,7 +93,8 @@ fun StopDto.toStopEntity(loadId: Long): StopEntity {
         latitude = latitude,
         longitude = longitude,
         enter = enter,
-        note = note
+        note = note,
+        completion = completion
     )
 }
 
@@ -107,7 +110,8 @@ fun StopEntity.toDomain(): Stop {
         latitude = latitude,
         longitude = longitude,
         enter = enter,
-        note = note
+        note = note,
+        completion = completion
     )
 }
 

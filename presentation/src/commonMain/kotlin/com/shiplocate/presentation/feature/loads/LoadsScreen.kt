@@ -138,8 +138,10 @@ fun LoadsScreen(
                                         isRefreshing = isRefreshing,
                                         isLoadingAction = isLoadingAction,
                                         onRefresh = { viewModel.refresh() },
-                                        onLoadClick = onLoadClick,
                                         onConfirmLoadDelivered = { viewModel.showLoadDeliveredDialog() },
+                                        onUpdateStopCompletion = { stopId, completion ->
+                                            viewModel.updateStopCompletion(stopId, completion)
+                                        },
                                     )
                                 } else {
                                     // Показываем пустое состояние
@@ -659,8 +661,8 @@ private fun ActiveLoadListWithRefresh(
     isRefreshing: Boolean,
     isLoadingAction: Boolean,
     onRefresh: () -> Unit,
-    onLoadClick: (Long) -> Unit,
     onConfirmLoadDelivered: () -> Unit,
+    onUpdateStopCompletion: (Long, Int) -> Unit,
 ) {
     PullToRefreshBox(
         isRefreshing = isRefreshing,
@@ -676,8 +678,9 @@ private fun ActiveLoadListWithRefresh(
                 ActiveLoadItem(
                     load = load,
                     isLoadingAction = isLoadingAction,
-                    onClick = { onLoadClick(load.id) },
                     onConfirmLoadDelivered = onConfirmLoadDelivered,
+                    onUpdateStopCompletion = onUpdateStopCompletion,
+                    isLoadingCompletion = isLoadingAction,
                 )
             }
         }
@@ -689,8 +692,9 @@ private fun ActiveLoadListWithRefresh(
 private fun ActiveLoadItem(
     load: LoadUiModel,
     isLoadingAction: Boolean,
-    onClick: () -> Unit,
     onConfirmLoadDelivered: () -> Unit,
+    onUpdateStopCompletion: (Long, Int) -> Unit,
+    isLoadingCompletion: Boolean = false,
 ) {
     Column(
         modifier = Modifier
@@ -799,7 +803,12 @@ private fun ActiveLoadItem(
         // Stops Timeline (если есть stops)
         if (load.stops.isNotEmpty()) {
             Spacer(modifier = Modifier.height(16.dp))
-            StopsTimeline(stops = load.stops)
+            StopsTimeline(
+                stops = load.stops,
+                showCompletionButtons = true,
+                onUpdateStopCompletion = onUpdateStopCompletion,
+                isLoadingCompletion = isLoadingCompletion,
+            )
         }
 
         // Кнопка действия

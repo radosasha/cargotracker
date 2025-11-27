@@ -15,5 +15,11 @@ data class Stop(
     val longitude: Double,
     val enter: Boolean,
     val note: String? = null,
-)
+    val completion: Int = 0, // 0 = NOT_COMPLETED, 1 = COMPLETED
+) {
+    companion object {
+        const val STOP_COMPLETION_NOT_COMPLETED = 0
+        const val STOP_COMPLETION_COMPLETED = 1
+    }
+}
 

@@ -356,6 +356,38 @@ class LoadRepositoryImpl(
         }
     }
 
+    override suspend fun updateStopCompletion(
+        token: String,
+        stopId: Long,
+        completion: Int,
+    ): Result<Stop> {
+        logger.info(LogCategory.GENERAL, "🔄 LoadRepositoryImpl: Updating stop completion for stop $stopId to $completion")
+        
+        return try {
+            val stopDto = loadsRemoteDataSource.updateStopCompletion(token, stopId, completion)
+            
+            // Update stop in local database
+            val stopEntity = stopDto.toStopEntity(0) // loadId will be updated from existing stop
+            val existingStop = stopsLocalDataSource.getStopByServerId(stopId)
+            
+            if (existingStop != null) {
+                val updatedStop = stopEntity.copy(
+                    id = existingStop.id,
+                    loadId = existingStop.loadId,
+                )
+                stopsLocalDataSource.updateStops(listOf(updatedStop))
+                logger.info(LogCategory.GENERAL, "✅ LoadRepositoryImpl: Successfully updated stop completion")
+                Result.success(updatedStop.toDomain())
+            } else {
+                logger.warn(LogCategory.GENERAL, "⚠️ LoadRepositoryImpl: Stop not found in local database")
+                Result.success(stopDto.toDomain())
+            }
+        } catch (e: Exception) {
+            logger.error(LogCategory.GENERAL, "❌ LoadRepositoryImpl: Failed to update stop completion: ${e.message}")
+            Result.failure(e)
+        }
+    }
+
     override suspend fun clearAllData() {
         logger.info(LogCategory.GENERAL, "🔄 LoadRepositoryImpl: Clearing all data from database")
         try {

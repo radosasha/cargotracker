@@ -31,5 +31,7 @@ data class StopDto(
     val enter: Boolean,
     @SerialName("note")
     val note: String? = null,
+    @SerialName("completion")
+    val completion: Int = 0, // 0 = NOT_COMPLETED, 1 = COMPLETED
 )
 

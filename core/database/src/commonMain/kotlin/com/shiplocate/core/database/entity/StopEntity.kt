@@ -35,5 +35,6 @@ data class StopEntity(
     val longitude: Double,
     val enter: Boolean,
     val note: String? = null,
+    val completion: Int = 0, // 0 = NOT_COMPLETED, 1 = COMPLETED
 )
 

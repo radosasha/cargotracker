@@ -1,5 +1,5 @@
+
 import com.android.build.api.dsl.ApplicationExtension
-import org.gradle.kotlin.dsl.configure
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 

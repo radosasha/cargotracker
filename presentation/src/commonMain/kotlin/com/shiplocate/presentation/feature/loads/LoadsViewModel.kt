@@ -19,6 +19,7 @@ import com.shiplocate.domain.usecase.load.DisconnectFromLoadUseCase
 import com.shiplocate.domain.usecase.load.GetCachedLoadsUseCase
 import com.shiplocate.domain.usecase.load.GetLoadsUseCase
 import com.shiplocate.domain.usecase.load.RejectLoadUseCase
+import com.shiplocate.domain.usecase.load.UpdateStopCompletionUseCase
 import com.shiplocate.presentation.mapper.toUiModel
 import com.shiplocate.presentation.model.LoadUiModel
 import kotlinx.coroutines.Dispatchers
@@ -45,6 +46,7 @@ class LoadsViewModel(
     private val observePermissionsUseCase: ObservePermissionsUseCase,
     private val disconnectFromLoadUseCase: DisconnectFromLoadUseCase,
     private val rejectLoadUseCase: RejectLoadUseCase,
+    private val updateStopCompletionUseCase: UpdateStopCompletionUseCase,
     private val requestNotificationPermissionUseCase: RequestNotificationPermissionUseCase,
     private val sendCachedTokenOnAuthUseCase: SendCachedTokenOnAuthUseCase,
     private val observeReceivedPushesUseCase: ObserveReceivedPushesUseCase,
@@ -597,6 +599,35 @@ class LoadsViewModel(
                 }
             } catch (e: Exception) {
                 logger.error(LogCategory.UI, "LoadsViewModel: Exception during reject load: ${e.message}")
+            } finally {
+                _isLoadingAction.value = false
+            }
+        }
+    }
+
+    fun updateStopCompletion(stopId: Long, completion: Int) {
+        viewModelScope.launch {
+            _isLoadingAction.value = true
+
+            try {
+                logger.info(LogCategory.UI, "LoadsViewModel: Updating stop completion for stop $stopId to $completion")
+
+                val result = withContext(Dispatchers.IO) {
+                    updateStopCompletionUseCase(stopId, completion)
+                }
+
+                if (result.isSuccess) {
+                    logger.info(LogCategory.UI, "LoadsViewModel: Successfully updated stop completion")
+                    // Refresh loads to get updated stops
+                    refresh()
+                } else {
+                    logger.error(
+                        LogCategory.UI,
+                        "LoadsViewModel: Failed to update stop completion: ${result.exceptionOrNull()?.message}",
+                    )
+                }
+            } catch (e: Exception) {
+                logger.error(LogCategory.UI, "LoadsViewModel: Exception during update stop completion: ${e.message}")
             } finally {
                 _isLoadingAction.value = false
             }

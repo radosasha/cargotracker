@@ -30,6 +30,14 @@ class StopsLocalDataSource(
     }
 
     /**
+     * Get stop by server ID
+     */
+    suspend fun getStopByServerId(serverId: Long): StopEntity? {
+        println("💾 StopsLocalDataSource: Getting stop by serverId $serverId")
+        return stopDao.getStopByServerId(serverId)
+    }
+
+    /**
      * Insert new stops to database
      */
     suspend fun insertStops(stops: List<StopEntity>) {

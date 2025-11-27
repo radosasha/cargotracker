@@ -109,6 +109,20 @@ interface LoadRepository {
     fun observeNotEnteredStopIdsUpdates(): Flow<List<Stop>>
 
     /**
+     * Update stop completion status
+     * Updates the completion field for a stop
+     * @param token Authentication token
+     * @param stopId Server's stop ID
+     * @param completion Completion status (0 = NOT_COMPLETED, 1 = COMPLETED)
+     * @return Updated Stop
+     */
+    suspend fun updateStopCompletion(
+        token: String,
+        stopId: Long,
+        completion: Int,
+    ): Result<Stop>
+
+    /**
      * Clear all data from database (loads, stops, etc.)
      * Used during logout to remove all cached data
      */

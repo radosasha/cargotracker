@@ -2,6 +2,7 @@ package com.shiplocate.data.datasource.load
 
 import com.shiplocate.data.network.api.LoadApi
 import com.shiplocate.data.network.dto.load.LoadDto
+import com.shiplocate.data.network.dto.load.StopDto
 
 /**
  * Remote data source for Load operations
@@ -87,5 +88,21 @@ class LoadsRemoteDataSource(
     ): List<LoadDto> {
         println("📡 LoadRemoteDataSource: Rejecting load $serverLoadId")
         return loadApi.rejectLoad(token, serverLoadId)
+    }
+
+    /**
+     * Update stop completion status
+     * @param token Bearer token for authentication
+     * @param stopId Server's stop ID
+     * @param completion Completion status (0 = NOT_COMPLETED, 1 = COMPLETED)
+     * @return Updated StopDto
+     */
+    suspend fun updateStopCompletion(
+        token: String,
+        stopId: Long,
+        completion: Int,
+    ): StopDto {
+        println("📡 LoadRemoteDataSource: Updating stop completion for stop $stopId to $completion")
+        return loadApi.updateStopCompletion(token, stopId, completion)
     }
 }
