@@ -1,5 +1,6 @@
 package com.shiplocate.core.database
 
+import androidx.room.AutoMigration
 import androidx.room.ConstructedBy
 import androidx.room.Database
 import androidx.room.RoomDatabase
@@ -20,6 +21,9 @@ import com.shiplocate.core.database.entity.StopEntity
     entities = [LocationEntity::class, LoadEntity::class, StopEntity::class, EnterStopQueueEntity::class],
     version = 5,
     exportSchema = true,
+    autoMigrations = [
+        AutoMigration(from = 4, to = 5),
+    ],
 )
 @ConstructedBy(TrackerDatabaseConstructor::class)
 abstract class TrackerDatabase : RoomDatabase() {

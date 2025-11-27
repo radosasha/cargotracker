@@ -29,7 +29,6 @@ actual class DatabaseProvider() {
             name = dbFile.path!!
         )
         .setDriver(BundledSQLiteDriver())
-        .addMigrations(Migrations.MIGRATION_4_5)
         .fallbackToDestructiveMigration(dropAllTables = false)
         .build()
     }

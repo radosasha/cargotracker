@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 5,
-    "identityHash": "515b5c57dcaa4686472df040c57656d3",
+    "identityHash": "606a38dd244a836b825f3ec3fe46babc",
     "entities": [
       {
         "tableName": "locations",
@@ -143,7 +143,7 @@
       },
       {
         "tableName": "stops",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `loadId` INTEGER NOT NULL, `serverId` INTEGER NOT NULL, `type` INTEGER NOT NULL, `locationName` TEXT NOT NULL, `locationAddress` TEXT NOT NULL, `date` INTEGER NOT NULL, `geofenceRadius` INTEGER NOT NULL, `stopIndex` INTEGER NOT NULL, `latitude` REAL NOT NULL, `longitude` REAL NOT NULL, `enter` INTEGER NOT NULL, `note` TEXT, `completion` INTEGER NOT NULL, FOREIGN KEY(`loadId`) REFERENCES `loads`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `loadId` INTEGER NOT NULL, `serverId` INTEGER NOT NULL, `type` INTEGER NOT NULL, `locationName` TEXT NOT NULL, `locationAddress` TEXT NOT NULL, `date` INTEGER NOT NULL, `geofenceRadius` INTEGER NOT NULL, `stopIndex` INTEGER NOT NULL, `latitude` REAL NOT NULL, `longitude` REAL NOT NULL, `enter` INTEGER NOT NULL, `note` TEXT, `completion` INTEGER NOT NULL DEFAULT 0, FOREIGN KEY(`loadId`) REFERENCES `loads`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "id",
@@ -226,7 +226,8 @@
             "fieldPath": "completion",
             "columnName": "completion",
             "affinity": "INTEGER",
-            "notNull": true
+            "notNull": true,
+            "defaultValue": "0"
           }
         ],
         "primaryKey": {
@@ -298,7 +299,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '515b5c57dcaa4686472df040c57656d3')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '606a38dd244a836b825f3ec3fe46babc')"
     ]
   }
 }

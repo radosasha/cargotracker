@@ -15,7 +15,6 @@ actual class DatabaseProvider(private val context: Context) {
             context = appContext,
             name = dbFile.absolutePath,
         )
-            .addMigrations(Migrations.MIGRATION_4_5)
             .fallbackToDestructiveMigration()
             .build()
     }
