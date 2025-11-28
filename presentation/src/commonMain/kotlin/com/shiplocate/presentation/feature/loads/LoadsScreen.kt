@@ -17,6 +17,12 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -24,6 +30,8 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -54,6 +62,7 @@ fun LoadsScreen(
     viewModel: LoadsViewModel,
     onLoadClick: (Long) -> Unit,
     onNavigateToPermissions: () -> Unit = {},
+    onNavigateToMessages: (Long) -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
@@ -175,6 +184,25 @@ fun LoadsScreen(
                                 .padding(16.dp),
                             onNavigateToPermissions = onNavigateToPermissions,
                         )
+                    }
+
+                    // Floating Action Button for Messages
+                    // Показывается только на вкладке Active (page 0) когда есть activeLoad
+                    if (currentPage == 0 && state.activeLoad != null) {
+                        FloatingActionButton(
+                            onClick = { onNavigateToMessages(state.activeLoad.id) },
+                            modifier = Modifier
+                                .align(Alignment.BottomEnd)
+                                .padding(16.dp),
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary,
+                            shape = CircleShape,
+                        ) {
+                            MessageIcon(
+                                color = MaterialTheme.colorScheme.onPrimary,
+                                modifier = Modifier.size(24.dp),
+                            )
+                        }
                     }
                 }
             }
@@ -903,6 +931,47 @@ private fun PermissionsWarningBanner(
                 Text("Grant Permissions")
             }
         }
+    }
+}
+
+/**
+ * Custom message icon for FloatingActionButton
+ */
+@Composable
+private fun MessageIcon(
+    color: androidx.compose.ui.graphics.Color,
+    modifier: Modifier = Modifier,
+) {
+    Canvas(modifier = modifier) {
+        val centerX = size.width / 2
+        val centerY = size.height / 2
+        val iconSize = size.width * 0.6f
+
+        // Speech bubble shape
+        val bubblePath = Path().apply {
+            // Main rectangle
+            moveTo(centerX - iconSize * 0.35f, centerY - iconSize * 0.25f)
+            lineTo(centerX + iconSize * 0.35f, centerY - iconSize * 0.25f)
+            lineTo(centerX + iconSize * 0.35f, centerY + iconSize * 0.25f)
+            lineTo(centerX - iconSize * 0.35f, centerY + iconSize * 0.25f)
+            close()
+
+            // Tail (pointing down-left)
+            moveTo(centerX - iconSize * 0.35f, centerY + iconSize * 0.25f)
+            lineTo(centerX - iconSize * 0.2f, centerY + iconSize * 0.4f)
+            lineTo(centerX - iconSize * 0.1f, centerY + iconSize * 0.25f)
+            close()
+        }
+
+        drawPath(
+            path = bubblePath,
+            color = color,
+            style = Stroke(
+                width = 2.dp.toPx(),
+                cap = StrokeCap.Round,
+                join = StrokeJoin.Round,
+            ),
+        )
     }
 }
 

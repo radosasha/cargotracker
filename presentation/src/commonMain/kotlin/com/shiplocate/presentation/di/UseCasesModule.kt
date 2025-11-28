@@ -36,6 +36,9 @@ import com.shiplocate.domain.usecase.load.RejectLoadUseCase
 import com.shiplocate.domain.usecase.load.UpdateStopCompletionUseCase
 import com.shiplocate.domain.usecase.logs.GetLogsClientIdUseCase
 import com.shiplocate.domain.usecase.logs.GetLogsUseCase
+import com.shiplocate.domain.usecase.message.FetchMessagesUseCase
+import com.shiplocate.domain.usecase.message.ObserveMessagesUseCase
+import com.shiplocate.domain.usecase.message.SendMessageUseCase
 import org.koin.core.module.dsl.factoryOf
 import org.koin.dsl.module
 
@@ -101,4 +104,9 @@ val useCasesModule =
         // Logs Use Cases
         factoryOf(::GetLogsUseCase)
         factoryOf(::GetLogsClientIdUseCase)
+
+        // Message Use Cases
+        factoryOf(::ObserveMessagesUseCase)
+        factoryOf(::FetchMessagesUseCase)
+        factoryOf(::SendMessageUseCase)
     }

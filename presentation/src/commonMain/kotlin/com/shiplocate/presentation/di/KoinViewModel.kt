@@ -5,6 +5,7 @@ import com.shiplocate.presentation.feature.auth.EnterPinViewModel
 import com.shiplocate.presentation.feature.home.LoadViewModel
 import com.shiplocate.presentation.feature.loads.LoadsViewModel
 import com.shiplocate.presentation.feature.logs.LogsViewModel
+import com.shiplocate.presentation.feature.messages.MessagesViewModel
 import com.shiplocate.presentation.feature.permissions.PermissionsViewModel
 
 /**
@@ -21,3 +22,5 @@ expect fun koinLoadsViewModel(): LoadsViewModel
 expect fun koinLogsViewModel(): LogsViewModel
 
 expect fun koinPermissionsViewModel(): PermissionsViewModel
+
+expect fun koinMessagesViewModel(): MessagesViewModel

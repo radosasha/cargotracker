@@ -27,6 +27,7 @@ import com.shiplocate.presentation.di.koinInject
 import com.shiplocate.presentation.di.koinLoadViewModel
 import com.shiplocate.presentation.di.koinLoadsViewModel
 import com.shiplocate.presentation.di.koinLogsViewModel
+import com.shiplocate.presentation.di.koinMessagesViewModel
 import com.shiplocate.presentation.di.koinPermissionsViewModel
 import com.shiplocate.presentation.feature.auth.EnterPhoneScreen
 import com.shiplocate.presentation.feature.auth.EnterPhoneViewModel
@@ -38,6 +39,8 @@ import com.shiplocate.presentation.feature.loads.LoadsScreen
 import com.shiplocate.presentation.feature.loads.LoadsViewModel
 import com.shiplocate.presentation.feature.logs.LogsScreen
 import com.shiplocate.presentation.feature.logs.LogsViewModel
+import com.shiplocate.presentation.feature.messages.MessagesScreen
+import com.shiplocate.presentation.feature.messages.MessagesViewModel
 import com.shiplocate.presentation.feature.permissions.PermissionsScreen
 import com.shiplocate.presentation.feature.permissions.PermissionsViewModel
 import com.shiplocate.presentation.model.BottomBarState
@@ -275,6 +278,9 @@ fun TrackerNavigation(
                 onNavigateToPermissions = {
                     navController.navigate(Screen.PERMISSIONS)
                 },
+                onNavigateToMessages = { loadId ->
+                    navController.navigate(Screen.messages(loadId))
+                },
             )
         }
 
@@ -399,6 +405,41 @@ fun TrackerNavigation(
             LogsScreen(
                 paddingValues = paddingValues,
                 viewModel = viewModel,
+            )
+        }
+
+        // Messages screen
+        composable(
+            route = Screen.MESSAGES,
+            arguments =
+                listOf(
+                    navArgument("loadId") { type = NavType.LongType },
+                ),
+        ) { backStackEntry ->
+            // Скрываем bottomBar при переходе на другие экраны
+            LaunchedEffect(currentRoute) {
+                if (currentRoute != Screen.LOADS) {
+                    onBottomBarStateChanged(BottomBarState.None)
+                }
+            }
+
+            val loadId = backStackEntry.getLongArgument("loadId") ?: 0L
+            val messagesViewModelFactory = viewModelFactory {
+                initializer<MessagesViewModel> {
+                    koinMessagesViewModel()
+                }
+            }
+            val viewModel: MessagesViewModel = viewModel(
+                factory = messagesViewModelFactory,
+            )
+
+            MessagesScreen(
+                paddingValues = paddingValues,
+                loadId = loadId,
+                viewModel = viewModel,
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
             )
         }
     }

@@ -11,8 +11,11 @@ object Screen {
     const val LOAD = "load/{loadId}"
     const val LOGS = "logs"
     const val PERMISSIONS = "permissions"
+    const val MESSAGES = "messages/{loadId}"
 
     fun enterPin(phone: String) = "enter_pin/$phone"
 
     fun load(loadId: Long) = "load/$loadId"
+
+    fun messages(loadId: Long) = "messages/$loadId"
 }

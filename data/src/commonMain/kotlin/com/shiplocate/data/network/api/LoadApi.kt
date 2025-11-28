@@ -10,6 +10,8 @@ import com.shiplocate.data.network.dto.load.LoadDto
 import com.shiplocate.data.network.dto.load.PingLoadRequest
 import com.shiplocate.data.network.dto.load.StopDto
 import com.shiplocate.data.network.dto.load.UpdateStopCompletionRequest
+import com.shiplocate.data.network.dto.message.MessageDto
+import com.shiplocate.data.network.dto.message.SendMessageRequest
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.ClientRequestException
@@ -120,6 +122,34 @@ interface LoadApi {
         stopId: Long,
         completion: Int,
     ): StopDto
+
+    /**
+     * Get messages for a load
+     *
+     * @param token JWT token for authentication
+     * @param loadId Load ID to get messages for
+     * @return List of MessageDto
+     * @throws Exception if request fails
+     */
+    suspend fun getMessages(
+        token: String,
+        loadId: Long,
+    ): List<MessageDto>
+
+    /**
+     * Send a message for a load
+     *
+     * @param token JWT token for authentication
+     * @param loadId Load ID
+     * @param message Message text
+     * @return Created MessageDto
+     * @throws Exception if request fails
+     */
+    suspend fun sendMessage(
+        token: String,
+        loadId: Long,
+        message: String,
+    ): MessageDto
 }
 
 /**
@@ -281,6 +311,70 @@ class LoadApiImpl(
             } catch (parseError: Exception) {
                 logger.debug(LogCategory.NETWORK, "🌐 LoadApi: Failed to parse error response: ${parseError.message}")
                 "Stop ID and completion are required"
+            }
+            throw Exception(errorMessage)
+        } catch (e: Exception) {
+            logger.debug(LogCategory.NETWORK, "🌐 LoadApi: ❌ Network error: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getMessages(
+        token: String,
+        loadId: Long,
+    ): List<MessageDto> {
+        logger.debug(LogCategory.NETWORK, "🌐 LoadApi: Getting messages for load $loadId")
+
+        return try {
+            val response = httpClient.get("$baseUrl/api/mobile/loads/messages") {
+                header(HttpHeaders.Authorization, "Bearer $token")
+                url {
+                    parameters.append("loadId", loadId.toString())
+                }
+            }
+
+            logger.debug(LogCategory.NETWORK, "🌐 LoadApi: Get messages response status: ${response.status}")
+            response.bodyOrThrow<List<MessageDto>>()
+        } catch (e: ResponseException) {
+            logger.debug(LogCategory.NETWORK, "🌐 LoadApi: ❌ Get messages error: ${e.response.status}")
+            val errorMessage = try {
+                e.response.body<String>()
+            } catch (parseError: Exception) {
+                logger.debug(LogCategory.NETWORK, "🌐 LoadApi: Failed to parse error response: ${parseError.message}")
+                "Failed to get messages"
+            }
+            throw Exception(errorMessage)
+        } catch (e: Exception) {
+            logger.debug(LogCategory.NETWORK, "🌐 LoadApi: ❌ Network error: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun sendMessage(
+        token: String,
+        loadId: Long,
+        message: String,
+    ): MessageDto {
+        logger.debug(LogCategory.NETWORK, "🌐 LoadApi: Sending message for load $loadId")
+
+        val request = SendMessageRequest(loadId = loadId, message = message.trim())
+
+        return try {
+            val response = httpClient.post("$baseUrl/api/mobile/loads/message") {
+                header(HttpHeaders.Authorization, "Bearer $token")
+                contentType(ContentType.Application.Json)
+                setBody(request)
+            }
+
+            logger.debug(LogCategory.NETWORK, "🌐 LoadApi: Send message response status: ${response.status}")
+            response.bodyOrThrow<MessageDto>()
+        } catch (e: ResponseException) {
+            logger.debug(LogCategory.NETWORK, "🌐 LoadApi: ❌ Send message error: ${e.response.status}")
+            val errorMessage = try {
+                e.response.body<String>()
+            } catch (parseError: Exception) {
+                logger.debug(LogCategory.NETWORK, "🌐 LoadApi: Failed to parse error response: ${parseError.message}")
+                "Failed to send message"
             }
             throw Exception(errorMessage)
         } catch (e: Exception) {

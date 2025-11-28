@@ -23,6 +23,8 @@ import com.shiplocate.data.datasource.impl.TrackingDataSourceImpl
 import com.shiplocate.data.datasource.load.LoadsLocalDataSource
 import com.shiplocate.data.datasource.load.LoadsRemoteDataSource
 import com.shiplocate.data.datasource.load.StopsLocalDataSource
+import com.shiplocate.data.datasource.message.MessagesLocalDataSource
+import com.shiplocate.data.datasource.message.MessagesRemoteDataSource
 import com.shiplocate.data.datasource.remote.AuthRemoteDataSource
 import com.shiplocate.data.network.api.AuthApi
 import com.shiplocate.data.network.api.AuthApiImpl
@@ -40,6 +42,7 @@ import com.shiplocate.data.repository.GpsRepositoryImpl
 import com.shiplocate.data.repository.LoadRepositoryImpl
 import com.shiplocate.data.repository.LocationRepositoryImpl
 import com.shiplocate.data.repository.LogsRepositoryImpl
+import com.shiplocate.data.repository.MessagesRepositoryImpl
 import com.shiplocate.data.repository.NotificationRepositoryImpl
 import com.shiplocate.data.repository.PermissionRepositoryImpl
 import com.shiplocate.data.repository.PrefsRepositoryImpl
@@ -54,6 +57,7 @@ import com.shiplocate.domain.repository.GpsRepository
 import com.shiplocate.domain.repository.LoadRepository
 import com.shiplocate.domain.repository.LocationRepository
 import com.shiplocate.domain.repository.LogsRepository
+import com.shiplocate.domain.repository.MessagesRepository
 import com.shiplocate.domain.repository.NotificationRepository
 import com.shiplocate.domain.repository.PermissionRepository
 import com.shiplocate.domain.repository.PrefsRepository
@@ -156,6 +160,8 @@ val dataModule =
             single { LoadsRemoteDataSource(get()) }
             single { StopsLocalDataSource(get()) }
             single { LoadsLocalDataSource(get(), get<StopsLocalDataSource>()) }
+            single { MessagesRemoteDataSource(get()) }
+            single { MessagesLocalDataSource(get()) }
             single<LogsRemoteDataSource> { LogsRemoteDataSourceImpl(get(), get()) }
 
             // Firebase Token Data Sources
@@ -173,6 +179,7 @@ val dataModule =
             single<AuthRepository> { AuthRepositoryImpl(get()) }
             single<AuthPreferencesRepository> { AuthPreferencesRepositoryImpl(get(), get(), get()) }
             single<LoadRepository> { LoadRepositoryImpl(get(), get(), get(), get()) }
+            single<MessagesRepository> { MessagesRepositoryImpl(get(), get(), get(), get()) }
             single<LogsRepository> { LogsRepositoryImpl(get(), get(), get()) }
             single<NotificationRepository> { NotificationRepositoryImpl(get(), get(), get(), get()) }
 
