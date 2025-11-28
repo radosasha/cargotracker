@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 6,
-    "identityHash": "7d15bf0461a2d51e40760f5139a02ecd",
+    "identityHash": "5bdb39e550de62a9eeaefc5023562d3f",
     "entities": [
       {
         "tableName": "locations",
@@ -355,12 +355,12 @@
           },
           {
             "name": "index_messages_serverId",
-            "unique": true,
+            "unique": false,
             "columnNames": [
               "serverId"
             ],
             "orders": [],
-            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_messages_serverId` ON `${TABLE_NAME}` (`serverId`)"
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_messages_serverId` ON `${TABLE_NAME}` (`serverId`)"
           }
         ],
         "foreignKeys": [
@@ -380,7 +380,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '7d15bf0461a2d51e40760f5139a02ecd')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '5bdb39e550de62a9eeaefc5023562d3f')"
     ]
   }
 }

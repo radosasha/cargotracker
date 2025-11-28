@@ -14,10 +14,10 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface MessageDao {
     @Query("SELECT * FROM messages WHERE loadId = :loadId ORDER BY datetime ASC")
-    fun getMessagesByLoadId(loadId: Long): Flow<List<MessageEntity>>
+    fun getMessagesByLoadIdFlow(loadId: Long): Flow<List<MessageEntity>>
 
     @Query("SELECT * FROM messages WHERE loadId = :loadId ORDER BY datetime ASC")
-    suspend fun getMessagesByLoadIdSync(loadId: Long): List<MessageEntity>
+    suspend fun getMessagesByLoadId(loadId: Long): List<MessageEntity>
 
     @Query("SELECT * FROM messages WHERE serverId = :serverId LIMIT 1")
     suspend fun getMessageByServerId(serverId: Long): MessageEntity?
@@ -25,7 +25,7 @@ interface MessageDao {
     @Query("SELECT * FROM messages WHERE id = :id LIMIT 1")
     suspend fun getMessageById(id: Long): MessageEntity?
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Insert()
     suspend fun insertMessage(message: MessageEntity): Long
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
@@ -33,6 +33,9 @@ interface MessageDao {
 
     @Update
     suspend fun updateMessage(message: MessageEntity)
+
+    @Update
+    suspend fun updateMessages(messages: List<MessageEntity>)
 
     @Query("DELETE FROM messages WHERE loadId = :loadId")
     suspend fun deleteMessagesByLoadId(loadId: Long)

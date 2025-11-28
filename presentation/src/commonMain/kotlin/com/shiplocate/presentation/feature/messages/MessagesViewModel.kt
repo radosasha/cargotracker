@@ -46,7 +46,6 @@ class MessagesViewModel(
                 if (messagesFlow == null) {
                     logger.warn(LogCategory.UI, "MessagesViewModel: Not authenticated")
                     _uiState.value = _uiState.value.copy(
-                        error = "Not authenticated",
                         isLoading = false,
                     )
                     return@launch
@@ -67,7 +66,6 @@ class MessagesViewModel(
                 logger.error(LogCategory.UI, "MessagesViewModel: Error initializing: ${e.message}", e)
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    error = e.message,
                 )
             }
         }
@@ -105,7 +103,7 @@ class MessagesViewModel(
             return
         }
 
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.Default) {
             try {
                 _uiState.value = _uiState.value.copy(isSending = true, canSendMessage = false)
 
@@ -139,22 +137,17 @@ class MessagesViewModel(
                     logger.error(LogCategory.UI, "MessagesViewModel: Failed to send message: ${result.exceptionOrNull()?.message}")
                     _uiState.value = _uiState.value.copy(
                         isSending = false,
-                        error = result.exceptionOrNull()?.message ?: "Failed to send message",
                     )
                 }
             } catch (e: Exception) {
                 logger.error(LogCategory.UI, "MessagesViewModel: Exception sending message: ${e.message}", e)
                 _uiState.value = _uiState.value.copy(
                     isSending = false,
-                    error = e.message ?: "Failed to send message",
                 )
             }
         }
     }
 
-    fun clearError() {
-        _uiState.value = _uiState.value.copy(error = null)
-    }
 }
 
 /**
@@ -166,6 +159,5 @@ data class MessagesUiState(
     val isSending: Boolean = false,
     val messageText: String = "",
     val canSendMessage: Boolean = false,
-    val error: String? = null,
 )
 

@@ -21,7 +21,7 @@ import androidx.room.PrimaryKey
     ],
     indices = [
         Index(value = ["loadId"]),
-        Index(value = ["serverId"], unique = true),
+        Index(value = ["serverId"]),
     ],
 )
 data class MessageEntity(

@@ -18,6 +18,14 @@ class MessagesLocalDataSource(
      */
     fun getMessagesByLoadId(loadId: Long): Flow<List<MessageEntity>> {
         println("💾 MessagesLocalDataSource: Getting messages by loadId=$loadId")
+        return messageDao.getMessagesByLoadIdFlow(loadId)
+    }
+
+    /**
+     * Get messages for a load synchronously
+     */
+    suspend fun getMessagesByLoadIdSync(loadId: Long): List<MessageEntity> {
+        println("💾 MessagesLocalDataSource: Getting messages by loadId=$loadId (sync)")
         return messageDao.getMessagesByLoadId(loadId)
     }
 
@@ -51,6 +59,14 @@ class MessagesLocalDataSource(
     suspend fun updateMessage(message: MessageEntity) {
         println("💾 MessagesLocalDataSource: Updating message with serverId=${message.serverId}")
         messageDao.updateMessage(message)
+    }
+
+    /**
+     * Update multiple messages
+     */
+    suspend fun updateMessages(messages: List<MessageEntity>) {
+        println("💾 MessagesLocalDataSource: Updating ${messages.size} messages")
+        messageDao.updateMessages(messages)
     }
 }
 

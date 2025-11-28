@@ -1,5 +1,6 @@
 package com.shiplocate.data.repository
 
+import com.shiplocate.core.database.entity.MessageEntity
 import com.shiplocate.core.logging.LogCategory
 import com.shiplocate.core.logging.Logger
 import com.shiplocate.data.datasource.load.LoadsLocalDataSource
@@ -44,14 +45,38 @@ class MessagesRepositoryImpl(
 
             val messageDtos = messagesRemoteDataSource.getMessages(token, serverLoadId)
 
-            // Convert to entities and save to database
-            val entities = messageDtos.map { dto ->
-                dto.toMessageEntity(loadId) // Using local loadId for database
+            // Get existing messages from database
+            val existingMessages = messagesLocalDataSource.getMessagesByLoadIdSync(loadId)
+
+            // Separate messages into new and existing
+            val messagesToInsert = mutableListOf<MessageEntity>()
+            val messagesToUpdate = mutableListOf<MessageEntity>()
+
+            messageDtos.forEach { messageDto ->
+                val existingMessage = existingMessages.find { it.serverId == messageDto.id }
+                if (existingMessage != null) {
+                    // Update existing message with new data, keeping the same local id
+                    val updatedEntity = messageDto.toMessageEntity(loadId).copy(id = existingMessage.id)
+                    messagesToUpdate.add(updatedEntity)
+                } else {
+                    // New message: set id = 0 so Room will auto-generate a new id
+                    messagesToInsert.add(messageDto.toMessageEntity(loadId).copy(id = 0))
+                }
             }
 
-            messagesLocalDataSource.insertMessages(entities)
+            // Insert new messages
+            if (messagesToInsert.isNotEmpty()) {
+                logger.info(LogCategory.GENERAL, "💾 MessagesRepositoryImpl: Inserting ${messagesToInsert.size} new messages")
+                messagesLocalDataSource.insertMessages(messagesToInsert)
+            }
 
-            logger.info(LogCategory.GENERAL, "✅ MessagesRepositoryImpl: Successfully refreshed ${entities.size} messages")
+            // Update existing messages
+            if (messagesToUpdate.isNotEmpty()) {
+                logger.info(LogCategory.GENERAL, "💾 MessagesRepositoryImpl: Updating ${messagesToUpdate.size} existing messages")
+                messagesLocalDataSource.updateMessages(messagesToUpdate)
+            }
+
+            logger.info(LogCategory.GENERAL, "✅ MessagesRepositoryImpl: Successfully refreshed ${messageDtos.size} messages")
             Result.success(messageDtos.map { it.toMessageDomain() })
         } catch (e: Exception) {
             logger.error(LogCategory.GENERAL, "❌ MessagesRepositoryImpl: Failed to refresh messages: ${e.message}")
