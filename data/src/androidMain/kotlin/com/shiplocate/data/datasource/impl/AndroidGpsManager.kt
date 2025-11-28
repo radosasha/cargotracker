@@ -6,6 +6,7 @@ import android.content.pm.PackageManager
 import android.os.Looper
 import androidx.core.app.ActivityCompat
 import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationAvailability
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
@@ -22,6 +23,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Instant
+import kotlin.coroutines.resumeWithException
+import kotlin.coroutines.suspendCoroutine
 import android.location.Location as AndroidLocation
 
 /**
@@ -79,12 +82,20 @@ class AndroidGpsManager(
                 .setMinUpdateIntervalMillis(MIN_UPDATE_MS)
                 .build()
 
-            // Запрашиваем обновления местоположения
-            fusedLocationClient.requestLocationUpdates(
-                locationRequest,
-                locationCallback,
-                Looper.getMainLooper(),
-            )
+            suspendCoroutine<Unit> { cont ->
+                // Запрашиваем обновления местоположения
+                fusedLocationClient.requestLocationUpdates(
+                    locationRequest,
+                    locationCallback,
+                    Looper.getMainLooper(),
+                ).addOnSuccessListener {
+                    logger.info(LogCategory.LOCATION, "AndroidGpsManager: FusedProvider registered successfully successfully")
+                    cont.resumeWith(Result.success(Unit))
+                }.addOnFailureListener { it ->
+                    logger.info(LogCategory.LOCATION, "AndroidGpsManager: failed to start FusedProvider: ${it}")
+                    cont.resumeWithException(it)
+                }
+            }
 
             isTracking = true
             logger.info(LogCategory.LOCATION, "AndroidGpsManager: GPS tracking started successfully")
@@ -154,6 +165,15 @@ class AndroidGpsManager(
                     }
                 }
             }
+        }
+
+        override fun onLocationAvailability(p0: LocationAvailability) {
+            super.onLocationAvailability(p0)
+            logger.info(
+                LogCategory.LOCATION,
+                "AndroidGpsManager: Location availability changed, isAvailable: ${p0.isLocationAvailable}"
+            )
+
         }
     }
 

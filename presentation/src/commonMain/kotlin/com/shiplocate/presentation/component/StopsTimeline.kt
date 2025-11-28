@@ -77,7 +77,7 @@ private fun StopTimelineItem(
 
     val title = when (stop.type) {
         StopType.TYPE_PICKUP -> "Pickup"
-        StopType.TYPE_BORDER -> "Border"
+        StopType.TYPE_BORDER -> "Stop"
         StopType.TYPE_DELIVERY -> "Delivery"
         else -> "Unknown"
     }

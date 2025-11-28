@@ -51,3 +51,7 @@ kotlin {
         }
     }
 }
+
+compose.resources {
+    generateResClass = auto
+}

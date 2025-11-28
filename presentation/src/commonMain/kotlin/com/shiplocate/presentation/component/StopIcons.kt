@@ -51,11 +51,11 @@ fun PickupIcon(
 }
 
 /**
- * Иконка для TYPE_BORDER - место пересечения границы стран
+ * Иконка для TYPE_STOP - место пересечения границы стран
  * Иконка: флаг
  */
 @Composable
-fun BorderIcon(
+fun StopIcon(
     color: Color,
     modifier: Modifier = Modifier,
     size: Dp = 24.dp,
@@ -184,7 +184,7 @@ fun StopIconWithBackground(
     ) {
         when (stopType) {
             StopType.TYPE_PICKUP -> PickupIcon(color = iconColor, size = size * 0.75f)
-            StopType.TYPE_BORDER -> BorderIcon(color = iconColor, size = size * 0.75f)
+            StopType.TYPE_BORDER -> StopIcon(color = iconColor, size = size * 0.75f)
             StopType.TYPE_DELIVERY -> DeliveryIcon(color = iconColor, size = size * 0.75f)
             else -> UnknownStopIcon(color = iconColor, size = size * 0.75f)
         }
