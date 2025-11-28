@@ -129,7 +129,7 @@ fun MessagesScreen(
         // Toast message
         showToast?.let { toastMessage ->
             LaunchedEffect(toastMessage) {
-                delay(2000)
+                delay(1000)
                 showToast = null
             }
             Box(
@@ -162,15 +162,13 @@ private fun MessageItem(
 ) {
     val isDriver = message.type == Message.MESSAGE_TYPE_DRIVER
 
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = if (isDriver) 32.dp else 0.dp, vertical = 4.dp),
-        contentAlignment = if (isDriver) Alignment.CenterEnd else Alignment.CenterStart,
+    Row(
+        modifier = Modifier.fillMaxWidth()
+            .padding(horizontal = if (isDriver) 4.dp else 0.dp, vertical = 4.dp),
+        horizontalArrangement = if (isDriver) Arrangement.End else Arrangement.Start,
     ) {
         Card(
             modifier = Modifier
-                .widthIn(max = 280.dp)
                 .pointerInput(Unit) {
                     detectTapGestures(
                         onLongPress = { onLongClick() },
@@ -201,7 +199,7 @@ private fun MessageItem(
                 Spacer(modifier = Modifier.height(4.dp))
 
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier,
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
