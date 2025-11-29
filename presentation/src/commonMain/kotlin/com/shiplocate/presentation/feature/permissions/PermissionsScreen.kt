@@ -89,9 +89,17 @@ fun PermissionsScreen(
             onGrantClick = { viewModel.requestBackgroundLocationPermission() },
         )
 
-        // Step 3: Battery Optimization
+        // Step 3: GPS enabled
         PermissionStepCard(
             stepNumber = 3,
+            title = "Keep Location Services (GPS) turned on to ensure ShipLocate records precise movement.",
+            isGranted = uiState.isLocationEnabled,
+            onGrantClick = { viewModel.requestEnableHighAccuracy() },
+        )
+
+        // Step 3: Battery Optimization
+        PermissionStepCard(
+            stepNumber = 4,
             title = "Enable Unrestricted Battery Use so the app stays active during your trips.",
             isGranted = uiState.isBatteryOptimizationDisabled,
             onGrantClick = { viewModel.requestBatteryOptimizationDisable() },
@@ -99,7 +107,7 @@ fun PermissionsScreen(
 
         // Step 4: Notification Permission
         PermissionStepCard(
-            stepNumber = 4,
+            stepNumber = 5,
             title = "Allow Notifications so you can receive important updates about your deliveries.",
             isGranted = uiState.hasNotificationPermission,
             onGrantClick = { viewModel.requestNotificationPermission() },

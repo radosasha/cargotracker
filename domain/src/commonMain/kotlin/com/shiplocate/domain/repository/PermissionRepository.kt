@@ -13,11 +13,6 @@ interface PermissionRepository {
     suspend fun getPermissionStatus(): PermissionStatus
 
     /**
-     * Запрашивает все необходимые разрешения
-     */
-    suspend fun requestAllPermissions(): Result<PermissionStatus>
-
-    /**
      * Запрашивает разрешения на уведомления
      */
     suspend fun requestNotificationPermission(): Result<Boolean>
@@ -36,6 +31,11 @@ interface PermissionRepository {
      * Запрашивает отключение оптимизации батареи (Unrestricted Battery Use)
      */
     suspend fun requestBatteryOptimizationDisable(): Result<PermissionStatus>
+
+    /**
+     * Запрашивает включение Location Services (GPS) через системный диалог
+     */
+    suspend fun requestEnableHighAccuracy(): Result<PermissionStatus>
 
     /**
      * Уведомляет о том, что разрешения были получены

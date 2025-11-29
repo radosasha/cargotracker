@@ -25,19 +25,6 @@ ktlint {
         include("**/kotlin/**")
     }
 
-    // Дополнительные настройки для игнорирования правил
-    disabledRules.set(
-        setOf(
-            "function-naming",
-            "class-naming",
-            "discouraged-comment-location",
-            "no-empty-first-line-in-class-body",
-            "blank-line-before-declaration",
-            "wrapping",
-            "parameter-list-wrapping",
-            "multiline-expression-wrapping",
-        ),
-    )
 }
 
 android {
@@ -58,6 +45,7 @@ kotlin {
             // Coroutines Android
             implementation(libs.kotlinx.coroutines.android)
             implementation(libs.androidx.lifecycle.service)
+            implementation(libs.play.services.location)
         }
 
         commonMain.dependencies {

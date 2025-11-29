@@ -9,9 +9,9 @@ import com.shiplocate.domain.usecase.ManageFirebaseTokensUseCase
 import com.shiplocate.domain.usecase.NotifyPermissionGrantedUseCase
 import com.shiplocate.domain.usecase.ObservePermissionsUseCase
 import com.shiplocate.domain.usecase.ObserveReceivedPushesUseCase
-import com.shiplocate.domain.usecase.RequestAllPermissionsUseCase
 import com.shiplocate.domain.usecase.RequestBackgroundLocationPermissionUseCase
 import com.shiplocate.domain.usecase.RequestBatteryOptimizationDisableUseCase
+import com.shiplocate.domain.usecase.RequestEnableHighAccuracyCase
 import com.shiplocate.domain.usecase.RequestLocationPermissionUseCase
 import com.shiplocate.domain.usecase.RequestNotificationPermissionUseCase
 import com.shiplocate.domain.usecase.SavePhoneNumberUseCase
@@ -55,11 +55,11 @@ val useCasesModule =
 
         // Permission Use Cases
         factoryOf(::GetPermissionStatusUseCase)
-        factoryOf(::RequestAllPermissionsUseCase)
         factoryOf(::RequestNotificationPermissionUseCase)
         factoryOf(::RequestLocationPermissionUseCase)
         factoryOf(::RequestBackgroundLocationPermissionUseCase)
         factoryOf(::RequestBatteryOptimizationDisableUseCase)
+        factoryOf(::RequestEnableHighAccuracyCase)
         factoryOf(::ObservePermissionsUseCase)
         factoryOf(::ObserveReceivedPushesUseCase)
         factoryOf(::NotifyPermissionGrantedUseCase)

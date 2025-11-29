@@ -1,5 +1,6 @@
 package com.shiplocate
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -86,12 +87,26 @@ class MainActivity : ComponentActivity(), KoinComponent {
         }
     }
 
+    override fun onActivityResult(
+        requestCode: Int,
+        resultCode: Int,
+        data: Intent?,
+    ) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == REQUEST_ENABLE_GPS) {
+            scope.launch(Dispatchers.Default) {
+                notifyPermissionGrantedUseCase()
+            }
+        }
+    }
+
     companion object {
         const val REQUEST_ALL_PERMISSIONS = 2311
         const val REQUEST_NOTIFICATIONS_PERMISSION = 2310
         const val LOCATION_PERMISSION_REQUEST_CODE = 1001
         const val BACKGROUND_LOCATION_PERMISSION_REQUEST_CODE = 1002
         const val ACTIVITY_RECOGNITION_PERMISSION_REQUEST_CODE = 1003
+        const val REQUEST_ENABLE_GPS = 1004
     }
 
     override fun onDestroy() {

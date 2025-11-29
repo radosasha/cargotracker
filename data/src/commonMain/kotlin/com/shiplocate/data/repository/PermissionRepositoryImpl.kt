@@ -18,12 +18,6 @@ class PermissionRepositoryImpl(
         return PermissionMapper.toDomain(dataModel)
     }
 
-    override suspend fun requestAllPermissions(): Result<PermissionStatus> {
-        return permissionDataSource.requestAllPermissions().map { dataModel ->
-            PermissionMapper.toDomain(dataModel)
-        }
-    }
-
     override suspend fun requestNotificationPermission(): Result<Boolean> {
         return permissionDataSource.requestNotificationPermission()
     }
@@ -42,6 +36,12 @@ class PermissionRepositoryImpl(
 
     override suspend fun requestBatteryOptimizationDisable(): Result<PermissionStatus> {
         return permissionDataSource.requestBatteryOptimizationDisable().map { dataModel ->
+            PermissionMapper.toDomain(dataModel)
+        }
+    }
+
+    override suspend fun requestEnableHighAccuracy(): Result<PermissionStatus> {
+        return permissionDataSource.requestEnableHighAccuracy().map { dataModel ->
             PermissionMapper.toDomain(dataModel)
         }
     }

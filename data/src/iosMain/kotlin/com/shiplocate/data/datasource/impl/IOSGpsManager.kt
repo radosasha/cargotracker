@@ -43,7 +43,7 @@ class IOSGpsManager : GpsManager {
 
         // Настраиваем параметры согласно документации Apple
         locationManager.desiredAccuracy = platform.CoreLocation.kCLLocationAccuracyBest
-        locationManager.distanceFilter = 200.0 // 200 метров
+        locationManager.distanceFilter = 400.0 // 200 метров
 
         // Включаем фоновые обновления (требует Always разрешение)
         locationManager.allowsBackgroundLocationUpdates = true

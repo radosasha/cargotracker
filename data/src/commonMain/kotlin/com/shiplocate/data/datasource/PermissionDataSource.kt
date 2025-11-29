@@ -12,11 +12,6 @@ interface PermissionDataSource {
      */
     suspend fun getPermissionStatus(): PermissionDataModel
 
-    /**
-     * Запрашивает все необходимые разрешения
-     */
-    suspend fun requestAllPermissions(): Result<PermissionDataModel>
-
 
     /**
      * Запрашивает разрешения на уведомления
@@ -37,6 +32,11 @@ interface PermissionDataSource {
      * Запрашивает отключение оптимизации батареи (Unrestricted Battery Use)
      */
     suspend fun requestBatteryOptimizationDisable(): Result<PermissionDataModel>
+
+    /**
+     * Запрашивает включение GPS через системный диалог
+     */
+    suspend fun requestEnableHighAccuracy(): Result<PermissionDataModel>
 
     /**
      * Уведомляет о том, что разрешения были получены

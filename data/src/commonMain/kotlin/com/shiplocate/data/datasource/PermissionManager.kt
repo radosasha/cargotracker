@@ -33,4 +33,6 @@ interface PermissionManager {
      * Запрашивает отключение оптимизации батареи (Unrestricted Battery Use)
      */
     suspend fun requestBatteryOptimizationDisable(): Result<Unit>
+
+    suspend fun requestEnableHighAccuracy(): Result<Unit>
 }

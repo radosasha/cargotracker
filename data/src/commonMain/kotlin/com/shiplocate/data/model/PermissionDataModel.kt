@@ -9,4 +9,5 @@ data class PermissionDataModel(
     val hasNotificationPermission: Boolean,
 //    val hasActivityRecognitionPermission: Boolean,
     val isBatteryOptimizationDisabled: Boolean,
+    val isHighAccuracyEnabled: Boolean,
 )

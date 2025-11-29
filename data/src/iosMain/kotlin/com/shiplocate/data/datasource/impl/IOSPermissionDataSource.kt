@@ -28,28 +28,8 @@ class IOSPermissionDataSource(
             hasBackgroundLocationPermission = permissionManager.hasBackgroundLocationPermission(),
             hasNotificationPermission = permissionManager.hasNotificationPermission(),
             isBatteryOptimizationDisabled = permissionManager.isBatteryOptimizationDisabled(),
+            isHighAccuracyEnabled = true
         )
-    }
-
-    override suspend fun requestAllPermissions(): Result<PermissionDataModel> {
-        return try {
-            // Используем suspend версию, которая ждет результата через callbacks
-            val result = permissionManager.requestAllPermissions()
-            if (result.isFailure) {
-                return Result.failure(result.exceptionOrNull() ?: Exception("Failed to request permissions"))
-            }
-
-            // Получаем финальный статус разрешений
-            val status = getPermissionStatus()
-
-            if (status.hasLocationPermission && status.hasBackgroundLocationPermission && status.hasNotificationPermission) {
-                Result.success(status)
-            } else {
-                Result.failure(Exception("Не все разрешения получены"))
-            }
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
     }
 
     override suspend fun requestNotificationPermission(): Result<Boolean> {
@@ -94,6 +74,16 @@ class IOSPermissionDataSource(
         return try {
             // iOS не требует отдельного разрешения для батареи
             // Возвращаем текущий статус
+            val status = getPermissionStatus()
+            Result.success(status)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun requestEnableHighAccuracy(): Result<PermissionDataModel> {
+        return try {
+            permissionManager.requestEnableHighAccuracy()
             val status = getPermissionStatus()
             Result.success(status)
         } catch (e: Exception) {

@@ -1,10 +1,21 @@
 package com.shiplocate
 
+import android.content.IntentSender
 import android.content.pm.PackageManager
 import android.os.Build
+import com.google.android.gms.common.api.ResolvableApiException
+import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.LocationSettingsRequest
+import com.google.android.gms.location.Priority
 import com.shiplocate.data.datasource.PermissionManager
+import com.shiplocate.data.datasource.impl.AndroidGpsManager.Companion.INTERVAL_MS
+import com.shiplocate.data.datasource.impl.AndroidGpsManager.Companion.MIN_DISTANCE_M
+import com.shiplocate.data.datasource.impl.AndroidGpsManager.Companion.MIN_UPDATE_MS
+import kotlinx.coroutines.suspendCancellableCoroutine
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import kotlin.coroutines.resume
 
 /**
  * Android реализация PermissionRequester
@@ -141,65 +152,44 @@ class AndroidPermissionManagerImpl(private val activityContextProvider: Activity
         }
     }
 
-    fun continuePermissionRequest() {
-        println("AndroidPermissionRequester.continuePermissionRequest() called")
+    override suspend fun requestEnableHighAccuracy(): Result<Unit> {
+        return try {
+            suspendCancellableCoroutine { cont ->
+                val activity = activityContextProvider.getActivity()
+                val locationRequest = LocationRequest.Builder(
+                    Priority.PRIORITY_HIGH_ACCURACY,
+                    1000L,
+                ).setMinUpdateDistanceMeters(MIN_DISTANCE_M)
+                    .setMaxUpdateDelayMillis(INTERVAL_MS)
+                    .setMinUpdateIntervalMillis(MIN_UPDATE_MS).build()
 
-        // Продолжаем с того места, где остановились
-        if (!permissionChecker.hasLocationPermissions()) {
-            // Если основные разрешения не получены, начинаем сначала
-            println("AndroidPermissionRequester.requestLocationPermissions() called")
-            if (permissionRequester.shouldShowLocationPermissionRationale()) {
-                println("Showing location permission rationale")
-                // Показываем объяснение зачем нужны разрешения
+                val settingsRequest = LocationSettingsRequest.Builder()
+                    .addLocationRequest(locationRequest)
+                    .setAlwaysShow(true)
+                    .build()
+                val client = LocationServices.getSettingsClient(activity)
+                client.checkLocationSettings(settingsRequest)
+                    .addOnSuccessListener {
+                        if (cont.isActive) cont.resume(Result.success(Unit))
+                    }
+                    .addOnFailureListener { exception ->
+                        if (exception is ResolvableApiException) {
+                            try {
+                                exception.startResolutionForResult(
+                                    activity,
+                                    MainActivity.REQUEST_ENABLE_GPS,
+                                )
+                                if (cont.isActive) cont.resume(Result.success(Unit))
+                            } catch (sendEx: IntentSender.SendIntentException) {
+                                if (cont.isActive) cont.resume(Result.failure(sendEx))
+                            }
+                        } else {
+                            if (cont.isActive) cont.resume(Result.failure(exception))
+                        }
+                    }
             }
-
-            println("Requesting location permissions")
-            permissionRequester.requestLocationPermissions()
-
-        } else if (!permissionChecker.hasBackgroundLocationPermission()) {
-            // Если основные разрешения есть, но фоновое нет - запрашиваем фоновое
-            println("AndroidPermissionRequester.requestBackgroundLocationPermission() called")
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                // API 29+ (Android 10+): запрашиваем отдельное разрешение ACCESS_BACKGROUND_LOCATION
-                println("Requesting background location permission")
-                permissionRequester.requestBackgroundLocationPermission()
-            } else {
-                // API 24-28 (Android 7.0-9): фоновое разрешение не требуется
-                println("Background location permission not required for this Android version (API ${Build.VERSION.SDK_INT})")
-            }
-        } else if (!permissionChecker.hasActivityRecognitionPermission()) {
-            // Если основные разрешения есть, но Activity Recognition нет - запрашиваем Activity Recognition
-            println("AndroidPermissionRequester.requestActivityRecognitionPermission() called")
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                // API 29+ (Android 10+): запрашиваем разрешение ACTIVITY_RECOGNITION
-                println("Requesting activity recognition permission")
-                permissionRequester.requestActivityRecognitionPermission()
-            } else {
-                // API 24-28 (Android 7.0-9): Activity Recognition доступен через Google Play Services
-                // без необходимости в системном разрешении - пропускаем запрос
-                println("Activity recognition available without permission for this Android version (API ${Build.VERSION.SDK_INT})")
-            }
-        } else if (!permissionChecker.hasNotificationPermission()) {
-            // Если основные разрешения есть, но уведомления нет - запрашиваем уведомления
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                // API 33+ (Android 13+): запрашиваем разрешение POST_NOTIFICATIONS
-                if (permissionRequester.shouldShowNotificationPermissionRationale()) {
-                    println("Showing notification permission rationale")
-                    // Показываем объяснение зачем нужны уведомления
-                }
-
-                println("Requesting notification permission")
-                permissionRequester.requestNotificationPermission()
-            } else {
-                // API 24-32 (Android 7.0-12): уведомления работают без разрешения
-                println("Notification permission not required for this Android version (API ${Build.VERSION.SDK_INT})")
-            }
-        } else if (!permissionChecker.isBatteryOptimizationDisabled()) {
-            // Если все разрешения есть, но оптимизация батареи включена - запрашиваем отключение
-            permissionRequester.requestBatteryOptimizationDisable()
-        } else {
-            // Все разрешения получены
-            println("All permissions granted")
+        } catch (e: Exception) {
+            Result.failure(e)
         }
     }
 

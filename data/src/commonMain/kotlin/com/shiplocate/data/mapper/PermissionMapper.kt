@@ -17,19 +17,7 @@ object PermissionMapper {
             hasNotificationPermission = dataModel.hasNotificationPermission,
 //            hasActivityRecognitionPermission = dataModel.hasActivityRecognitionPermission,
             isBatteryOptimizationDisabled = dataModel.isBatteryOptimizationDisabled,
-        )
-    }
-
-    /**
-     * Преобразует Domain модель в Data модель
-     */
-    fun toData(domainModel: PermissionStatus): PermissionDataModel {
-        return PermissionDataModel(
-            hasLocationPermission = domainModel.hasLocationPermission,
-            hasBackgroundLocationPermission = domainModel.hasBackgroundLocationPermission,
-            hasNotificationPermission = domainModel.hasNotificationPermission,
-//            hasActivityRecognitionPermission = domainModel.hasActivityRecognitionPermission,
-            isBatteryOptimizationDisabled = domainModel.isBatteryOptimizationDisabled,
+            isHighAccuracyEnabled = dataModel.isHighAccuracyEnabled
         )
     }
 }

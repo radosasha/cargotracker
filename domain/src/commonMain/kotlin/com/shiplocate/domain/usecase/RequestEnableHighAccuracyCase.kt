@@ -4,12 +4,12 @@ import com.shiplocate.domain.model.PermissionStatus
 import com.shiplocate.domain.repository.PermissionRepository
 
 /**
- * Use Case для запроса всех необходимых разрешений
+ * Use case для запроса включения GPS через системный диалог
  */
-class RequestAllPermissionsUseCase(
+class RequestEnableHighAccuracyCase(
     private val permissionRepository: PermissionRepository,
 ) {
     suspend operator fun invoke(): Result<PermissionStatus> {
-        return permissionRepository.requestAllPermissions()
+        return permissionRepository.requestEnableHighAccuracy()
     }
 }

@@ -8,6 +8,7 @@ import com.shiplocate.domain.usecase.GetPermissionStatusUseCase
 import com.shiplocate.domain.usecase.ObservePermissionsUseCase
 import com.shiplocate.domain.usecase.RequestBackgroundLocationPermissionUseCase
 import com.shiplocate.domain.usecase.RequestBatteryOptimizationDisableUseCase
+import com.shiplocate.domain.usecase.RequestEnableHighAccuracyCase
 import com.shiplocate.domain.usecase.RequestLocationPermissionUseCase
 import com.shiplocate.domain.usecase.RequestNotificationPermissionUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,6 +28,7 @@ class PermissionsViewModel(
     private val requestBackgroundLocationPermissionUseCase: RequestBackgroundLocationPermissionUseCase,
     private val requestBatteryOptimizationDisableUseCase: RequestBatteryOptimizationDisableUseCase,
     private val requestNotificationPermissionUseCase: RequestNotificationPermissionUseCase,
+    private val requestEnableHighAccuracyUseCase: RequestEnableHighAccuracyCase,
     private val logger: Logger,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(PermissionsUiState())
@@ -61,11 +63,8 @@ class PermissionsViewModel(
                 hasBackgroundLocationPermission = status.hasBackgroundLocationPermission,
                 isBatteryOptimizationDisabled = status.isBatteryOptimizationDisabled,
                 hasNotificationPermission = status.hasNotificationPermission,
-                hasAllPermissions =
-                    status.hasLocationPermission &&
-                        status.hasBackgroundLocationPermission &&
-                        status.isBatteryOptimizationDisabled &&
-                        status.hasNotificationPermission,
+                isLocationEnabled = status.isHighAccuracyEnabled,
+                hasAllPermissions = status.hasAllPermissionsForTracking && status.hasNotificationPermission,
             )
     }
 
@@ -164,6 +163,29 @@ class PermissionsViewModel(
             }
         }
     }
+
+    fun requestEnableHighAccuracy() {
+        viewModelScope.launch {
+            try {
+                logger.info(LogCategory.PERMISSIONS, "PermissionsViewModel: Requesting enable GPS")
+                val result = requestEnableHighAccuracyUseCase()
+                if (result.isSuccess) {
+                    val status = result.getOrNull()
+                    _uiState.value =
+                        _uiState.value.copy(
+                            isLocationEnabled = status?.isHighAccuracyEnabled ?: _uiState.value.isLocationEnabled,
+                        )
+                    logger.info(LogCategory.PERMISSIONS, "PermissionsViewModel: GPS enable flow triggered")
+                } else {
+                    logger.warn(LogCategory.PERMISSIONS, "PermissionsViewModel: GPS enable request failed")
+                }
+                refreshPermissionStatus()
+            } catch (e: Exception) {
+                logger.error(LogCategory.PERMISSIONS, "PermissionsViewModel: Error requesting enable GPS: ${e.message}", e)
+                refreshPermissionStatus()
+            }
+        }
+    }
 }
 
 /**
@@ -174,6 +196,7 @@ data class PermissionsUiState(
     val hasBackgroundLocationPermission: Boolean = false,
     val isBatteryOptimizationDisabled: Boolean = false,
     val hasNotificationPermission: Boolean = false,
+    val isLocationEnabled: Boolean = false,
     val hasAllPermissions: Boolean = false,
 )
 

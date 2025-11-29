@@ -2,9 +2,7 @@ package com.shiplocate.data.datasource.impl
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.content.pm.PackageManager
 import android.os.Looper
-import androidx.core.app.ActivityCompat
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationAvailability
 import com.google.android.gms.location.LocationCallback
@@ -39,7 +37,7 @@ class AndroidGpsManager(
         LocationServices.getFusedLocationProviderClient(context)
 
     // TODO replay 0, onBufferOverflow
-    private val gpsLocationFlow = MutableSharedFlow<GpsLocation>(replay = 1, extraBufferCapacity = 5)
+    private val gpsLocationFlow = MutableSharedFlow<GpsLocation>(replay = 0, extraBufferCapacity = 5)
     private var isTracking = false
 
     // Coroutine scope for emitting to flow
@@ -47,9 +45,9 @@ class AndroidGpsManager(
 
     companion object {
         // Интервалы обновления GPS (в миллисекундах)
-        private const val INTERVAL_MS = 60 * 1000L // 1 минута
-        private const val MIN_UPDATE_MS = 55 * 1000L // 1 минута
-        private const val MIN_DISTANCE_M = 400f // 20 метров
+        const val INTERVAL_MS = 60 * 1000L // 1 минута
+        const val MIN_UPDATE_MS = 40 * 1000L // 1 минута
+        const val MIN_DISTANCE_M = 400f // 20 метров
     }
 
     @SuppressLint("MissingPermission")
@@ -57,16 +55,6 @@ class AndroidGpsManager(
         if (isTracking) {
             logger.info(LogCategory.LOCATION, "AndroidGpsManager: Already tracking")
             return gpsLocationFlow
-        }
-
-        // Проверяем разрешения
-        if (ActivityCompat.checkSelfPermission(
-                context,
-                android.Manifest.permission.ACCESS_FINE_LOCATION,
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            logger.info(LogCategory.LOCATION, "AndroidGpsManager: Location permission not granted")
-            throw IllegalStateException("Location permission not granted")
         }
 
         try {

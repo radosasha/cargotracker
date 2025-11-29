@@ -330,7 +330,7 @@ class LoadsViewModel(
     fun fetchLoadsFromCache() {
         logger.info(LogCategory.UI, "LoadsViewModel: Loading from cache")
 
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.Default) {
             try {
                 val cachedLoads =
                     withContext(Dispatchers.Default) {
@@ -356,10 +356,12 @@ class LoadsViewModel(
                     com.shiplocate.domain.model.PermissionStatus(
                         hasLocationPermission = false,
                         hasBackgroundLocationPermission = false,
-                        isBatteryOptimizationDisabled = false,
                         hasNotificationPermission = false,
+                        isBatteryOptimizationDisabled = false,
+                        isHighAccuracyEnabled = false,
                     )
                 }
+
                 val activeLoadUi = activeLoad?.toUiModel()
                 val showWarning = activeLoadUi != null && !permissionStatus.hasAllPermissionsForTracking
 
