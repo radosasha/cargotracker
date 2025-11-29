@@ -35,4 +35,6 @@ interface PermissionManager {
     suspend fun requestBatteryOptimizationDisable(): Result<Unit>
 
     suspend fun requestEnableHighAccuracy(): Result<Unit>
+
+    suspend fun openAirplaneModeSettings(): Result<Unit>
 }

@@ -28,7 +28,8 @@ class IOSPermissionDataSource(
             hasBackgroundLocationPermission = permissionManager.hasBackgroundLocationPermission(),
             hasNotificationPermission = permissionManager.hasNotificationPermission(),
             isBatteryOptimizationDisabled = permissionManager.isBatteryOptimizationDisabled(),
-            isHighAccuracyEnabled = true
+            isHighAccuracyEnabled = true,
+            inAirplaneMode = false,
         )
     }
 
@@ -89,6 +90,10 @@ class IOSPermissionDataSource(
         } catch (e: Exception) {
             Result.failure(e)
         }
+    }
+
+    override suspend fun openAirplaneModeSettings(): Result<Unit> {
+        return permissionManager.openAirplaneModeSettings()
     }
 
     override suspend fun notifyPermissionGranted() {

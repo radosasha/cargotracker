@@ -35,11 +35,18 @@ data class PermissionStatus(
     val hasNotificationPermission: Boolean,
 //    val hasActivityRecognitionPermission: Boolean,
     val isBatteryOptimizationDisabled: Boolean,
-    val isHighAccuracyEnabled: Boolean
+    val isHighAccuracyEnabled: Boolean,
+    val inAirplaneMode: Boolean,
 ) {
     val hasAllPermissions: Boolean
-        get() = hasAllPermissionsForTracking && hasNotificationPermission
+        get() = hasAllPermissionsForTracking &&
+            hasNotificationPermission &&
+            !inAirplaneMode
 
     val hasAllPermissionsForTracking
-        get() = hasLocationPermission && hasBackgroundLocationPermission && isBatteryOptimizationDisabled && isHighAccuracyEnabled
+        get() = hasLocationPermission &&
+            hasBackgroundLocationPermission &&
+            isBatteryOptimizationDisabled &&
+            isHighAccuracyEnabled &&
+            !inAirplaneMode
 }

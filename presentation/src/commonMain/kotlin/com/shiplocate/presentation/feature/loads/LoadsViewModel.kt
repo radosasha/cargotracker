@@ -347,19 +347,8 @@ class LoadsViewModel(
                 val upcomingLoads = sortedCachedLoads.filter { it.loadStatus == LoadStatus.LOAD_STATUS_NOT_CONNECTED }
 
                 // Получаем текущий статус разрешений для расчета showPermissionsWarning
-                val permissionStatus = try {
-                    withContext(Dispatchers.Default) {
-                        permissionStatusUseCase()
-                    }
-                } catch (e: Exception) {
-                    logger.error(LogCategory.PERMISSIONS, "LoadsViewModel: Error getting permission status: ${e.message}")
-                    com.shiplocate.domain.model.PermissionStatus(
-                        hasLocationPermission = false,
-                        hasBackgroundLocationPermission = false,
-                        hasNotificationPermission = false,
-                        isBatteryOptimizationDisabled = false,
-                        isHighAccuracyEnabled = false,
-                    )
+                val permissionStatus = withContext(Dispatchers.Default) {
+                    permissionStatusUseCase()
                 }
 
                 val activeLoadUi = activeLoad?.toUiModel()

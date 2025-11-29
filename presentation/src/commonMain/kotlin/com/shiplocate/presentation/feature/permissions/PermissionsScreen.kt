@@ -1,6 +1,7 @@
 package com.shiplocate.presentation.feature.permissions
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -33,6 +34,9 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import org.jetbrains.compose.resources.painterResource
+import shiplocate.presentation.generated.resources.Res
+import shiplocate.presentation.generated.resources.ic_warning_triangle
 import kotlin.math.min
 
 /**
@@ -72,6 +76,12 @@ fun PermissionsScreen(
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
             modifier = Modifier.fillMaxWidth(),
         )
+
+        if (uiState.inAirplaneMode) {
+            AirplaneModeCard(
+                onSettingsClick = { viewModel.openAirplaneSettings() },
+            )
+        }
 
         // Step 1: Precise Location
         PermissionStepCard(
@@ -220,6 +230,56 @@ private fun GrantedPermissionIcon(
                 color = Color.White,
                 style = Stroke(width = 3.dp.toPx(), cap = StrokeCap.Round),
             )
+        }
+    }
+}
+
+@Composable
+private fun AirplaneModeCard(
+    onSettingsClick: () -> Unit,
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface,
+            ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Image(
+                painter = painterResource(Res.drawable.ic_warning_triangle),
+                contentDescription = "Airplane mode warning",
+                modifier = Modifier.size(32.dp),
+            )
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                Text(
+                    text = "Disable Airplane Mode to resume tracking.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                Text(
+                    text = "Go to Settings and switch off Airplane Mode so ShipLocate can stay connected.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                )
+            }
+            OutlinedButton(
+                onClick = onSettingsClick,
+            ) {
+                Text("Settings")
+            }
         }
     }
 }

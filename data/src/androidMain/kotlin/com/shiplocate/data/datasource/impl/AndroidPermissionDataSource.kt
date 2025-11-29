@@ -1,6 +1,10 @@
 package com.shiplocate.data.datasource.impl
 
+import android.content.BroadcastReceiver
 import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
+import android.provider.Settings
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationServices
@@ -35,6 +39,12 @@ class AndroidPermissionDataSource(
 
     // Coroutine scope для эмита в Flow
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+
+    init {
+        val filter = IntentFilter(Intent.ACTION_AIRPLANE_MODE_CHANGED)
+        context.registerReceiver(AirplaneReceiver(), filter)
+    }
+
     override suspend fun getPermissionStatus(): PermissionDataModel {
         val locationRequest = LocationRequest.Builder(
             Priority.PRIORITY_HIGH_ACCURACY,
@@ -80,7 +90,8 @@ class AndroidPermissionDataSource(
             hasNotificationPermission = permissionManager.hasNotificationPermission(),
 //            hasActivityRecognitionPermission = permissionManager.hasActivityRecognitionPermission(),
             isBatteryOptimizationDisabled = permissionManager.isBatteryOptimizationDisabled(),
-            isHighAccuracyEnabled = locationSatisfied
+            isHighAccuracyEnabled = locationSatisfied,
+            inAirplaneMode = isAirplaneOn(),
         )
     }
 
@@ -177,6 +188,15 @@ class AndroidPermissionDataSource(
         }
     }
 
+    override suspend fun openAirplaneModeSettings(): Result<Unit> {
+        return try {
+            permissionManager.openAirplaneModeSettings()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     override suspend fun notifyPermissionGranted() {
         logger.debug(LogCategory.PERMISSIONS, "AndroidPermissionDataSource.notifyPermissionGranted() called")
         scope.launch {
@@ -189,5 +209,23 @@ class AndroidPermissionDataSource(
     override fun observePermissions(): Flow<PermissionDataModel> {
         logger.debug(LogCategory.PERMISSIONS, "AndroidPermissionDataSource.observePermissions() called")
         return permissionsFlow
+    }
+
+    private fun isAirplaneOn(): Boolean {
+        return Settings.Global.getInt(
+            context.contentResolver,
+            Settings.Global.AIRPLANE_MODE_ON, 0
+        ) == 1
+    }
+
+    private inner class AirplaneReceiver : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            if (intent.action == Intent.ACTION_AIRPLANE_MODE_CHANGED) {
+                val enabled = intent.getBooleanExtra("state", false)
+                scope.launch {
+                    permissionsFlow.emit(getPermissionStatus())
+                }
+            }
+        }
     }
 }

@@ -180,6 +180,11 @@ class IOSPermissionManagerImpl : PermissionManager {
         return Result.success(Unit)
     }
 
+    override suspend fun openAirplaneModeSettings(): Result<Unit> {
+        // нет публичного API для открытия этого экрана
+        return Result.success(Unit)
+    }
+
     private suspend fun requestLocationPermissionInternal(): Result<Unit> {
         return suspendCancellableCoroutine { continuation ->
             dispatch_async(dispatch_get_main_queue()) {

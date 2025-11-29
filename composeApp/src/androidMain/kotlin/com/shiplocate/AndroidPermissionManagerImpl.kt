@@ -193,6 +193,15 @@ class AndroidPermissionManagerImpl(private val activityContextProvider: Activity
         }
     }
 
+    override suspend fun openAirplaneModeSettings(): Result<Unit> {
+        return try {
+            permissionRequester.openAirplaneModeSettings()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     fun handlePermissionResult(
         requestCode: Int,
         grantResults: IntArray,

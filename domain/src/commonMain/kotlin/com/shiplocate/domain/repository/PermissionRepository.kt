@@ -38,6 +38,11 @@ interface PermissionRepository {
     suspend fun requestEnableHighAccuracy(): Result<PermissionStatus>
 
     /**
+     * Открывает настройки режима полета
+     */
+    suspend fun openAirplaneModeSettings(): Result<Unit>
+
+    /**
      * Уведомляет о том, что разрешения были получены
      * Эмитит событие в Flow для подписчиков
      */

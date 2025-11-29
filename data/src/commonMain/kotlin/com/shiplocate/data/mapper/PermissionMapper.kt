@@ -17,7 +17,8 @@ object PermissionMapper {
             hasNotificationPermission = dataModel.hasNotificationPermission,
 //            hasActivityRecognitionPermission = dataModel.hasActivityRecognitionPermission,
             isBatteryOptimizationDisabled = dataModel.isBatteryOptimizationDisabled,
-            isHighAccuracyEnabled = dataModel.isHighAccuracyEnabled
+            isHighAccuracyEnabled = dataModel.isHighAccuracyEnabled,
+            inAirplaneMode = dataModel.inAirplaneMode
         )
     }
 }

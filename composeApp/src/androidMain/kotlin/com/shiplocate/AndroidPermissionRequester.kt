@@ -169,6 +169,19 @@ class AndroidPermissionRequester(private val context: Activity) {
         }
     }
 
+    fun openAirplaneModeSettings() {
+        println("openAirplaneModeSettings() called")
+        try {
+            val intent = Intent(Settings.ACTION_AIRPLANE_MODE_SETTINGS)
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            context.startActivity(intent)
+            println("Airplane mode settings opened successfully")
+        } catch (e: Exception) {
+            println("Error opening airplane mode settings: ${e.message}")
+            openAppSettings()
+        }
+    }
+
     fun openAppSettings() {
         println("openAppSettings() called")
         try {

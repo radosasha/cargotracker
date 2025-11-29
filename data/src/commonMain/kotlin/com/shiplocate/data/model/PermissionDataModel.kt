@@ -10,4 +10,5 @@ data class PermissionDataModel(
 //    val hasActivityRecognitionPermission: Boolean,
     val isBatteryOptimizationDisabled: Boolean,
     val isHighAccuracyEnabled: Boolean,
+    val inAirplaneMode: Boolean
 )

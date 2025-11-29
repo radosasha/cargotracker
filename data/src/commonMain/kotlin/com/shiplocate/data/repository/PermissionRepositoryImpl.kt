@@ -46,6 +46,10 @@ class PermissionRepositoryImpl(
         }
     }
 
+    override suspend fun openAirplaneModeSettings(): Result<Unit> {
+        return permissionDataSource.openAirplaneModeSettings()
+    }
+
     override suspend fun notifyPermissionGranted() {
         permissionDataSource.notifyPermissionGranted()
     }

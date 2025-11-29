@@ -39,6 +39,11 @@ interface PermissionDataSource {
     suspend fun requestEnableHighAccuracy(): Result<PermissionDataModel>
 
     /**
+     * Открывает настройки режима полета
+     */
+    suspend fun openAirplaneModeSettings(): Result<Unit>
+
+    /**
      * Уведомляет о том, что разрешения были получены
      * Эмитит событие в Flow для подписчиков
      */

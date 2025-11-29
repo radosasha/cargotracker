@@ -6,9 +6,10 @@ import com.shiplocate.core.logging.LogCategory
 import com.shiplocate.core.logging.Logger
 import com.shiplocate.domain.usecase.GetPermissionStatusUseCase
 import com.shiplocate.domain.usecase.ObservePermissionsUseCase
+import com.shiplocate.domain.usecase.OpenAirplaneModeSettingsUseCase
 import com.shiplocate.domain.usecase.RequestBackgroundLocationPermissionUseCase
 import com.shiplocate.domain.usecase.RequestBatteryOptimizationDisableUseCase
-import com.shiplocate.domain.usecase.RequestEnableHighAccuracyCase
+import com.shiplocate.domain.usecase.RequestEnableHighAccuracyUseCase
 import com.shiplocate.domain.usecase.RequestLocationPermissionUseCase
 import com.shiplocate.domain.usecase.RequestNotificationPermissionUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -28,7 +29,8 @@ class PermissionsViewModel(
     private val requestBackgroundLocationPermissionUseCase: RequestBackgroundLocationPermissionUseCase,
     private val requestBatteryOptimizationDisableUseCase: RequestBatteryOptimizationDisableUseCase,
     private val requestNotificationPermissionUseCase: RequestNotificationPermissionUseCase,
-    private val requestEnableHighAccuracyUseCase: RequestEnableHighAccuracyCase,
+    private val requestEnableHighAccuracyUseCase: RequestEnableHighAccuracyUseCase,
+    private val openAirplaneModeSettingsUseCase: OpenAirplaneModeSettingsUseCase,
     private val logger: Logger,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(PermissionsUiState())
@@ -64,7 +66,8 @@ class PermissionsViewModel(
                 isBatteryOptimizationDisabled = status.isBatteryOptimizationDisabled,
                 hasNotificationPermission = status.hasNotificationPermission,
                 isLocationEnabled = status.isHighAccuracyEnabled,
-                hasAllPermissions = status.hasAllPermissionsForTracking && status.hasNotificationPermission,
+                inAirplaneMode = status.inAirplaneMode,
+                hasAllPermissions = status.hasAllPermissions,
             )
     }
 
@@ -88,6 +91,17 @@ class PermissionsViewModel(
             } catch (e: Exception) {
                 logger.error(LogCategory.PERMISSIONS, "PermissionsViewModel: Error requesting location permission: ${e.message}", e)
                 refreshPermissionStatus()
+            }
+        }
+    }
+
+    fun openAirplaneSettings() {
+        viewModelScope.launch {
+            try {
+                logger.info(LogCategory.PERMISSIONS, "PermissionsViewModel: Opening airplane mode settings")
+                openAirplaneModeSettingsUseCase()
+            } catch (e: Exception) {
+                logger.error(LogCategory.PERMISSIONS, "PermissionsViewModel: Error opening airplane settings: ${e.message}", e)
             }
         }
     }
@@ -197,6 +211,7 @@ data class PermissionsUiState(
     val isBatteryOptimizationDisabled: Boolean = false,
     val hasNotificationPermission: Boolean = false,
     val isLocationEnabled: Boolean = false,
+    val inAirplaneMode: Boolean = false,
     val hasAllPermissions: Boolean = false,
 )
 
