@@ -2,6 +2,9 @@ package com.shiplocate.data.datasource.impl
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.location.LocationListener
+import android.location.LocationManager
+import android.os.Build
 import android.os.Looper
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationAvailability
@@ -16,6 +19,8 @@ import com.shiplocate.data.datasource.GpsManager
 import com.shiplocate.data.model.GpsLocation
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
@@ -39,6 +44,17 @@ class AndroidGpsManager(
     private val gpsLocationFlow = MutableSharedFlow<GpsLocation>(replay = 0, extraBufferCapacity = 5)
     private var isTracking = false
 
+    // samsung fallback
+    private val isSamsungDevice: Boolean =
+        Build.MANUFACTURER?.lowercase()?.contains("samsung") == true
+    private var lastLocationTimestamp: Long = 0L
+    private var fallbackJob: Job? = null
+    private var fallbackListener: LocationListener? = null
+    private var isFallbackActive: Boolean = false
+    private var hasReceivedFusedLocation: Boolean = false
+    private val locationManager: LocationManager? =
+        context.getSystemService(Context.LOCATION_SERVICE) as? LocationManager
+
     // Coroutine scope for emitting to flow
     private val scope = CoroutineScope(Dispatchers.IO)
 
@@ -58,6 +74,10 @@ class AndroidGpsManager(
 
         try {
             logger.info(LogCategory.LOCATION, "AndroidGpsManager: Starting GPS tracking with FusedLocationProviderClient")
+
+            lastLocationTimestamp = System.currentTimeMillis()
+            hasReceivedFusedLocation = false
+            startInitialFallbackTimerIfNeeded()
 
             // Создаем LocationRequest с настройками
             val locationRequest = LocationRequest.Builder(
@@ -105,6 +125,8 @@ class AndroidGpsManager(
         try {
             fusedLocationClient.removeLocationUpdates(locationCallback)
             isTracking = false
+            stopInitialFallbackTimer()
+            stopLocationManagerFallback()
             logger.info(LogCategory.LOCATION, "AndroidGpsManager: GPS tracking stopped")
             return Result.success(Unit)
         } catch (e: Exception) {
@@ -147,6 +169,11 @@ class AndroidGpsManager(
 
                     // Эмитим в flow
                     scope.launch {
+                        lastLocationTimestamp = System.currentTimeMillis()
+                        if (isFallbackActive) {
+                            stopLocationManagerFallback()
+                        }
+                        hasReceivedFusedLocation = true
                         gpsLocationFlow.emit(gpsLocation)
                         logger.info(LogCategory.LOCATION, "AndroidGpsManager: Location emitted to flow")
                     }
@@ -175,5 +202,90 @@ class AndroidGpsManager(
             timestamp = Instant.fromEpochMilliseconds(androidLocation.time),
             provider = androidLocation.provider ?: "fused",
         )
+    }
+
+    private fun startInitialFallbackTimerIfNeeded() {
+        if (!isSamsungDevice) return
+        if (fallbackJob?.isActive == true) return
+
+        fallbackJob = scope.launch {
+            logger.info(
+                LogCategory.LOCATION,
+                "AndroidGpsManager: Starting Samsung initial fallback timer",
+            )
+            delay(MIN_UPDATE_MS)
+            if (!hasReceivedFusedLocation && isTracking) {
+                logger.warn(
+                    LogCategory.LOCATION,
+                    "AndroidGpsManager: No fused location received after start, activating LocationManager fallback",
+                )
+                startLocationManagerFallback()
+            }
+        }
+    }
+
+    private fun stopInitialFallbackTimer() {
+        fallbackJob?.cancel()
+        fallbackJob = null
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun startLocationManagerFallback() {
+        if (isFallbackActive) return
+        val manager = locationManager ?: run {
+            logger.error(LogCategory.LOCATION, "AndroidGpsManager: LocationManager not available, cannot start fallback")
+            return
+        }
+        logger.warn(
+            LogCategory.LOCATION,
+            "AndroidGpsManager: Activating LocationManager fallback, stopping fused provider",
+        )
+        fusedLocationClient.removeLocationUpdates(locationCallback)
+        isTracking = false
+
+        val listener = LocationListener { location ->
+            logger.info(LogCategory.LOCATION, "AndroidGpsManager: Fallback location received")
+            val gpsLocation = convertToGpsLocation(location.apply { provider = "network" })
+            scope.launch {
+                lastLocationTimestamp = System.currentTimeMillis()
+                gpsLocationFlow.emit(gpsLocation)
+            }
+        }
+
+        try {
+            manager.requestLocationUpdates(
+                LocationManager.GPS_PROVIDER,
+                MIN_UPDATE_MS,
+                MIN_DISTANCE_M,
+                listener,
+                Looper.getMainLooper(),
+            )
+            manager.requestLocationUpdates(
+                LocationManager.NETWORK_PROVIDER,
+                MIN_UPDATE_MS,
+                MIN_DISTANCE_M,
+                listener,
+                Looper.getMainLooper(),
+            )
+            fallbackListener = listener
+            isFallbackActive = true
+            logger.info(LogCategory.LOCATION, "AndroidGpsManager: LocationManager fallback started")
+        } catch (e: SecurityException) {
+            logger.error(LogCategory.LOCATION, "AndroidGpsManager: Failed to start fallback due to permissions: ${e.message}")
+        } catch (e: Exception) {
+            logger.error(LogCategory.LOCATION, "AndroidGpsManager: Failed to start fallback: ${e.message}")
+        }
+    }
+
+    private fun stopLocationManagerFallback() {
+        logger.info(LogCategory.LOCATION, "AndroidGpsManager: Trying to stop Samsung fallback")
+        if (!isFallbackActive) return
+        val manager = locationManager ?: return
+        fallbackListener?.let {
+            manager.removeUpdates(it)
+        }
+        fallbackListener = null
+        isFallbackActive = false
+        logger.info(LogCategory.LOCATION, "AndroidGpsManager: LocationManager fallback stopped")
     }
 }
