@@ -16,7 +16,6 @@ import com.shiplocate.data.datasource.GpsManager
 import com.shiplocate.data.model.GpsLocation
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
@@ -41,7 +40,7 @@ class AndroidGpsManager(
     private var isTracking = false
 
     // Coroutine scope for emitting to flow
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+    private val scope = CoroutineScope(Dispatchers.IO)
 
     companion object {
         // Интервалы обновления GPS (в миллисекундах)

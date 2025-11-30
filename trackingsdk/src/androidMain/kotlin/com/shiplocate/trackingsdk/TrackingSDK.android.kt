@@ -2,6 +2,7 @@ package com.shiplocate.trackingsdk
 
 import android.content.Context
 import android.content.Intent
+import androidx.core.content.ContextCompat
 import com.shiplocate.core.logging.LogCategory
 import com.shiplocate.core.logging.Logger
 
@@ -10,7 +11,7 @@ import com.shiplocate.core.logging.Logger
  */
 class TrackingSDKAndroid(
     private val context: Context,
-    private val logger: Logger
+    private val logger: Logger,
 ) : TrackingSDK {
 
     private var isTracking = false
@@ -21,11 +22,11 @@ class TrackingSDKAndroid(
 
     override suspend fun startTracking(loadId: Long): Result<Unit> {
         return try {
+            val serviceIntent = Intent(context.applicationContext, AndroidTrackingService::class.java).apply {
+                putExtra(AndroidTrackingService.EXTRA_LOAD_ID, loadId)
+            }
 
-            // Используем AndroidTrackingService из trackingsdk модуля
-            val intent = Intent(context, AndroidTrackingService::class.java)
-            intent.putExtra(AndroidTrackingService.EXTRA_LOAD_ID, loadId)
-            context.startForegroundService(intent)
+            ContextCompat.startForegroundService(context.applicationContext, serviceIntent)
             isTracking = true
 
             logger.info(LogCategory.LOCATION, "$TAG: Tracking started with loadId=$loadId, isTracking = $isTracking")
@@ -38,8 +39,7 @@ class TrackingSDKAndroid(
 
     override suspend fun stopTracking(): Result<Unit> {
         return try {
-
-            val intent = Intent(context, AndroidTrackingService::class.java)
+            val intent = Intent(context.applicationContext, AndroidTrackingService::class.java)
             context.stopService(intent)
             isTracking = false
 
