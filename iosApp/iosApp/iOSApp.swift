@@ -47,10 +47,11 @@ class AppDelegate: NSObject, UIApplicationDelegate, MessagingDelegate, UNUserNot
     func userNotificationCenter(_ center: UNUserNotificationCenter,
                               willPresent notification: UNNotification,
                               withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
-        print("iOS: Received notification in foreground: \(notification.request.content.userInfo)")
+        let userInfo = notification.request.content.userInfo
+        print("iOS: Received notification in foreground: \(userInfo)")
         
-        // Передаем уведомление в KMP модуль
-        IOSKoinAppKt.handleIOSPushNotification()
+        // Передаем payload в KMP модуль
+        IOSKoinAppKt.handleIOSPushNotification(payload: userInfo.toStringMap())
         
         completionHandler([[.alert, .sound, .badge]])
     }
@@ -58,10 +59,11 @@ class AppDelegate: NSObject, UIApplicationDelegate, MessagingDelegate, UNUserNot
     func userNotificationCenter(_ center: UNUserNotificationCenter,
                               didReceive response: UNNotificationResponse,
                               withCompletionHandler completionHandler: @escaping () -> Void) {
-        print("iOS: User tapped notification: \(response.notification.request.content.userInfo)")
+        let userInfo = response.notification.request.content.userInfo
+        print("iOS: User tapped notification: \(userInfo)")
         
-        // Передаем уведомление в KMP модуль
-        IOSKoinAppKt.handleIOSPushNotification()
+        // Передаем payload в KMP модуль
+        IOSKoinAppKt.handleIOSPushNotification(payload: userInfo.toStringMap())
         
         completionHandler()
     }
@@ -85,6 +87,23 @@ class AppDelegate: NSObject, UIApplicationDelegate, MessagingDelegate, UNUserNot
     
     func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
         print("iOS: Failed to register for remote notifications: \(error.localizedDescription)")
+    }
+}
+
+private extension Dictionary where Key == AnyHashable, Value == Any {
+    func toStringMap() -> [String: String] {
+        var result: [String: String] = [:]
+        for (key, value) in self {
+            guard let keyString = key as? String else { continue }
+            if let valueString = value as? String {
+                result[keyString] = valueString
+            } else if let number = value as? NSNumber {
+                result[keyString] = number.stringValue
+            } else {
+                result[keyString] = "\(value)"
+            }
+        }
+        return result
     }
 }
 

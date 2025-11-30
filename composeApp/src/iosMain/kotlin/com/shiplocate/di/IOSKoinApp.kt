@@ -4,6 +4,7 @@ package com.shiplocate.di
 
 import com.shiplocate.core.logging.LogCategory
 import com.shiplocate.core.logging.Logger
+import com.shiplocate.domain.model.notification.NotificationPayloadKeys
 import com.shiplocate.domain.repository.NotificationRepository
 import com.shiplocate.domain.usecase.HandlePushNotificationWhenAppKilledUseCase
 import com.shiplocate.domain.usecase.ManageFirebaseTokensUseCase
@@ -14,8 +15,6 @@ import kotlinx.coroutines.IO
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
-import org.koin.core.component.KoinComponent
-import org.koin.core.component.inject
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 
@@ -160,7 +159,7 @@ object IOSKoinApp {
      * Обработка push-уведомления когда приложение запущено
      * Вызывается из iOS кода
      */
-    fun onPushNotificationReceived() {
+    fun onPushNotificationReceived(payload: Map<String, String>? = null) {
         if (!isInitialized) {
             logger?.warn(LogCategory.GENERAL, "IOSKoinApp: Not initialized, skipping push notification")
             return
@@ -172,13 +171,11 @@ object IOSKoinApp {
                 logger?.warn(LogCategory.GENERAL, "IOSKoinApp: NotificationRepository not set, skipping push notification")
                 return
             }
-            
-            // Передаем уведомление в Repository
-            repository.onPushNotificationReceived(emptyMap())
-            
+
             // Уведомляем о получении push (для случая когда приложение запущено)
+            val type = payload?.get(NotificationPayloadKeys.TYPE)?.toIntOrNull()
             scope.launch {
-                repository.pushReceived(null)
+                repository.pushReceived(type)
             }
             
             // Обрабатываем push когда приложение не запущено
@@ -242,5 +239,9 @@ fun handleIOSCurrentToken(token: String?) {
 }
 
 fun handleIOSPushNotification() {
-    IOSKoinApp.onPushNotificationReceived()
+    IOSKoinApp.onPushNotificationReceived(null)
+}
+
+fun handleIOSPushNotification(payload: Map<String, String>) {
+    IOSKoinApp.onPushNotificationReceived(payload)
 }
