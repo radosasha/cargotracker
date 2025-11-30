@@ -10,12 +10,14 @@ interface FirebaseTokenRemoteDataSource {
     /**
      * Уведомить о получении push-уведомления
      * Вызывается когда приложение запущено и получает push
+     *
+     * @param type значение поля type из payload (может быть null)
      */
-    suspend fun pushReceived()
+    suspend fun pushReceived(type: Int?)
 
     /**
      * Наблюдать за получением push-уведомлений
-     * Возвращает Flow<Unit> который эмитит Unit при получении push
+     * Возвращает Flow<Int?> который эмитит type при получении push
      */
-    fun observeReceivedPushes(): Flow<Unit>
+    fun observeReceivedPushes(): Flow<Int?>
 }

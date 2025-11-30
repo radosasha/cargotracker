@@ -57,9 +57,12 @@ class AndroidFirebaseMessagingService : FirebaseMessagingService(), KoinComponen
         super.onMessageReceived(remoteMessage)
         println("Android: Firebase message received: ${remoteMessage.data}")
 
+        val notificationType =
+            remoteMessage.data[NotificationPayloadKeys.TYPE]?.toIntOrNull()
+
         // Уведомляем о получении push (для случая когда приложение запущено)
         scope.launch {
-            notificationRepository.pushReceived()
+            notificationRepository.pushReceived(notificationType)
         }
 
         // Обрабатываем push когда приложение не запущено (onMessageReceived вызывается даже когда app killed, если есть data payload)
@@ -71,8 +74,6 @@ class AndroidFirebaseMessagingService : FirebaseMessagingService(), KoinComponen
             }
         }
 
-        val notificationType =
-            remoteMessage.data[NotificationPayloadKeys.TYPE]?.toIntOrNull()
         val shouldShowNotification = notificationType != NotificationType.SILENT
         if (shouldShowNotification) { // Показываем уведомление в foreground вручную
             try {

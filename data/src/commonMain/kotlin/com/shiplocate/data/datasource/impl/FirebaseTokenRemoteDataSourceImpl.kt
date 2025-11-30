@@ -15,8 +15,8 @@ class FirebaseTokenRemoteDataSourceImpl(
     private val firebaseTokenApi: FirebaseTokenApi,
     private val authPreferencesRepository: AuthPreferencesRepository,
 ) : FirebaseTokenRemoteDataSource {
-    
-    private val _pushedFlow = MutableSharedFlow<Unit>(replay = 0)
+
+    private val _pushedFlow = MutableSharedFlow<Int?>(replay = 0)
     override suspend fun sendTokenToServer(token: String) {
         println("Sending Firebase token to server: $token")
 
@@ -62,11 +62,11 @@ class FirebaseTokenRemoteDataSourceImpl(
         }
     }
 
-    override suspend fun pushReceived() {
-        _pushedFlow.emit(Unit)
+    override suspend fun pushReceived(type: Int?) {
+        _pushedFlow.emit(type)
     }
 
-    override fun observeReceivedPushes(): Flow<Unit> {
+    override fun observeReceivedPushes(): Flow<Int?> {
         return _pushedFlow
     }
 }

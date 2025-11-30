@@ -12,9 +12,9 @@ class ObserveReceivedPushesUseCase(
 ) {
     /**
      * Наблюдать за получением push-уведомлений
-     * @return Flow<Unit> который эмитит Unit при получении push
+     * @return Flow<Int?> который эмитит type при получении push
      */
-    operator fun invoke(): Flow<Unit> {
+    operator fun invoke(): Flow<Int?> {
         return notificationRepository.observeReceivedPushes()
     }
 }

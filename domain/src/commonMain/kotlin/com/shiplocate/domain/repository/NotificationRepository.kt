@@ -20,10 +20,10 @@ interface NotificationRepository {
     suspend fun saveToken(token: String)
 
     /**
-     * Наблюдать за получением push-уведомлений
-     * Возвращает Flow<Unit> который эмитит Unit при получении push
+     * Наблюдать за получением push-уведомлений.
+     * Возвращает Flow<Int?>, где значение — это type из payload (если его удалось распарсить).
      */
-    fun observeReceivedPushes(): Flow<Unit>
+    fun observeReceivedPushes(): Flow<Int?>
 
     /**
      * Обработка нового токена (вызывается системой Firebase)
@@ -33,6 +33,8 @@ interface NotificationRepository {
     /**
      * Уведомить о получении push-уведомления
      * Вызывается когда приложение запущено и получает push
+     *
+     * @param type значение поля type из payload (может быть null, если не удалось распарсить)
      */
-    suspend fun pushReceived()
+    suspend fun pushReceived(type: Int?)
 }

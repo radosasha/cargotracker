@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.shiplocate.core.logging.LogCategory
 import com.shiplocate.core.logging.Logger
 import com.shiplocate.domain.model.message.Message
+import com.shiplocate.domain.model.notification.NotificationType
+import com.shiplocate.domain.usecase.ObserveReceivedPushesUseCase
 import com.shiplocate.domain.usecase.message.FetchMessagesUseCase
 import com.shiplocate.domain.usecase.message.ObserveMessagesUseCase
 import com.shiplocate.domain.usecase.message.SendMessageUseCase
@@ -24,6 +26,7 @@ class MessagesViewModel(
     private val observeMessagesUseCase: ObserveMessagesUseCase,
     private val fetchMessagesUseCase: FetchMessagesUseCase,
     private val sendMessageUseCase: SendMessageUseCase,
+    private val observeReceivedPushesUseCase: ObserveReceivedPushesUseCase,
     private val logger: Logger,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(MessagesUiState())
@@ -31,10 +34,12 @@ class MessagesViewModel(
 
     private var loadId: Long = 0L
     private var currentMessageText: String = ""
+    private var isPushListenerStarted = false
 
     fun initialize(loadId: Long) {
         logger.info(LogCategory.UI, "MessagesViewModel: Initialized with loadId = $loadId")
         this.loadId = loadId
+        startPushListenerIfNeeded()
 
         // Load cached messages first
         viewModelScope.launch(Dispatchers.Default) {
@@ -69,6 +74,25 @@ class MessagesViewModel(
                 )
             }
         }
+    }
+
+    private fun startPushListenerIfNeeded() {
+        if (isPushListenerStarted) {
+            return
+        }
+        isPushListenerStarted = true
+
+        observeReceivedPushesUseCase()
+            .onEach { type ->
+                if (type == NotificationType.DISPATCH_MESSAGE && loadId != 0L) {
+                    logger.info(
+                        LogCategory.UI,
+                        "MessagesViewModel: Dispatch message push received, refreshing messages",
+                    )
+                    refreshMessages(loadId)
+                }
+            }
+            .launchIn(viewModelScope)
     }
 
     private suspend fun refreshMessages(loadId: Long) {

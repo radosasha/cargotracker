@@ -114,7 +114,7 @@ class NotificationRepositoryImpl(
         firebaseTokenLocalDataSource.saveToken(token)
     }
 
-    override fun observeReceivedPushes(): Flow<Unit> {
+    override fun observeReceivedPushes(): Flow<Int?> {
         return firebaseTokenRemoteDataSource.observeReceivedPushes()
     }
 
@@ -122,7 +122,7 @@ class NotificationRepositoryImpl(
         firebaseTokenService.onNewTokenReceived(token)
     }
 
-    override suspend fun pushReceived() {
-        firebaseTokenRemoteDataSource.pushReceived()
+    override suspend fun pushReceived(type: Int?) {
+        firebaseTokenRemoteDataSource.pushReceived(type)
     }
 }

@@ -178,7 +178,7 @@ object IOSKoinApp {
             
             // Уведомляем о получении push (для случая когда приложение запущено)
             scope.launch {
-                repository.pushReceived()
+                repository.pushReceived(null)
             }
             
             // Обрабатываем push когда приложение не запущено

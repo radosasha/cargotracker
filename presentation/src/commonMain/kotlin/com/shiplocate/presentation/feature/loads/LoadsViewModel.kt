@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.shiplocate.core.logging.LogCategory
 import com.shiplocate.core.logging.Logger
 import com.shiplocate.domain.model.load.LoadStatus
+import com.shiplocate.domain.model.notification.NotificationType
 import com.shiplocate.domain.usecase.GetActiveLoadUseCase
 import com.shiplocate.domain.usecase.GetPermissionStatusUseCase
 import com.shiplocate.domain.usecase.ObservePermissionsUseCase
@@ -101,9 +102,20 @@ class LoadsViewModel(
 
         // Подписываемся на push-уведомления когда приложение запущено
         observeReceivedPushesUseCase()
-            .onEach {
-                logger.info(LogCategory.GENERAL, "LoadsViewModel: Received push notification, refreshing loads")
-                refresh()
+            .onEach { type ->
+                logger.info(
+                    LogCategory.GENERAL,
+                    "LoadsViewModel: Received push notification (type=$type), refreshing loads",
+                )
+                if (type in listOf(
+                        NotificationType.NEW_LOAD,
+                        NotificationType.LOAD_UPDATED,
+                        NotificationType.LOAD_ASSIGNED,
+                        NotificationType.LOAD_UNAVAILABLE
+                    )
+                ) {
+                    refresh()
+                }
             }
             .launchIn(viewModelScope)
     }
