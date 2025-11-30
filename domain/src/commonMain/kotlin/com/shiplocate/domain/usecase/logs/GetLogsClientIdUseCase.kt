@@ -28,7 +28,7 @@ class GetLogsClientIdUseCase(
             getFormatedClientId("NoPhone")
         }
 
-        val activeLoadId = runCatching { loadRepository.getConnectedLoad()?.id }.getOrNull()
+        val activeLoadId = runCatching { loadRepository.getConnectedLoad()?.serverId }.getOrNull()
         if (activeLoadId != null) {
             clientId += "_load_$activeLoadId"
         }
