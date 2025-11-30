@@ -1,8 +1,10 @@
 package com.shiplocate
 
+import android.content.Context
 import android.content.IntentSender
 import android.content.pm.PackageManager
 import android.os.Build
+import android.provider.Settings
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationServices
@@ -175,10 +177,15 @@ class AndroidPermissionManagerImpl(private val activityContextProvider: Activity
                     .addOnFailureListener { exception ->
                         if (exception is ResolvableApiException) {
                             try {
-                                exception.startResolutionForResult(
-                                    activity,
-                                    MainActivity.REQUEST_ENABLE_GPS,
-                                )
+                                val manufacturer = Build.MANUFACTURER
+                                if (manufacturer.lowercase().startsWith("samsung") && isHighAccuracyEnabled(activity)) {
+                                    if (cont.isActive) cont.resume(Result.success(Unit))
+                                } else {
+                                    exception.startResolutionForResult(
+                                        activity,
+                                        MainActivity.REQUEST_ENABLE_GPS,
+                                    )
+                                }
                                 if (cont.isActive) cont.resume(Result.success(Unit))
                             } catch (sendEx: IntentSender.SendIntentException) {
                                 if (cont.isActive) cont.resume(Result.failure(sendEx))
@@ -312,6 +319,17 @@ class AndroidPermissionManagerImpl(private val activityContextProvider: Activity
                     }
                 }
             }
+        }
+    }
+
+    fun isHighAccuracyEnabled(context: Context): Boolean {
+        return try {
+            Settings.Secure.getInt(
+                context.contentResolver,
+                Settings.Secure.LOCATION_MODE
+            ) == Settings.Secure.LOCATION_MODE_HIGH_ACCURACY
+        } catch (e: Exception) {
+            false
         }
     }
 }

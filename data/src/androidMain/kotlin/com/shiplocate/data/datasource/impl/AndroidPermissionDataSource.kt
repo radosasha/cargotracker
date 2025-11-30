@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.os.Build
 import android.provider.Settings
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.LocationRequest
@@ -72,6 +73,12 @@ class AndroidPermissionDataSource(
                                 LogCategory.LOCATION,
                                 "AndroidPermissionDataSource: Location settings are not satisfied and need solution: message=${e.message}, error=$e"
                             )
+                            val manufacturer = Build.MANUFACTURER
+                            if (!manufacturer.isNullOrEmpty() && manufacturer.lowercase().startsWith("samsung") && isHighAccuracyEnabled(context)) {
+                                cont.resumeWith(Result.success(true))
+                            } else {
+                                cont.resumeWith(Result.success(false))
+                            }
                         }
 
                         else -> {
@@ -79,9 +86,9 @@ class AndroidPermissionDataSource(
                                 LogCategory.LOCATION,
                                 "AndroidPermissionDataSource: Location settings are not satisfied: message=${e.message}, error=$e"
                             )
+                            cont.resumeWith(Result.success(false))
                         }
                     }
-                    cont.resumeWith(Result.success(false))
                 }
         }
         return PermissionDataModel(
@@ -221,11 +228,21 @@ class AndroidPermissionDataSource(
     private inner class AirplaneReceiver : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             if (intent.action == Intent.ACTION_AIRPLANE_MODE_CHANGED) {
-                val enabled = intent.getBooleanExtra("state", false)
                 scope.launch {
                     permissionsFlow.emit(getPermissionStatus())
                 }
             }
+        }
+    }
+
+    fun isHighAccuracyEnabled(context: Context): Boolean {
+        return try {
+            Settings.Secure.getInt(
+                context.contentResolver,
+                Settings.Secure.LOCATION_MODE
+            ) == Settings.Secure.LOCATION_MODE_HIGH_ACCURACY
+        } catch (e: Exception) {
+            false
         }
     }
 }

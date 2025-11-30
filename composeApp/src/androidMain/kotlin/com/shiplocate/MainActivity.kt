@@ -14,6 +14,7 @@ import com.shiplocate.domain.usecase.NotifyPermissionGrantedUseCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -94,14 +95,16 @@ class MainActivity : ComponentActivity(), KoinComponent {
     ) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == REQUEST_ENABLE_GPS) {
-            scope.launch(Dispatchers.Default) {
-                notifyPermissionGrantedUseCase()
+            if(resultCode == RESULT_OK) {
+                scope.launch(Dispatchers.Default) {
+                    delay(1000)
+                    notifyPermissionGrantedUseCase()
+                }
             }
         }
     }
 
     companion object {
-        const val REQUEST_ALL_PERMISSIONS = 2311
         const val REQUEST_NOTIFICATIONS_PERMISSION = 2310
         const val LOCATION_PERMISSION_REQUEST_CODE = 1001
         const val BACKGROUND_LOCATION_PERMISSION_REQUEST_CODE = 1002
