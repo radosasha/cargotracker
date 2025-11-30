@@ -2,12 +2,14 @@ package com.shiplocate.domain.usecase.logs
 
 import com.shiplocate.domain.repository.AuthPreferencesRepository
 import com.shiplocate.domain.repository.DeviceRepository
+import com.shiplocate.domain.repository.LoadRepository
 import com.shiplocate.domain.repository.PrefsRepository
 
 class GetLogsClientIdUseCase(
     private val prefsRepository: PrefsRepository,
     private val deviceRepository: DeviceRepository,
     private val authPreferencesRepository: AuthPreferencesRepository,
+    private val loadRepository: LoadRepository,
 ) {
     private fun sanitizeClientId(clientId: String): String {
         // Remove any path separators and dangerous characters
@@ -15,7 +17,7 @@ class GetLogsClientIdUseCase(
     }
 
     suspend operator fun invoke(): String {
-        val clientId = if (authPreferencesRepository.hasSession()) {
+        var clientId = if (authPreferencesRepository.hasSession()) {
             val phoneNumber = prefsRepository.getPhoneNumber()
             if (phoneNumber == null) {
                 getFormatedClientId("NoPhone")
@@ -25,6 +27,12 @@ class GetLogsClientIdUseCase(
         } else {
             getFormatedClientId("NoPhone")
         }
+
+        val activeLoadId = runCatching { loadRepository.getConnectedLoad()?.id }.getOrNull()
+        if (activeLoadId != null) {
+            clientId += "_load_$activeLoadId"
+        }
+
         return sanitizeClientId(clientId)
     }
 
