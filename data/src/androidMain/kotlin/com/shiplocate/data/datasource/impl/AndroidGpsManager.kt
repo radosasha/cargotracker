@@ -53,6 +53,7 @@ class AndroidGpsManager(
     private var hasReceivedFusedLocation: Boolean = false
     private val locationManager: LocationManager? =
         context.getSystemService(Context.LOCATION_SERVICE) as? LocationManager
+    private val FALLBACK_TIMEOUT_MS = 5 * 60_000L
 
     // Coroutine scope for emitting to flow
     private val scope = CoroutineScope(Dispatchers.IO)
@@ -210,7 +211,7 @@ class AndroidGpsManager(
                 LogCategory.LOCATION,
                 "AndroidGpsManager: Starting Samsung initial fallback timer",
             )
-            delay(MIN_UPDATE_MS)
+            delay(FALLBACK_TIMEOUT_MS)
             if (!hasReceivedFusedLocation && isTracking) {
                 logger.warn(
                     LogCategory.LOCATION,
