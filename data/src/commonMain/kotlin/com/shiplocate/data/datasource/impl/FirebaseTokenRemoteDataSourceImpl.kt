@@ -1,5 +1,7 @@
 package com.shiplocate.data.datasource.impl
 
+import com.shiplocate.core.logging.LogCategory
+import com.shiplocate.core.logging.Logger
 import com.shiplocate.data.datasource.FirebaseTokenRemoteDataSource
 import com.shiplocate.data.network.api.FirebaseTokenApi
 import com.shiplocate.data.network.dto.firebase.FirebaseTokenRequestDto
@@ -14,17 +16,18 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 class FirebaseTokenRemoteDataSourceImpl(
     private val firebaseTokenApi: FirebaseTokenApi,
     private val authPreferencesRepository: AuthPreferencesRepository,
+    private val logger: Logger,
 ) : FirebaseTokenRemoteDataSource {
 
     private val _pushedFlow = MutableSharedFlow<Int?>(replay = 0)
     override suspend fun sendTokenToServer(token: String) {
-        println("Sending Firebase token to server: $token")
+        logger.info(LogCategory.NETWORK, "FirebaseTokenRemoteDataSource: Sending Firebase token to server")
 
         try {
             // Получаем токен авторизации из сессии
             val authSession = authPreferencesRepository.getSession()
             if (authSession == null) {
-                println("No auth session found, cannot send Firebase token to server")
+                logger.warn(LogCategory.AUTH, "FirebaseTokenRemoteDataSource: No auth session, cannot send token")
                 return
             }
 
@@ -32,12 +35,12 @@ class FirebaseTokenRemoteDataSourceImpl(
             val response = firebaseTokenApi.updateFirebaseToken(authSession.token, request)
 
             if (response.success) {
-                println("Token sent to server successfully: ${response.message}")
+                logger.info(LogCategory.NETWORK, "FirebaseTokenRemoteDataSource: Token sent successfully")
             } else {
-                println("Failed to send token to server: ${response.message}")
+                logger.warn(LogCategory.NETWORK, "FirebaseTokenRemoteDataSource: Failed to send token: ${response.message}")
             }
         } catch (e: Exception) {
-            println("Error sending token to server: ${e.message}")
+            logger.error(LogCategory.NETWORK, "FirebaseTokenRemoteDataSource: Error sending token", e)
             throw e
         }
     }
@@ -46,18 +49,18 @@ class FirebaseTokenRemoteDataSourceImpl(
         try {
             val authSession = authPreferencesRepository.getSession()
             if (authSession == null) {
-                println("No auth session found, cannot clear token")
+                logger.warn(LogCategory.AUTH, "FirebaseTokenRemoteDataSource: No auth session, cannot clear token")
                 return
             }
 
             val response = firebaseTokenApi.clearFirebaseToken(authSession.token)
             if (response.success) {
-                println("Token cleared successfully: ${response.message}")
+                logger.info(LogCategory.NETWORK, "FirebaseTokenRemoteDataSource: Token cleared successfully")
             } else {
-                println("Failed to clear token: ${response.message}")
+                logger.warn(LogCategory.NETWORK, "FirebaseTokenRemoteDataSource: Failed to clear token: ${response.message}")
             }
         } catch (e: Exception) {
-            println("Error clearing token: ${e.message}")
+            logger.error(LogCategory.NETWORK, "FirebaseTokenRemoteDataSource: Error clearing token", e)
             throw e
         }
     }

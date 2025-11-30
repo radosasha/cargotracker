@@ -1,5 +1,7 @@
 package com.shiplocate.data.datasource.remote
 
+import com.shiplocate.core.logging.LogCategory
+import com.shiplocate.core.logging.Logger
 import com.shiplocate.data.network.api.AuthApi
 import com.shiplocate.data.network.dto.auth.LogoutErrorResponseDto
 import com.shiplocate.data.network.dto.auth.SmsRequestErrorResponseDto
@@ -26,18 +28,19 @@ import io.ktor.http.HttpStatusCode
  */
 class AuthRemoteDataSource(
     private val authApi: AuthApi,
+    private val logger: Logger,
 ) {
     /**
      * Request SMS verification code
      */
     suspend fun requestSmsCode(request: SmsCodeRequest): Result<SmsCodeResponse> {
-        println("🌐 AuthRemoteDataSource: Requesting SMS code for ${request.phone}")
+        logger.info(LogCategory.AUTH, "AuthRemoteDataSource: Requesting SMS code for ${request.phone}")
         return try {
             val response = authApi.requestSmsCode(request.toDto())
-            println("🌐 AuthRemoteDataSource: ✅ SMS request successful")
+            logger.info(LogCategory.AUTH, "AuthRemoteDataSource: SMS request successful")
             Result.success(response.toDomain())
         } catch (e: ResponseException) {
-            println("🌐 AuthRemoteDataSource: ❌ Client error: ${e.response.status}")
+            logger.warn(LogCategory.AUTH, "AuthRemoteDataSource: Client error ${e.response.status}", e)
             val statusCode = e.response.status.value
             val error = when (statusCode) {
                 400, 500, 503 -> {
@@ -58,7 +61,7 @@ class AuthRemoteDataSource(
             }
             Result.failure(error)
         } catch (e: Exception) {
-            println("🌐 AuthRemoteDataSource: ❌ Network error: ${e.message}")
+            logger.error(LogCategory.AUTH, "AuthRemoteDataSource: Network error requesting SMS code", e)
             Result.failure(
                 SmsRequestError.SmsServiceError(
                     message = e.message ?: "Network error occurred",
@@ -71,18 +74,22 @@ class AuthRemoteDataSource(
      * Verify SMS code and authenticate
      */
     suspend fun verifySmsCode(verify: SmsCodeVerify): Result<AuthToken> {
-        println("🌐 AuthRemoteDataSource: Verifying SMS code for ${verify.phone}")
+        logger.info(LogCategory.AUTH, "AuthRemoteDataSource: Verifying SMS code for ${verify.phone}")
         return try {
             val response = authApi.verifySmsCode(verify.toDto())
-            println("🌐 AuthRemoteDataSource: ✅ SMS verification successful")
+            logger.info(LogCategory.AUTH, "AuthRemoteDataSource: SMS verification successful")
             Result.success(response.toDomain())
         } catch (e: ResponseException) {
-            println("🌐 AuthRemoteDataSource: ❌ Verification error: ${e.response.status}")
+            logger.warn(LogCategory.AUTH, "AuthRemoteDataSource: Verification error ${e.response.status}", e)
             suspend fun parseErrorDto(): SmsVerifyErrorResponseDto? {
                 return try {
                     e.response.body()
                 } catch (parseError: Exception) {
-                    println("🌐 AuthRemoteDataSource: Failed to parse verify error response: ${parseError.message}")
+                    logger.error(
+                        LogCategory.AUTH,
+                        "AuthRemoteDataSource: Failed to parse verify error response",
+                        parseError,
+                    )
                     null
                 }
             }
@@ -194,7 +201,7 @@ class AuthRemoteDataSource(
             }
             Result.failure(error)
         } catch (e: Exception) {
-            println("🌐 AuthRemoteDataSource: ❌ Network error: ${e.message}")
+            logger.error(LogCategory.AUTH, "AuthRemoteDataSource: Network error verifying SMS code", e)
             Result.failure(
                 SmsVerificationError.VerificationServiceError(
                     message = e.message ?: "Network error occurred",
@@ -207,18 +214,18 @@ class AuthRemoteDataSource(
      * Logout user
      */
     suspend fun logout(token: String): Result<Unit> {
-        println("🌐 AuthRemoteDataSource: Logging out user")
+        logger.info(LogCategory.AUTH, "AuthRemoteDataSource: Logging out user")
         return try {
             authApi.logout(token)
-            println("🌐 AuthRemoteDataSource: ✅ Logout successful")
+            logger.info(LogCategory.AUTH, "AuthRemoteDataSource: Logout successful")
             Result.success(Unit)
         } catch (e: ResponseException) {
-            println("🌐 AuthRemoteDataSource: ❌ Client error: ${e.response.status}")
+            logger.warn(LogCategory.AUTH, "AuthRemoteDataSource: Logout client error ${e.response.status}", e)
             val error = try {
                 val errorDto: LogoutErrorResponseDto = e.response.body()
                 errorDto.toAuthError()
             } catch (parseError: Exception) {
-                println("🌐 AuthRemoteDataSource: Failed to parse error response: ${parseError.message}")
+                logger.error(LogCategory.AUTH, "AuthRemoteDataSource: Failed to parse logout error", parseError)
                 val statusCode = e.response.status.value
                 when (statusCode) {
                     401 -> AuthError.CodeInvalid(message = "Invalid or expired token")
@@ -235,7 +242,7 @@ class AuthRemoteDataSource(
             }
             Result.failure(error)
         } catch (e: ServerResponseException) {
-            println("🌐 AuthRemoteDataSource: ❌ Server error: ${e.response.status}")
+            logger.error(LogCategory.AUTH, "AuthRemoteDataSource: Server error ${e.response.status}", e)
             val error = when (e.response.status) {
                 HttpStatusCode.ServiceUnavailable ->
                     AuthError.ServiceUnavailable(
@@ -250,7 +257,7 @@ class AuthRemoteDataSource(
             }
             Result.failure(error)
         } catch (e: Exception) {
-            println("🌐 AuthRemoteDataSource: ❌ Network error: ${e.message}")
+            logger.error(LogCategory.AUTH, "AuthRemoteDataSource: Network error logging out", e)
             Result.failure(
                 AuthError.NetworkError(
                     message = e.message ?: "Network error occurred",

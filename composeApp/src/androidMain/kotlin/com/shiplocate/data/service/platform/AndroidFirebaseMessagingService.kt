@@ -12,6 +12,8 @@ import androidx.core.app.NotificationManagerCompat
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import com.shiplocate.MainActivity
+import com.shiplocate.core.logging.LogCategory
+import com.shiplocate.core.logging.Logger
 import com.shiplocate.domain.model.notification.NotificationPayloadKeys
 import com.shiplocate.domain.model.notification.NotificationType
 import com.shiplocate.domain.repository.NotificationRepository
@@ -35,6 +37,7 @@ class AndroidFirebaseMessagingService : FirebaseMessagingService(), KoinComponen
     private val handlePushNotificationWhenAppKilledUseCase: HandlePushNotificationWhenAppKilledUseCase by inject()
     private val sendAllLogsUseCase: SendAllLogsUseCase by inject()
     private val getLogsClientIdUseCase: GetLogsClientIdUseCase by inject()
+    private val logger: Logger by inject()
 
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -45,7 +48,7 @@ class AndroidFirebaseMessagingService : FirebaseMessagingService(), KoinComponen
 
     override fun onNewToken(token: String) {
         super.onNewToken(token)
-        println("Android: New Firebase token received: $token")
+        logger.info(LogCategory.NOTIFICATIONS, "Android FCM: New token received")
 
         scope.launch {
             // Передаем токен в Repository
@@ -55,7 +58,7 @@ class AndroidFirebaseMessagingService : FirebaseMessagingService(), KoinComponen
 
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
         super.onMessageReceived(remoteMessage)
-        println("Android: Firebase message received: ${remoteMessage.data}")
+        logger.debug(LogCategory.NOTIFICATIONS, "Android FCM: Message received ${remoteMessage.data}")
 
         val notificationType =
             remoteMessage.data[NotificationPayloadKeys.TYPE]?.toIntOrNull()
@@ -70,7 +73,7 @@ class AndroidFirebaseMessagingService : FirebaseMessagingService(), KoinComponen
             try {
                 handlePushNotificationWhenAppKilledUseCase()
             } catch (e: Exception) {
-                println("Android: Failed to handle push notification when app killed: ${e.message}")
+                logger.error(LogCategory.NOTIFICATIONS, "Android FCM: Failed to handle push when app killed", e)
             }
         }
 
@@ -87,7 +90,7 @@ class AndroidFirebaseMessagingService : FirebaseMessagingService(), KoinComponen
 
                 showForegroundNotification(title, body, remoteMessage.data)
             } catch (e: Exception) {
-                println("Android: failed to show foreground notification: ${e.message}")
+                logger.error(LogCategory.NOTIFICATIONS, "Android FCM: Failed to show notification", e)
             }
         } else {
             scope.launch {

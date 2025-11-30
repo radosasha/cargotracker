@@ -156,7 +156,7 @@ val dataModule =
             single<LocationRemoteDataSource> { LocationRemoteDataSourceImpl(get(), get()) }
             single<TrackingDataSource> { TrackingDataSourceImpl(get()) }
             single<PrefsDataSource> { PrefsDataSourceImpl(get()) }
-            single<AuthRemoteDataSource> { AuthRemoteDataSource(get()) }
+            single<AuthRemoteDataSource> { AuthRemoteDataSource(get(), get()) }
             single { LoadsRemoteDataSource(get()) }
             single { StopsLocalDataSource(get()) }
             single { LoadsLocalDataSource(get(), get<StopsLocalDataSource>()) }
@@ -166,7 +166,7 @@ val dataModule =
 
             // Firebase Token Data Sources
             single<FirebaseTokenLocalDataSource> { FirebaseTokenLocalDataSourceImpl(get()) }
-            single<FirebaseTokenRemoteDataSource> { FirebaseTokenRemoteDataSourceImpl(get(), get()) }
+            single<FirebaseTokenRemoteDataSource> { FirebaseTokenRemoteDataSourceImpl(get(), get(), get()) }
             // FirebaseTokenService регистрируется в платформо-специфичных модулях composeApp
 
             // Repositories

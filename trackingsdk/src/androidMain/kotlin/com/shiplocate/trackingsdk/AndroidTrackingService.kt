@@ -14,6 +14,8 @@ import androidx.core.app.NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE
 import androidx.core.app.NotificationManagerCompat
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.coroutineScope
+import com.shiplocate.core.logging.LogCategory
+import com.shiplocate.core.logging.Logger
 import com.shiplocate.domain.util.DateFormatter
 import com.shiplocate.trackingsdk.motion.models.MotionAnalysisResult
 import kotlinx.coroutines.Dispatchers
@@ -29,6 +31,7 @@ import org.koin.core.component.inject
 class AndroidTrackingService : LifecycleService(), KoinComponent {
     private val binder = LocationBinder()
     private var isTracking = false
+    private val logger: Logger by inject()
 
     // Koin DI - используем новые Use Cases
     private val trackingManager: TrackingManager by inject()
@@ -73,7 +76,7 @@ class AndroidTrackingService : LifecycleService(), KoinComponent {
         // Получаем loadId из Intent
         val loadId = intent?.getLongExtra(EXTRA_LOAD_ID, -1L) ?: -1L
         if (loadId == -1L) {
-            println("AndroidTrackingService: ⚠️ No loadId provided in Intent, cannot start tracking")
+            logger.warn(LogCategory.LOCATION, "AndroidTrackingService: No loadId provided in Intent, cannot start tracking")
             stopSelf()
             return START_NOT_STICKY
         }
@@ -147,13 +150,13 @@ class AndroidTrackingService : LifecycleService(), KoinComponent {
 
     private fun startLocationTracking(loadId: Long) {
         if (isTracking) {
-            println("LocationTrackingService: Already tracking, ignoring start request")
+            logger.debug(LogCategory.LOCATION, "LocationTrackingService: Already tracking, ignoring start request")
             return
         }
 
         lifecycle.coroutineScope.launch {
             try {
-                println("LocationTrackingService: Starting GPS tracking through TrackingManager with loadId=$loadId")
+                logger.info(LogCategory.LOCATION, "LocationTrackingService: Starting GPS tracking with loadId=$loadId")
 
                 // Запускаем обработку GPS координат и подписываемся на Flow результатов
                 trackingManager.startTracking(loadId)
@@ -166,9 +169,9 @@ class AndroidTrackingService : LifecycleService(), KoinComponent {
 
                                 // Логируем результат обработки
                                 if (event.result.shouldSend) {
-                                    println("AndroidTrackingService: ✅ Location processed successfully: ${event.result.reason}")
+                                    logger.info(LogCategory.LOCATION, "AndroidTrackingService: Location processed: ${event.result.reason}")
                                 } else {
-                                    println("AndroidTrackingService: ⏭️ Location filtered: ${event.result.reason}")
+                                    logger.debug(LogCategory.LOCATION, "AndroidTrackingService: Location filtered: ${event.result.reason}")
                                 }
                             }
 
@@ -176,11 +179,11 @@ class AndroidTrackingService : LifecycleService(), KoinComponent {
                                 // Обновляем уведомление с результатами анализа движения
                                 updateNotificationWithMotionAnalysis(event.analysisResult, event.timestamp)
 
-                                println(
-                                    "AndroidTrackingService: 📊 Motion analysis: " +
-                                        "driving=${event.analysisResult.drivingDetected}, " +
+                                logger.debug(
+                                    LogCategory.LOCATION,
+                                    "AndroidTrackingService: Motion analysis: driving=${event.analysisResult.drivingDetected}, " +
                                         "vehicleTime=${(event.analysisResult.vehicleTimePercentage * 100).toInt()}%, " +
-                                        "confidence=${event.analysisResult.averageConfidence}%"
+                                        "confidence=${event.analysisResult.averageConfidence}%",
                                 )
                             }
                         }
@@ -188,11 +191,10 @@ class AndroidTrackingService : LifecycleService(), KoinComponent {
                     .launchIn(lifecycle.coroutineScope)
                 isTracking = true
 
-                println("LocationTrackingService: ✅ GPS tracking started successfully")
+                logger.info(LogCategory.LOCATION, "LocationTrackingService: GPS tracking started successfully")
                 updateNotificationWithStats(com.shiplocate.domain.model.TrackingStats(isTracking = true)) // Initial empty stats
             } catch (e: Exception) {
-                println("LocationTrackingService: ❌ Error starting GPS tracking: ${e.message}")
-                e.printStackTrace()
+                logger.error(LogCategory.LOCATION, "LocationTrackingService: Error starting GPS tracking", e)
                 updateNotificationWithStats(com.shiplocate.domain.model.TrackingStats(isTracking = false)) // Error state
                 stopSelf()
             }
@@ -205,24 +207,25 @@ class AndroidTrackingService : LifecycleService(), KoinComponent {
      */
     private suspend fun stopLocationTrackingSync() {
         if (!isTracking) {
-            println("LocationTrackingService: Not tracking, ignoring stop request")
+            logger.debug(LogCategory.LOCATION, "LocationTrackingService: Not tracking, ignoring stop request")
             return
         }
 
         try {
-            println("LocationTrackingService: Stopping GPS tracking synchronously")
-
-            // Останавливаем обработку GPS координат синхронно
+            logger.info(LogCategory.LOCATION, "LocationTrackingService: Stopping GPS tracking")
             val result = trackingManager.stopTracking()
             if (result.isSuccess) {
                 isTracking = false
-                println("LocationTrackingService: ✅ GPS tracking stopped successfully")
+                logger.info(LogCategory.LOCATION, "LocationTrackingService: GPS tracking stopped successfully")
             } else {
-                println("LocationTrackingService: ❌ Failed to stop GPS tracking: ${result.exceptionOrNull()?.message}")
+                logger.error(
+                    LogCategory.LOCATION,
+                    "LocationTrackingService: Failed to stop GPS tracking: ${result.exceptionOrNull()?.message}",
+                    result.exceptionOrNull(),
+                )
             }
         } catch (e: Exception) {
-            println("LocationTrackingService: ❌ Error stopping GPS tracking: ${e.message}")
-            e.printStackTrace()
+            logger.error(LogCategory.LOCATION, "LocationTrackingService: Error stopping GPS tracking", e)
         }
     }
 
@@ -340,7 +343,7 @@ class AndroidTrackingService : LifecycleService(), KoinComponent {
             }
         }
 
-        println("LocationTrackingService: Service scope cancelled")
+        logger.warn(LogCategory.LOCATION, "LocationTrackingService: Service scope cancelled")
         super.onDestroy()
     }
 }

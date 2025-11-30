@@ -25,9 +25,9 @@ val activityModule = module {
     // PermissionManager для domain слоя
     // Создаем экземпляр AndroidPermissionManagerImpl
     single<AndroidPermissionManagerImpl> {
-        AndroidPermissionManagerImpl(get())
+        AndroidPermissionManagerImpl(get(), get(), get())
     }
-    
+
     // Регистрируем тот же экземпляр как PermissionManager
     single<PermissionManager> {
         get<AndroidPermissionManagerImpl>()

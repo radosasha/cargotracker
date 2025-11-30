@@ -9,6 +9,7 @@ enum class LogCategory(val displayName: String) {
     DATABASE("DATABASE"),
     AUTH("AUTH"),
     LOCATION("LOCATION"),
+    NOTIFICATIONS("NOTIFICATIONS"),
     UI("UI"),
     ERROR("ERROR"),
     PERMISSIONS("PERMISSIONS"),
