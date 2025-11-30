@@ -47,7 +47,6 @@ class AndroidGpsManager(
     // samsung fallback
     private val isSamsungDevice: Boolean =
         Build.MANUFACTURER?.lowercase()?.contains("samsung") == true
-    private var lastLocationTimestamp: Long = 0L
     private var fallbackJob: Job? = null
     private var fallbackListener: LocationListener? = null
     private var isFallbackActive: Boolean = false
@@ -75,10 +74,10 @@ class AndroidGpsManager(
         try {
             logger.info(LogCategory.LOCATION, "AndroidGpsManager: Starting GPS tracking with FusedLocationProviderClient")
 
-            lastLocationTimestamp = System.currentTimeMillis()
             hasReceivedFusedLocation = false
-            startInitialFallbackTimerIfNeeded()
-
+            if (isSamsungDevice) {
+                startInitialFallbackTimer()
+            }
             // Создаем LocationRequest с настройками
             val locationRequest = LocationRequest.Builder(
                 Priority.PRIORITY_HIGH_ACCURACY,
@@ -89,7 +88,7 @@ class AndroidGpsManager(
                 .setMinUpdateIntervalMillis(MIN_UPDATE_MS)
                 .build()
 
-            suspendCoroutine<Unit> { cont ->
+            suspendCoroutine { cont ->
                 // Запрашиваем обновления местоположения
                 fusedLocationClient.requestLocationUpdates(
                     locationRequest,
@@ -145,6 +144,7 @@ class AndroidGpsManager(
             if (locations.isEmpty()) {
                 logger.error(LogCategory.LOCATION, "AndroidGpsManager: Received empty list of locations")
             } else {
+                hasReceivedFusedLocation = true
                 locations.forEach { androidLocation ->
                     logger.info(LogCategory.LOCATION, "AndroidGpsManager: GPS Location received")
                     logger.info(
@@ -169,10 +169,8 @@ class AndroidGpsManager(
 
                     // Эмитим в flow
                     scope.launch {
-                        lastLocationTimestamp = System.currentTimeMillis()
-                        if (isFallbackActive) {
-                            stopLocationManagerFallback()
-                        }
+                        stopInitialFallbackTimer()
+                        stopLocationManagerFallback()
                         hasReceivedFusedLocation = true
                         gpsLocationFlow.emit(gpsLocation)
                         logger.info(LogCategory.LOCATION, "AndroidGpsManager: Location emitted to flow")
@@ -204,8 +202,7 @@ class AndroidGpsManager(
         )
     }
 
-    private fun startInitialFallbackTimerIfNeeded() {
-        if (!isSamsungDevice) return
+    private fun startInitialFallbackTimer() {
         if (fallbackJob?.isActive == true) return
 
         fallbackJob = scope.launch {
@@ -241,13 +238,11 @@ class AndroidGpsManager(
             "AndroidGpsManager: Activating LocationManager fallback, stopping fused provider",
         )
         fusedLocationClient.removeLocationUpdates(locationCallback)
-        isTracking = false
 
         val listener = LocationListener { location ->
             logger.info(LogCategory.LOCATION, "AndroidGpsManager: Fallback location received")
             val gpsLocation = convertToGpsLocation(location.apply { provider = "network" })
             scope.launch {
-                lastLocationTimestamp = System.currentTimeMillis()
                 gpsLocationFlow.emit(gpsLocation)
             }
         }
