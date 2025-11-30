@@ -116,6 +116,23 @@ fun TrackerNavigation(
         }
     }
 
+    // Listen for external navigation events (e.g., push notification taps)
+    LaunchedEffect(navController, isCheckingAuth) {
+        if (isCheckingAuth) {
+            return@LaunchedEffect
+        }
+        NavigationEventBus.events.collect { event ->
+            when (event) {
+                is NavigationEvent.OpenMessages -> {
+                    val targetRoute = Screen.messages(event.loadId)
+                    navController.navigate(targetRoute) {
+                        launchSingleTop = true
+                    }
+                }
+            }
+        }
+    }
+
     // Check auth session on start
     LaunchedEffect(Unit) {
         scope.launch {

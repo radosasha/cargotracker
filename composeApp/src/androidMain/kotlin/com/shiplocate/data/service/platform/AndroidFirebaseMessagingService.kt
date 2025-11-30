@@ -3,12 +3,17 @@ package com.shiplocate.data.service.platform
 import android.Manifest
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
+import android.content.Intent
 import android.content.pm.PackageManager
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
+import com.shiplocate.MainActivity
+import com.shiplocate.domain.model.notification.NotificationPayloadKeys
+import com.shiplocate.domain.model.notification.NotificationType
 import com.shiplocate.domain.repository.NotificationRepository
 import com.shiplocate.domain.usecase.HandlePushNotificationWhenAppKilledUseCase
 import com.shiplocate.domain.usecase.logs.GetLogsClientIdUseCase
@@ -33,13 +38,10 @@ class AndroidFirebaseMessagingService : FirebaseMessagingService(), KoinComponen
 
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-
-    private val NOTIFICATION_TYPE_NEW_LOAD: Int = 0
-    private val NOTIFICATION_TYPE_LOAD_ASSIGNED: Int = 1
-    private val NOTIFICATION_TYPE_LOAD_UPDATED: Int = 2
-    private val NOTIFICATION_TYPE_STOP_ENTERED: Int = 3
-    private val NOTIFICATION_TYPE_LOAD_UNAVAILABLE: Int = 4
-    private val NOTIFICATION_TYPE_SILENT_PUSH: Int = 5
+    companion object {
+        private const val DEFAULT_NOTIFICATION_CHANNEL_ID = "default_notifications"
+        private const val DEFAULT_NOTIFICATION_CHANNEL_NAME = "General"
+    }
 
     override fun onNewToken(token: String) {
         super.onNewToken(token)
@@ -69,12 +71,9 @@ class AndroidFirebaseMessagingService : FirebaseMessagingService(), KoinComponen
             }
         }
 
-        val shouldShowNotification = try {
-            val type = remoteMessage.data["type"]?.toInt()
-            type != NOTIFICATION_TYPE_SILENT_PUSH
-        } catch (e: Exception) {
-            false
-        }
+        val notificationType =
+            remoteMessage.data[NotificationPayloadKeys.TYPE]?.toIntOrNull()
+        val shouldShowNotification = notificationType != NotificationType.SILENT
         if (shouldShowNotification) { // Показываем уведомление в foreground вручную
             try {
                 val title = remoteMessage.notification?.title
@@ -85,7 +84,7 @@ class AndroidFirebaseMessagingService : FirebaseMessagingService(), KoinComponen
                     ?: remoteMessage.data["command"]
                     ?: ""
 
-                showForegroundNotification(title, body)
+                showForegroundNotification(title, body, remoteMessage.data)
             } catch (e: Exception) {
                 println("Android: failed to show foreground notification: ${e.message}")
             }
@@ -97,9 +96,13 @@ class AndroidFirebaseMessagingService : FirebaseMessagingService(), KoinComponen
         }
     }
 
-    private fun showForegroundNotification(title: String, body: String) {
-        val channelId = "default_notifications"
-        val channelName = "General"
+    private fun showForegroundNotification(
+        title: String,
+        body: String,
+        payload: Map<String, String>,
+    ) {
+        val channelId = DEFAULT_NOTIFICATION_CHANNEL_ID
+        val channelName = DEFAULT_NOTIFICATION_CHANNEL_NAME
 
         val manager = getSystemService(NotificationManager::class.java)
         if (manager?.getNotificationChannel(channelId) == null) {
@@ -117,6 +120,24 @@ class AndroidFirebaseMessagingService : FirebaseMessagingService(), KoinComponen
             .setSmallIcon(android.R.drawable.ic_dialog_info)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)
+
+        val launchIntent =
+            Intent(this, MainActivity::class.java).apply {
+                flags =
+                    Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                        Intent.FLAG_ACTIVITY_SINGLE_TOP or
+                        Intent.FLAG_ACTIVITY_NEW_TASK
+                payload[NotificationPayloadKeys.TYPE]?.let { putExtra(NotificationPayloadKeys.TYPE, it) }
+                payload[NotificationPayloadKeys.LOAD_ID]?.let { putExtra(NotificationPayloadKeys.LOAD_ID, it) }
+            }
+        val pendingIntent =
+            PendingIntent.getActivity(
+                this,
+                Random.nextInt(),
+                launchIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+            )
+        builder.setContentIntent(pendingIntent)
 
         if (ActivityCompat.checkSelfPermission(
                 this,

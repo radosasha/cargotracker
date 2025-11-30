@@ -10,7 +10,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.shiplocate.core.logging.LogCategory
 import com.shiplocate.core.logging.Logger
 import com.shiplocate.di.AndroidKoinApp
+import com.shiplocate.domain.model.notification.NotificationPayloadKeys
+import com.shiplocate.domain.model.notification.NotificationType
+import com.shiplocate.domain.usecase.GetActiveLoadUseCase
 import com.shiplocate.domain.usecase.NotifyPermissionGrantedUseCase
+import com.shiplocate.domain.usecase.auth.HasAuthSessionUseCase
+import com.shiplocate.presentation.navigation.NavigationEvent
+import com.shiplocate.presentation.navigation.NavigationEventBus
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -22,6 +28,8 @@ import org.koin.core.component.inject
 class MainActivity : ComponentActivity(), KoinComponent {
     private val logger: Logger by inject()
     private val notifyPermissionGrantedUseCase: NotifyPermissionGrantedUseCase by inject()
+    private val hasAuthSessionUseCase: HasAuthSessionUseCase by inject()
+    private val getActiveLoadUseCase: GetActiveLoadUseCase by inject()
 
     // Coroutine scope для вызова suspend функций
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
@@ -49,6 +57,8 @@ class MainActivity : ComponentActivity(), KoinComponent {
         setContent {
             App()
         }
+
+        handleNotificationIntent(intent)
     }
 
     override fun onResume() {
@@ -59,6 +69,11 @@ class MainActivity : ComponentActivity(), KoinComponent {
         scope.launch {
             notifyPermissionGrantedUseCase()
         }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        handleNotificationIntent(intent)
     }
 
     override fun onRequestPermissionsResult(
@@ -83,6 +98,70 @@ class MainActivity : ComponentActivity(), KoinComponent {
                     LogCategory.PERMISSIONS,
                     "Error notifying permission granted: ${e.message}",
                     e
+                )
+            }
+        }
+    }
+
+    private fun handleNotificationIntent(intent: Intent?) {
+        if (intent == null) {
+            return
+        }
+
+        val extras = intent.extras
+        val typeValue = extras?.get(NotificationPayloadKeys.TYPE)?.toString()
+                ?: intent.getStringExtra(NotificationPayloadKeys.TYPE)
+        val notificationType = typeValue?.toIntOrNull()
+        if (notificationType != NotificationType.DISPATCH_MESSAGE) {
+            return
+        }
+
+        val loadIdValue =
+            extras?.get(NotificationPayloadKeys.LOAD_ID)?.toString()
+                ?: intent.getStringExtra(NotificationPayloadKeys.LOAD_ID)
+        val payloadLoadId = loadIdValue?.toLongOrNull()
+
+        // Clear extras so we don't handle twice
+        intent.removeExtra(NotificationPayloadKeys.TYPE)
+        intent.removeExtra(NotificationPayloadKeys.LOAD_ID)
+
+        scope.launch(Dispatchers.Default) {
+            try {
+                val hasSession = hasAuthSessionUseCase()
+                if (!hasSession) {
+                    logger.warn(
+                        LogCategory.GENERAL,
+                        "Dispatch message notification tapped, but user is not authenticated",
+                    )
+                    return@launch
+                }
+
+                val activeLoad = getActiveLoadUseCase()
+                if (activeLoad == null) {
+                    logger.warn(
+                        LogCategory.GENERAL,
+                        "Dispatch message notification tapped, but no active load found",
+                    )
+                    return@launch
+                }
+
+                val targetLoadId =
+                    if (payloadLoadId != null && payloadLoadId == activeLoad.id) {
+                        payloadLoadId
+                    } else {
+                        activeLoad.id
+                    }
+
+                logger.info(
+                    LogCategory.GENERAL,
+                    "Opening Messages screen from notification for loadId=$targetLoadId",
+                )
+                NavigationEventBus.publish(NavigationEvent.OpenMessages(targetLoadId))
+            } catch (e: Exception) {
+                logger.error(
+                    LogCategory.GENERAL,
+                    "Failed to handle dispatch message notification intent: ${e.message}",
+                    e,
                 )
             }
         }
