@@ -5,6 +5,7 @@ import android.content.Context
 import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Build
+import android.os.Bundle
 import android.os.Looper
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationAvailability
@@ -240,11 +241,44 @@ class AndroidGpsManager(
         )
         fusedLocationClient.removeLocationUpdates(locationCallback)
 
-        val listener = LocationListener { location ->
-            logger.info(LogCategory.LOCATION, "AndroidGpsManager: Fallback location received")
-            val gpsLocation = convertToGpsLocation(location.apply { provider = "network" })
-            scope.launch {
-                gpsLocationFlow.emit(gpsLocation)
+        val listener = object : LocationListener {
+
+            override fun onLocationChanged(location: AndroidLocation) {
+                logger.info(LogCategory.LOCATION, "AndroidGpsManager: Fallback location received")
+                val gpsLocation = convertToGpsLocation(location.apply { provider = "network" })
+                scope.launch {
+                    gpsLocationFlow.emit(gpsLocation)
+                }
+            }
+
+            override fun onFlushComplete(requestCode: Int) {
+                logger.info(LogCategory.LOCATION, "onFlushComplete: requestCode:${requestCode}")
+            }
+
+            override fun onProviderDisabled(provider: String) {
+                logger.info(LogCategory.LOCATION, "onProviderDisabled: provider:${provider}")
+            }
+
+            override fun onProviderEnabled(provider: String) {
+                logger.info(LogCategory.LOCATION, "onProviderEnabled: provider:${provider}")
+            }
+
+            override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {
+                logger.info(LogCategory.LOCATION, "onStatusChanged: provider:${provider}, status:${status}, extras:${extras}")
+            }
+
+            override fun onLocationChanged(locations: List<AndroidLocation?>) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    super.onLocationChanged(locations)
+                }
+                locations.forEach { location ->
+                    if (location != null) {
+                        val gpsLocation = convertToGpsLocation(location.apply { provider = "network" })
+                        scope.launch {
+                            gpsLocationFlow.emit(gpsLocation)
+                        }
+                    }
+                }
             }
         }
 

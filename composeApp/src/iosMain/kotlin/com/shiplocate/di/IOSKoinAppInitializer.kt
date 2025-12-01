@@ -5,6 +5,7 @@ import com.shiplocate.core.logging.Logger
 import com.shiplocate.domain.repository.NotificationRepository
 import com.shiplocate.domain.usecase.HandlePushNotificationWhenAppKilledUseCase
 import com.shiplocate.domain.usecase.ManageFirebaseTokensUseCase
+import com.shiplocate.domain.usecase.auth.HasAuthSessionUseCase
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
@@ -21,6 +22,7 @@ class IOSKoinAppInitializer : KoinComponent {
     private val manageFirebaseTokensUseCase: ManageFirebaseTokensUseCase by inject()
     private val notificationRepository: NotificationRepository by inject()
     private val handlePushNotificationWhenAppKilledUseCase: HandlePushNotificationWhenAppKilledUseCase by inject()
+    private val hasAuthUseCase: HasAuthSessionUseCase by inject()
     private val logger: Logger by inject()
     
     /**
@@ -34,6 +36,7 @@ class IOSKoinAppInitializer : KoinComponent {
                 manageFirebaseTokensUseCase = manageFirebaseTokensUseCase,
                 notificationRepository = notificationRepository,
                 handlePushNotificationWhenAppKilledUseCase = handlePushNotificationWhenAppKilledUseCase,
+                hasAuthUseCase = hasAuthUseCase,
                 logger = logger
             )
             

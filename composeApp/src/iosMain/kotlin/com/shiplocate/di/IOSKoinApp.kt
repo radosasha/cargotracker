@@ -8,6 +8,7 @@ import com.shiplocate.domain.model.notification.NotificationPayloadKeys
 import com.shiplocate.domain.repository.NotificationRepository
 import com.shiplocate.domain.usecase.HandlePushNotificationWhenAppKilledUseCase
 import com.shiplocate.domain.usecase.ManageFirebaseTokensUseCase
+import com.shiplocate.domain.usecase.auth.HasAuthSessionUseCase
 import com.shiplocate.trackingsdk.di.trackingSDKModule
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -33,6 +34,7 @@ object IOSKoinApp {
     private var manageFirebaseTokensUseCase: ManageFirebaseTokensUseCase? = null
     private var notificationRepository: NotificationRepository? = null
     private var handlePushNotificationWhenAppKilledUseCase: HandlePushNotificationWhenAppKilledUseCase? = null
+    private var hasAuthSessionUseCase: HasAuthSessionUseCase? = null
     private var logger: Logger? = null
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
@@ -67,11 +69,13 @@ object IOSKoinApp {
         manageFirebaseTokensUseCase: ManageFirebaseTokensUseCase,
         notificationRepository: NotificationRepository,
         handlePushNotificationWhenAppKilledUseCase: HandlePushNotificationWhenAppKilledUseCase,
+        hasAuthSessionUseCase: HasAuthSessionUseCase,
         logger: Logger,
     ) {
         this.manageFirebaseTokensUseCase = manageFirebaseTokensUseCase
         this.notificationRepository = notificationRepository
         this.handlePushNotificationWhenAppKilledUseCase = handlePushNotificationWhenAppKilledUseCase
+        this.hasAuthSessionUseCase = hasAuthSessionUseCase
         this.logger = logger
         logger.info(LogCategory.GENERAL, "IOSKoinApp: Dependencies set successfully")
     }
@@ -165,36 +169,31 @@ object IOSKoinApp {
             return
         }
 
-        try {
+        scope.launch {
+            if (hasAuthSessionUseCase?.invoke() == false) {
+                logger?.warn(LogCategory.GENERAL, "IOSKoinApp: Ignore new push, not authorized")
+                return@launch
+            }
+
             val repository = notificationRepository
             if (repository == null) {
                 logger?.warn(LogCategory.GENERAL, "IOSKoinApp: NotificationRepository not set, skipping push notification")
-                return
+                return@launch
             }
 
             // Уведомляем о получении push (для случая когда приложение запущено)
             val type = payload?.get(NotificationPayloadKeys.TYPE)?.toIntOrNull()
-            scope.launch {
-                repository.pushReceived(type)
-            }
-            
+            repository.pushReceived(type)
+
             // Обрабатываем push когда приложение не запущено
             val handlePushUseCase = handlePushNotificationWhenAppKilledUseCase
             if (handlePushUseCase != null) {
-                scope.launch {
-                    try {
-                        handlePushUseCase()
-                    } catch (e: Exception) {
-                        logger?.error(LogCategory.GENERAL, "IOSKoinApp: Failed to handle push notification when app killed: ${e.message}")
-                    }
-                }
+                handlePushUseCase()
             } else {
                 logger?.warn(LogCategory.GENERAL, "IOSKoinApp: HandlePushNotificationWhenAppKilledUseCase not set, skipping")
             }
-            
+
             logger?.info(LogCategory.GENERAL, "IOSKoinApp: Push notification processed successfully")
-        } catch (e: Exception) {
-            logger?.error(LogCategory.GENERAL, "IOSKoinApp: Failed to process push notification: ${e.message}")
         }
     }
 

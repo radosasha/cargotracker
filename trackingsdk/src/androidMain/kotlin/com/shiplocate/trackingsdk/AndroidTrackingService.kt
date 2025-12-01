@@ -92,13 +92,13 @@ class AndroidTrackingService : LifecycleService(), KoinComponent {
 
     private fun createNotificationChannel() {
         val channel = NotificationChannel(
-                CHANNEL_ID,
-                CHANNEL_NAME,
-                NotificationManager.IMPORTANCE_LOW,
-            ).apply {
-                description = "GPS tracker notifications"
-                setShowBadge(false)
-            }
+            CHANNEL_ID,
+            CHANNEL_NAME,
+            NotificationManager.IMPORTANCE_LOW,
+        ).apply {
+            description = "GPS tracker notifications"
+            setShowBadge(false)
+        }
 
         val notificationManager = getSystemService(NotificationManager::class.java)
         notificationManager.createNotificationChannel(channel)
@@ -314,19 +314,18 @@ class AndroidTrackingService : LifecycleService(), KoinComponent {
                 }
             }
 
-        val notification =
-            NotificationCompat.Builder(this, CHANNEL_ID)
-                .setContentTitle("GPS Трекинг активен")
-                .setContentText("Saved: ${stats.totalSaved} | Sent: ${stats.totalSent} | Filtered: ${stats.totalFiltered}")
-                .setStyle(
-                    NotificationCompat.BigTextStyle()
-                        .bigText(locationText),
-                )
-                .setSmallIcon(android.R.drawable.ic_menu_mylocation)
-                .setOngoing(true)
-                .setPriority(NotificationCompat.PRIORITY_LOW)
-                .setCategory(NotificationCompat.CATEGORY_SERVICE)
-                .build()
+        val notification = NotificationCompat.Builder(this, CHANNEL_ID)
+            .setContentTitle("Tracking is active")
+            .setContentText("Saved: ${stats.totalSaved} | Sent: ${stats.totalSent} | Filtered: ${stats.totalFiltered}")
+            .setStyle(
+                NotificationCompat.BigTextStyle()
+                    .bigText(locationText),
+            )
+            .setSmallIcon(android.R.drawable.ic_menu_mylocation)
+            .setOngoing(true)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setCategory(NotificationCompat.CATEGORY_SERVICE)
+            .build()
 
         val notificationManager = NotificationManagerCompat.from(this)
         if (notificationManager.areNotificationsEnabled()) {

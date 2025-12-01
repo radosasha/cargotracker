@@ -18,6 +18,7 @@ import com.shiplocate.domain.model.notification.NotificationPayloadKeys
 import com.shiplocate.domain.model.notification.NotificationType
 import com.shiplocate.domain.repository.NotificationRepository
 import com.shiplocate.domain.usecase.HandlePushNotificationWhenAppKilledUseCase
+import com.shiplocate.domain.usecase.auth.HasAuthSessionUseCase
 import com.shiplocate.domain.usecase.logs.GetLogsClientIdUseCase
 import com.shiplocate.domain.usecase.logs.SendAllLogsUseCase
 import kotlinx.coroutines.CoroutineScope
@@ -37,10 +38,12 @@ class AndroidFirebaseMessagingService : FirebaseMessagingService(), KoinComponen
     private val handlePushNotificationWhenAppKilledUseCase: HandlePushNotificationWhenAppKilledUseCase by inject()
     private val sendAllLogsUseCase: SendAllLogsUseCase by inject()
     private val getLogsClientIdUseCase: GetLogsClientIdUseCase by inject()
+    private val isUserAuthorized: HasAuthSessionUseCase by inject()
     private val logger: Logger by inject()
 
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
     companion object {
         private const val DEFAULT_NOTIFICATION_CHANNEL_ID = "default_notifications"
         private const val DEFAULT_NOTIFICATION_CHANNEL_NAME = "General"
@@ -60,40 +63,35 @@ class AndroidFirebaseMessagingService : FirebaseMessagingService(), KoinComponen
         super.onMessageReceived(remoteMessage)
         logger.debug(LogCategory.NOTIFICATIONS, "Android FCM: Message received ${remoteMessage.data}")
 
-        val notificationType =
-            remoteMessage.data[NotificationPayloadKeys.TYPE]?.toIntOrNull()
+        val notificationType = remoteMessage.data[NotificationPayloadKeys.TYPE]?.toIntOrNull()
 
         // Уведомляем о получении push (для случая когда приложение запущено)
         scope.launch {
+            if (!isUserAuthorized()) {
+                return@launch
+            }
+
             notificationRepository.pushReceived(notificationType)
-        }
 
-        // Обрабатываем push когда приложение не запущено (onMessageReceived вызывается даже когда app killed, если есть data payload)
-        scope.launch {
-            try {
-                handlePushNotificationWhenAppKilledUseCase()
-            } catch (e: Exception) {
-                logger.error(LogCategory.NOTIFICATIONS, "Android FCM: Failed to handle push when app killed", e)
-            }
-        }
+            // Обрабатываем push когда приложение не запущено (onMessageReceived вызывается даже когда app killed, если есть data payload)
+            handlePushNotificationWhenAppKilledUseCase()
 
-        val shouldShowNotification = notificationType != NotificationType.SILENT
-        if (shouldShowNotification) { // Показываем уведомление в foreground вручную
-            try {
-                val title = remoteMessage.notification?.title
-                    ?: remoteMessage.data["title"]
-                    ?: "Notification"
-                val body = remoteMessage.notification?.body
-                    ?: remoteMessage.data["body"]
-                    ?: remoteMessage.data["command"]
-                    ?: ""
+            val shouldShowNotification = notificationType != NotificationType.SILENT
+            if (shouldShowNotification) { // Показываем уведомление в foreground вручную
+                try {
+                    val title = remoteMessage.notification?.title
+                        ?: remoteMessage.data["title"]
+                        ?: "Notification"
+                    val body = remoteMessage.notification?.body
+                        ?: remoteMessage.data["body"]
+                        ?: remoteMessage.data["command"]
+                        ?: ""
 
-                showForegroundNotification(title, body, remoteMessage.data)
-            } catch (e: Exception) {
-                logger.error(LogCategory.NOTIFICATIONS, "Android FCM: Failed to show notification", e)
-            }
-        } else {
-            scope.launch {
+                    showForegroundNotification(title, body, remoteMessage.data)
+                } catch (e: Exception) {
+                    logger.error(LogCategory.NOTIFICATIONS, "Android FCM: Failed to show notification", e)
+                }
+            } else {
                 val clientId = getLogsClientIdUseCase()
                 sendAllLogsUseCase(clientId)
             }
