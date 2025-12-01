@@ -5,8 +5,8 @@ object AndroidConfig {
     const val MIN_SDK = 26
     const val TARGET_SDK = 36
     
-    const val VERSION_CODE = 11
-    const val VERSION_NAME = "1.0.11"
+    const val VERSION_CODE = 13
+    const val VERSION_NAME = "1.0.13"
     
     // Java версии
     val JAVA_VERSION = JavaVersion.VERSION_11
