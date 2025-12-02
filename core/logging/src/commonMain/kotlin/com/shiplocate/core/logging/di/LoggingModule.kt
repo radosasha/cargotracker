@@ -30,7 +30,7 @@ val loggingModule: Module =
                 .crashErrorLogging()
                 .setFileHours(true)
                 .setMaxFileSize(3 * 1024 * 1024) // 3MB
-                .setMaxFiles(48)
+                .setMaxHoursHistory(48)
                 .buildConfig()
         }
 

@@ -42,19 +42,7 @@ expect class FilesManager {
      */
     suspend fun getFileSize(filePath: String): Long
 
-    /**
-     * Проверяет существование файла
-     * @param filePath путь к файлу
-     * @return true если файл существует
-     */
-    suspend fun fileExists(filePath: String): Boolean
-
-    /**
-     * Получает список файлов в директории
-     * @param directoryPath путь к директории
-     * @return список имен файлов
-     */
-    suspend fun listFiles(directoryPath: String): List<String>
+    suspend fun listFiles(directoryPath: String): List<FileAttributes>
 }
 
 /**
@@ -64,4 +52,12 @@ data class FileInfo(
     val name: String,
     val path: String,
     val content: Source,
+)
+
+/**
+ * Метаданные файла в директории
+ */
+data class FileAttributes(
+    val fileName: String,
+    val fileLastModified: Long,
 )

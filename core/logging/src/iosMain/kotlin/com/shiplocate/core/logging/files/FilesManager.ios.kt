@@ -9,8 +9,10 @@ import kotlinx.io.Source
 import kotlinx.io.asSource
 import kotlinx.io.buffered
 import platform.Foundation.NSData
+import platform.Foundation.NSDate
 import platform.Foundation.NSFileHandle
 import platform.Foundation.NSFileManager
+import platform.Foundation.NSFileModificationDate
 import platform.Foundation.NSInputStream
 import platform.Foundation.NSURL
 import platform.Foundation.closeFile
@@ -18,6 +20,7 @@ import platform.Foundation.dataWithBytes
 import platform.Foundation.fileHandleForUpdatingAtPath
 import platform.Foundation.inputStreamWithFileAtPath
 import platform.Foundation.seekToEndOfFile
+import platform.Foundation.timeIntervalSince1970
 import platform.Foundation.writeData
 import platform.Foundation.writeToFile
 
@@ -111,26 +114,27 @@ actual class FilesManager {
         }
     }
 
-    actual suspend fun fileExists(filePath: String): Boolean {
-        return withContext(Dispatchers.Default) {
-            NSFileManager.defaultManager.fileExistsAtPath(filePath)
-        }
-    }
-
     @OptIn(ExperimentalForeignApi::class)
-    actual suspend fun listFiles(directoryPath: String): List<String> {
+    actual suspend fun listFiles(directoryPath: String): List<FileAttributes> {
         return withContext(Dispatchers.Default) {
             try {
                 val fileManager = NSFileManager.defaultManager
                 val contents = fileManager.contentsOfDirectoryAtPath(directoryPath, null)
-                if (contents != null) {
-                    // Получаем список файлов и сортируем по имени (что обычно соответствует дате создания)
-                    val fileNames = contents.mapNotNull { it as? String }
-                    // Сортируем по имени файла (файлы обычно именуются с датой)
-                    fileNames.sorted()
-                } else {
-                    emptyList()
-                }
+                    ?: return@withContext emptyList()
+
+                contents
+                    .mapNotNull { it as? String }
+                    .map { fileName ->
+                        val fullPath = "$directoryPath/$fileName"
+                        val attrs = fileManager.attributesOfItemAtPath(fullPath, null)
+                        val modifiedSeconds = (attrs?.get(NSFileModificationDate) as? NSDate)?.timeIntervalSince1970()
+                        val modifiedMillis = modifiedSeconds?.times(1000)?.toLong() ?: 0L
+                        FileAttributes(
+                            fileName = fileName,
+                            fileLastModified = modifiedMillis,
+                        )
+                    }
+                    .sortedBy { it.fileLastModified }
             } catch (e: Exception) {
                 emptyList()
             }

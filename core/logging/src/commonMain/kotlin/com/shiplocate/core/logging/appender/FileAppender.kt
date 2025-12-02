@@ -3,6 +3,7 @@ package com.shiplocate.core.logging.appender
 import com.shiplocate.core.logging.LogEntry
 import com.shiplocate.core.logging.LoggingConfig
 import com.shiplocate.core.logging.LogsSettings
+import com.shiplocate.core.logging.files.FileAttributes
 import com.shiplocate.core.logging.files.FilesManager
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
@@ -64,28 +65,6 @@ class FileAppender(
         }
     }
 
-    /**
-     * Получает следующее доступное имя файла с учетом размера
-     */
-    private suspend fun getNextAvailableFileName(baseFileName: String): String {
-        if (!config.fileHours) {
-            return baseFileName
-        }
-
-        val baseName = baseFileName.substringBeforeLast(".")
-        val extension = baseFileName.substringAfterLast(".")
-
-        var counter = 1
-        var fileName = baseFileName
-
-        while (shouldCreateNewFile(fileName)) {
-            fileName = "$baseName($counter).$extension"
-            println("New file: ${fileName}")
-            counter++
-        }
-
-        return fileName
-    }
 
     /**
      * Проверяет, нужно ли создать новый файл
@@ -136,7 +115,7 @@ class FileAppender(
     /**
      * Получает список всех лог-файлов
      */
-    suspend fun getLogFiles(): List<String> {
+    suspend fun getLogFiles(): List<FileAttributes> {
         return filesManager.listFiles(logsSettings.getLogsDirectory())
     }
 

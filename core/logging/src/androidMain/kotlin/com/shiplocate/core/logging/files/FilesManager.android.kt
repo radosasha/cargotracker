@@ -81,19 +81,18 @@ actual class FilesManager(
         }
     }
 
-    actual suspend fun fileExists(filePath: String): Boolean {
-        return withContext(Dispatchers.IO) {
-            File(filePath).exists()
-        }
-    }
-
-    actual suspend fun listFiles(directoryPath: String): List<String> {
+    actual suspend fun listFiles(directoryPath: String): List<FileAttributes> {
         return withContext(Dispatchers.IO) {
             val directory = File(directoryPath)
             if (directory.exists() && directory.isDirectory) {
                 directory.listFiles()
-                    ?.sortedBy { it.lastModified() } // Сортируем по дате создания (lastModified)
-                    ?.map { it.name } ?: emptyList()
+                    ?.sortedBy { it.lastModified() }
+                    ?.map {
+                        FileAttributes(
+                            fileName = it.name,
+                            fileLastModified = it.lastModified(),
+                        )
+                    } ?: emptyList()
             } else {
                 emptyList()
             }

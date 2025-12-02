@@ -29,10 +29,10 @@ class LogsLocalDataSourceImpl(
     override suspend fun getLogFiles(): List<LogFile> {
         return try {
             logger.debug(LogCategory.GENERAL, "LogsLocalDataSource: Getting list of log files")
-            val fileNames = fileAppender.getLogFiles()
-            val logFiles = fileNames.map { fileName ->
-                val size = fileAppender.getLogFileSize(fileName)
-                LogFile(name = fileName, size = size)
+            val fileAttributes = fileAppender.getLogFiles()
+            val logFiles = fileAttributes.map { attributes ->
+                val size = fileAppender.getLogFileSize(attributes.fileName)
+                LogFile(name = attributes.fileName, size = size)
             }
             logger.info(LogCategory.GENERAL, "LogsLocalDataSource: Found ${logFiles.size} log files")
             logFiles

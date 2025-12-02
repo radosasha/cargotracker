@@ -14,7 +14,7 @@ data class LoggingConfig(
     val enableCrashLogging: Boolean = false,
     val fileHours: Boolean = false,
     val maxFileSize: Long = 2 * 1024 * 1024, // 2MB
-    val maxFiles: Int = 48,
+    val maxHoursHistory: Int = 48,
     val categoryLevels: Map<LogCategory, LogLevel> = emptyMap(),
     val logDirectory: String = "logs",
 ) {

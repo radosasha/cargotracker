@@ -81,8 +81,8 @@ class LoggerBuilder {
     /**
      * Установить максимальное количество файлов
      */
-    fun setMaxFiles(maxFiles: Int): LoggerBuilder {
-        config = config.copy(maxFiles = maxFiles)
+    fun setMaxHoursHistory(value: Int): LoggerBuilder {
+        config = config.copy(maxHoursHistory = value)
         return this
     }
 
@@ -129,38 +129,5 @@ class LoggerBuilder {
     @Deprecated("Используйте DI для создания Logger")
     fun build(): Logger {
         throw UnsupportedOperationException("Используйте DI для создания Logger. LoggerBuilder теперь используется только для создания LoggingConfig")
-    }
-
-    /**
-     * Создать конфигурацию для debug сборки
-     */
-    fun buildDebug(): Logger {
-        return LoggerBuilder()
-            .enableFileLogging()
-            .enableConsoleLogging()
-            .logNetworkRequests()
-            .logStackTraces()
-            .logDatabaseQueries()
-            .enableUserUiInteractions()
-            .crashErrorLogging()
-            .setLogLevel(LogLevel.DEBUG)
-            .setFileHours(true)
-            .setMaxFileSize(10 * 1024 * 1024) // 10MB
-            .setMaxFiles(5)
-            .build()
-    }
-
-    /**
-     * Создать конфигурацию для release сборки
-     */
-    fun buildRelease(): Logger {
-        return LoggerBuilder()
-            .enableFileLogging()
-            .crashErrorLogging()
-            .setLogLevel(LogLevel.WARN)
-            .setFileHours(true)
-            .setMaxFileSize(5 * 1024 * 1024) // 5MB
-            .setMaxFiles(3)
-            .build()
     }
 }
