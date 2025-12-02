@@ -6,7 +6,7 @@ import com.shiplocate.domain.model.auth.AuthError
 import com.shiplocate.domain.repository.AuthPreferencesRepository
 import com.shiplocate.domain.repository.LoadRepository
 import com.shiplocate.domain.repository.NotificationRepository
-import com.shiplocate.domain.usecase.StartTrackingUseCase
+import com.shiplocate.domain.usecase.StopTrackingUseCase
 
 /**
  * Use case for user logout
@@ -16,7 +16,7 @@ class LogoutUseCase(
     private val authPreferencesRepository: AuthPreferencesRepository,
     private val loadRepository: LoadRepository,
     private val notificationRepository: NotificationRepository,
-    private val stopTrackingUseCase: StartTrackingUseCase,
+    private val stopTrackingUseCase: StopTrackingUseCase,
     private val logger: Logger,
 ) {
     suspend operator fun invoke(): Result<Unit> {
@@ -64,7 +64,7 @@ class LogoutUseCase(
 
             val activeLoad = loadRepository.getConnectedLoad()
             if (activeLoad != null) {
-                stopTrackingUseCase(activeLoad.id)
+                stopTrackingUseCase()
             }
 
             // Step 4: Clear all data from database
