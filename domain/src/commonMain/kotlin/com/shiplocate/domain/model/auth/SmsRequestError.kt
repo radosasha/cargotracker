@@ -1,7 +1,5 @@
 package com.shiplocate.domain.model.auth
 
-import kotlinx.datetime.Clock
-
 /**
  * Domain model for SMS request errors
  * Contains only errors that can be returned from MobileAuthResource.requestCode endpoint
@@ -14,7 +12,6 @@ import kotlinx.datetime.Clock
 sealed class SmsRequestError(
     open val code: String,
     override val message: String,
-    open val timestamp: Long = Clock.System.now().toEpochMilliseconds(),
 ) : Exception(message) {
     companion object {
         const val VALIDATION_ERROR = "VALIDATION_ERROR"
@@ -29,8 +26,7 @@ sealed class SmsRequestError(
     data class ValidationError(
         override val code: String = VALIDATION_ERROR,
         override val message: String,
-        override val timestamp: Long = Clock.System.now().toEpochMilliseconds(),
-    ) : SmsRequestError(code, message, timestamp)
+    ) : SmsRequestError(code, message)
 
     /**
      * Rate limit exceeded (429 Too Many Requests)
@@ -40,8 +36,7 @@ sealed class SmsRequestError(
         override val message: String,
         val retryAfterSeconds: Long? = null,
         val nextRetryAt: String? = null,
-        override val timestamp: Long = Clock.System.now().toEpochMilliseconds(),
-    ) : SmsRequestError(code, message, timestamp)
+    ) : SmsRequestError(code, message)
 
     /**
      * SMS service error (503 Service Unavailable)
@@ -49,8 +44,7 @@ sealed class SmsRequestError(
     data class SmsServiceError(
         override val code: String = SMS_SERVICE_ERROR,
         override val message: String,
-        override val timestamp: Long = Clock.System.now().toEpochMilliseconds(),
-    ) : SmsRequestError(code, message, timestamp)
+    ) : SmsRequestError(code, message)
 }
 
 

@@ -100,10 +100,14 @@ class AuthRemoteDataSource(
                     val errorDto = parseErrorDto()
                     when (errorDto?.error) {
                         SmsVerificationError.VALIDATION_ERROR ->
-                            SmsVerificationError.ValidationError(message = errorDto.message)
+                            SmsVerificationError.ValidationError(
+                                message = errorDto.message,
+                            )
 
                         SmsVerificationError.CODE_ALREADY_USED ->
-                            SmsVerificationError.CodeAlreadyUsed(message = errorDto.message)
+                            SmsVerificationError.CodeAlreadyUsed(
+                                message = errorDto.message,
+                            )
 
                         SmsVerificationError.INVALID_PHONE ->
                             SmsVerificationError.InvalidPhone(
@@ -128,7 +132,9 @@ class AuthRemoteDataSource(
                             )
 
                         SmsVerificationError.VERIFICATION_FAILED ->
-                            SmsVerificationError.VerificationFailed(message = errorDto.message)
+                            SmsVerificationError.VerificationFailed(
+                                message = errorDto.message,
+                            )
 
                         else ->
                             SmsVerificationError.CodeInvalid(
@@ -148,10 +154,14 @@ class AuthRemoteDataSource(
                     val errorDto = parseErrorDto()
                     when (errorDto?.error) {
                         SmsVerificationError.CODE_NOT_FOUND ->
-                            SmsVerificationError.CodeNotFound(message = errorDto.message)
+                            SmsVerificationError.CodeNotFound(
+                                message = errorDto.message,
+                            )
 
                         SmsVerificationError.CODE_EXPIRED ->
-                            SmsVerificationError.CodeExpired(message = errorDto.message)
+                            SmsVerificationError.CodeExpired(
+                                message = errorDto.message,
+                            )
 
                         else ->
                             SmsVerificationError.CodeNotFound(
@@ -185,7 +195,9 @@ class AuthRemoteDataSource(
                             )
 
                         SmsVerificationError.INTERNAL_ERROR ->
-                            SmsVerificationError.InternalError(message = errorDto.message)
+                            SmsVerificationError.InternalError(
+                                message = errorDto.message,
+                            )
 
                         else ->
                             SmsVerificationError.InternalError(
@@ -228,7 +240,9 @@ class AuthRemoteDataSource(
                 logger.error(LogCategory.AUTH, "AuthRemoteDataSource: Failed to parse logout error", parseError)
                 val statusCode = e.response.status.value
                 when (statusCode) {
-                    401 -> AuthError.CodeInvalid(message = "Invalid or expired token")
+                    401 -> AuthError.CodeInvalid(
+                        message = "Invalid or expired token",
+                    )
                     500 -> AuthError.UnknownError(
                         code = "INTERNAL_ERROR",
                         message = "Internal server error",

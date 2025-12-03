@@ -1,14 +1,11 @@
 package com.shiplocate.domain.model.auth
 
-import kotlinx.datetime.Clock
-
 /**
  * Domain model for authentication errors
  */
 sealed class AuthError(
     open val code: String,
     override val message: String,
-    open val timestamp: Long = Clock.System.now().toEpochMilliseconds(),
 ) : Exception(message) {
     companion object {
         // Standard error codes
@@ -27,69 +24,58 @@ sealed class AuthError(
     data class ValidationError(
         override val code: String = CODE_VALIDATION_ERROR,
         override val message: String,
-        override val timestamp: Long = Clock.System.now().toEpochMilliseconds(),
-    ) : AuthError(code, message, timestamp)
+    ) : AuthError(code, message)
 
     data class RateLimitError(
         override val code: String = CODE_RATE_LIMIT_EXCEEDED,
         override val message: String,
         val retryAfterSeconds: Long,
         val nextRetryAt: String? = null,
-        override val timestamp: Long = Clock.System.now().toEpochMilliseconds(),
-    ) : AuthError(code, message, timestamp)
+    ) : AuthError(code, message)
 
     data class CodeInvalid(
         override val code: String = CODE_INVALID,
         override val message: String,
         val remainingAttempts: Int? = null,
-        override val timestamp: Long = Clock.System.now().toEpochMilliseconds(),
-    ) : AuthError(code, message, timestamp)
+    ) : AuthError(code, message)
 
     data class CodeExpired(
         override val code: String = CODE_EXPIRED,
         override val message: String,
-        override val timestamp: Long = Clock.System.now().toEpochMilliseconds(),
-    ) : AuthError(code, message, timestamp)
+    ) : AuthError(code, message)
 
     data class CodeNotFound(
         override val code: String = CODE_NOT_FOUND,
         override val message: String,
-        override val timestamp: Long = Clock.System.now().toEpochMilliseconds(),
-    ) : AuthError(code, message, timestamp)
+    ) : AuthError(code, message)
 
     data class TooManyAttempts(
         override val code: String = CODE_TOO_MANY_ATTEMPTS,
         override val message: String,
-        override val timestamp: Long = Clock.System.now().toEpochMilliseconds(),
-    ) : AuthError(code, message, timestamp)
+    ) : AuthError(code, message)
 
     data class CodeAlreadyUsed(
         override val code: String = CODE_ALREADY_USED,
         override val message: String,
-        override val timestamp: Long = Clock.System.now().toEpochMilliseconds(),
-    ) : AuthError(code, message, timestamp)
+    ) : AuthError(code, message)
 
     data class UserBlocked(
         override val code: String = CODE_USER_BLOCKED,
         override val message: String,
-        override val timestamp: Long = Clock.System.now().toEpochMilliseconds(),
-    ) : AuthError(code, message, timestamp)
+    ) : AuthError(code, message)
 
     data class NetworkError(
         override val code: String = CODE_NETWORK_ERROR,
         override val message: String,
-        override val timestamp: Long = Clock.System.now().toEpochMilliseconds(),
-    ) : AuthError(code, message, timestamp)
+    ) : AuthError(code, message)
 
     data class ServiceUnavailable(
         override val code: String = CODE_SERVICE_UNAVAILABLE,
         override val message: String,
-        override val timestamp: Long = Clock.System.now().toEpochMilliseconds(),
-    ) : AuthError(code, message, timestamp)
+    ) : AuthError(code, message)
 
     data class UnknownError(
         override val code: String = CODE_UNKNOWN_ERROR,
         override val message: String,
-        override val timestamp: Long = Clock.System.now().toEpochMilliseconds(),
-    ) : AuthError(code, message, timestamp)
+    ) : AuthError(code, message)
 }

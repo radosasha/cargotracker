@@ -1,7 +1,5 @@
 package com.shiplocate.domain.model.auth
 
-import kotlinx.datetime.Clock
-
 /**
  * Domain model for SMS verification errors
  * Contains only errors that can be returned from MobileAuthResource.verifyCode endpoint
@@ -9,7 +7,6 @@ import kotlinx.datetime.Clock
 sealed class SmsVerificationError(
     open val code: String,
     override val message: String,
-    open val timestamp: Long = Clock.System.now().toEpochMilliseconds(),
 ) : Exception(message) {
     companion object {
         // Verification error codes from VerificationErrorCode
@@ -35,8 +32,7 @@ sealed class SmsVerificationError(
     data class CodeNotFound(
         override val code: String = CODE_NOT_FOUND,
         override val message: String,
-        override val timestamp: Long = Clock.System.now().toEpochMilliseconds(),
-    ) : SmsVerificationError(code, message, timestamp)
+    ) : SmsVerificationError(code, message)
 
     /**
      * Code expired
@@ -44,8 +40,7 @@ sealed class SmsVerificationError(
     data class CodeExpired(
         override val code: String = CODE_EXPIRED,
         override val message: String,
-        override val timestamp: Long = Clock.System.now().toEpochMilliseconds(),
-    ) : SmsVerificationError(code, message, timestamp)
+    ) : SmsVerificationError(code, message)
 
     /**
      * Invalid code with remaining attempts
@@ -54,8 +49,7 @@ sealed class SmsVerificationError(
         override val code: String = CODE_INVALID,
         override val message: String,
         val remainingAttempts: Int? = null,
-        override val timestamp: Long = Clock.System.now().toEpochMilliseconds(),
-    ) : SmsVerificationError(code, message, timestamp)
+    ) : SmsVerificationError(code, message)
 
     /**
      * Too many failed attempts
@@ -63,8 +57,7 @@ sealed class SmsVerificationError(
     data class TooManyAttempts(
         override val code: String = TOO_MANY_ATTEMPTS,
         override val message: String,
-        override val timestamp: Long = Clock.System.now().toEpochMilliseconds(),
-    ) : SmsVerificationError(code, message, timestamp)
+    ) : SmsVerificationError(code, message)
 
     /**
      * Code already used
@@ -72,8 +65,7 @@ sealed class SmsVerificationError(
     data class CodeAlreadyUsed(
         override val code: String = CODE_ALREADY_USED,
         override val message: String,
-        override val timestamp: Long = Clock.System.now().toEpochMilliseconds(),
-    ) : SmsVerificationError(code, message, timestamp)
+    ) : SmsVerificationError(code, message)
 
     /**
      * Rate limit exceeded (with Twilio error code)
@@ -82,8 +74,7 @@ sealed class SmsVerificationError(
         override val code: String = RATE_LIMIT_EXCEEDED,
         override val message: String,
         val twilioErrorCode: String? = null,
-        override val timestamp: Long = Clock.System.now().toEpochMilliseconds(),
-    ) : SmsVerificationError(code, message, timestamp)
+    ) : SmsVerificationError(code, message)
 
     /**
      * Invalid phone number (with Twilio error code)
@@ -92,8 +83,7 @@ sealed class SmsVerificationError(
         override val code: String = INVALID_PHONE,
         override val message: String,
         val twilioErrorCode: String? = null,
-        override val timestamp: Long = Clock.System.now().toEpochMilliseconds(),
-    ) : SmsVerificationError(code, message, timestamp)
+    ) : SmsVerificationError(code, message)
 
     /**
      * Verification service error (with Twilio error code)
@@ -102,8 +92,7 @@ sealed class SmsVerificationError(
         override val code: String = VERIFICATION_ERROR,
         override val message: String,
         val twilioErrorCode: String? = null,
-        override val timestamp: Long = Clock.System.now().toEpochMilliseconds(),
-    ) : SmsVerificationError(code, message, timestamp)
+    ) : SmsVerificationError(code, message)
 
     /**
      * General verification failed
@@ -111,8 +100,7 @@ sealed class SmsVerificationError(
     data class VerificationFailed(
         override val code: String = VERIFICATION_FAILED,
         override val message: String,
-        override val timestamp: Long = Clock.System.now().toEpochMilliseconds(),
-    ) : SmsVerificationError(code, message, timestamp)
+    ) : SmsVerificationError(code, message)
 
     /**
      * Validation error
@@ -120,8 +108,7 @@ sealed class SmsVerificationError(
     data class ValidationError(
         override val code: String = VALIDATION_ERROR,
         override val message: String,
-        override val timestamp: Long = Clock.System.now().toEpochMilliseconds(),
-    ) : SmsVerificationError(code, message, timestamp)
+    ) : SmsVerificationError(code, message)
 
     /**
      * User account blocked
@@ -129,8 +116,7 @@ sealed class SmsVerificationError(
     data class UserBlocked(
         override val code: String = USER_BLOCKED,
         override val message: String,
-        override val timestamp: Long = Clock.System.now().toEpochMilliseconds(),
-    ) : SmsVerificationError(code, message, timestamp)
+    ) : SmsVerificationError(code, message)
 
     /**
      * Internal server error
@@ -138,7 +124,6 @@ sealed class SmsVerificationError(
     data class InternalError(
         override val code: String = INTERNAL_ERROR,
         override val message: String,
-        override val timestamp: Long = Clock.System.now().toEpochMilliseconds(),
-    ) : SmsVerificationError(code, message, timestamp)
+    ) : SmsVerificationError(code, message)
 }
 

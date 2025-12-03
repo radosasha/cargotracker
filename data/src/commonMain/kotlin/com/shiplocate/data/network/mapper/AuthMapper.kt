@@ -53,11 +53,16 @@ fun MobileUserDto.toDomain() =
  */
 fun SmsRequestErrorResponseDto.toSmsRequestError(): SmsRequestError {
     return when (error) {
-        SmsRequestError.VALIDATION_ERROR -> SmsRequestError.ValidationError(message = message)
-        SmsRequestError.SMS_SERVICE_ERROR -> SmsRequestError.SmsServiceError(message = message)
-        else -> SmsRequestError.SmsServiceError(
-            message = "Unknown error: $error - $message",
-        )
+        SmsRequestError.VALIDATION_ERROR ->
+            SmsRequestError.ValidationError(message = message)
+
+        SmsRequestError.SMS_SERVICE_ERROR ->
+            SmsRequestError.SmsServiceError(message = message)
+
+        else ->
+            SmsRequestError.SmsServiceError(
+                message = "Unknown error: $error - $message",
+            )
     }
 }
 
