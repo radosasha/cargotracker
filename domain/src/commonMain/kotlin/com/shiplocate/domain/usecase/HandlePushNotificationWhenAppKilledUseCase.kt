@@ -6,6 +6,7 @@ import com.shiplocate.domain.model.load.LoadStatus
 import com.shiplocate.domain.repository.AuthRepository
 import com.shiplocate.domain.repository.LoadRepository
 import com.shiplocate.domain.repository.TrackingRepository
+import com.shiplocate.domain.usecase.load.BaseLoadsUseCase
 
 /**
  * Use Case для обработки push-уведомлений когда приложение не запущено
@@ -14,9 +15,9 @@ import com.shiplocate.domain.repository.TrackingRepository
 class HandlePushNotificationWhenAppKilledUseCase(
     private val loadRepository: LoadRepository,
     private val trackingRepository: TrackingRepository,
-    private val authRepository: AuthRepository,
+    authRepository: AuthRepository,
     private val logger: Logger,
-) {
+) : BaseLoadsUseCase(loadRepository, authRepository, logger) {
     /**
      * Обрабатывает push-уведомление когда приложение не запущено
      * Обновляет список loads с сервера
@@ -25,19 +26,10 @@ class HandlePushNotificationWhenAppKilledUseCase(
         return try {
             logger.info(LogCategory.GENERAL, "HandlePushNotificationWhenAppKilledUseCase: Processing push notification when app was killed")
 
-            // Получаем токен авторизации
-            val authSession = authRepository.getSession()
-            val token = authSession?.token
-
-            if (token == null) {
-                logger.warn(LogCategory.GENERAL, "HandlePushNotificationWhenAppKilledUseCase: No auth session found, cannot refresh loads")
-                return Result.failure(Exception("Not authenticated"))
-            }
+            // Вызываем LoadRepository.getLoads для обновления данных
+            val result = getLoads()
 
             val connectedLoad = loadRepository.getConnectedLoad()
-
-            // Вызываем LoadRepository.getLoads(token) для обновления данных
-            val result = loadRepository.getLoads(token)
 
             result.fold(
                 onSuccess = { loads ->

@@ -1,5 +1,7 @@
 package com.shiplocate.domain.usecase.load
 
+import com.shiplocate.core.logging.LogCategory
+import com.shiplocate.core.logging.Logger
 import com.shiplocate.domain.model.load.Load
 import com.shiplocate.domain.repository.AuthRepository
 import com.shiplocate.domain.repository.LoadRepository
@@ -11,6 +13,7 @@ import com.shiplocate.domain.repository.LoadRepository
 class ConnectToLoadUseCase(
     private val loadRepository: LoadRepository,
     private val authRepository: AuthRepository,
+    private val logger: Logger,
 ) {
     /**
      * Connect to load
@@ -19,14 +22,14 @@ class ConnectToLoadUseCase(
      * @return Result with updated list of loads
      */
     suspend operator fun invoke(loadId: Long): Result<List<Load>> {
-        println("🔌 ConnectToLoadUseCase: Connecting to load with id: $loadId")
+        logger.info(LogCategory.GENERAL, "🔌 ConnectToLoadUseCase: Connecting to load with id: $loadId")
 
         // Get auth token
         val authSession = authRepository.getSession()
         val token = authSession?.token
 
         if (token == null) {
-            println("❌ ConnectToLoadUseCase: Not authenticated")
+            logger.info(LogCategory.GENERAL, "❌ ConnectToLoadUseCase: Not authenticated")
             return Result.failure(Exception("Not authenticated"))
         }
 
@@ -35,10 +38,26 @@ class ConnectToLoadUseCase(
         val load = loads.find { it.id == loadId }
 
         if (load == null) {
-            println("❌ ConnectToLoadUseCase: Load not found with id: $loadId")
+            logger.info(LogCategory.GENERAL, "❌ ConnectToLoadUseCase: Load not found with id: $loadId")
             return Result.failure(Exception("Load not found"))
         }
 
-        return loadRepository.connectToLoad(token, load.serverId)
+        val connectedResult = loadRepository.connectToLoad(token, load.serverId)
+        return connectedResult.fold(
+            {
+                // Cache the updated results
+                logger.info(LogCategory.GENERAL, "💾 ConnectToLoadUseCase: Saving ${it.size} loads to cache")
+
+                loadRepository.saveLoads(it)
+
+                // Return domain models
+                val loads = loadRepository.getCachedLoads()
+                logger.info(LogCategory.GENERAL, "✅ ConnectToLoadUseCase: Successfully connected to load ${load.serverId}")
+                Result.success(loads)
+            },
+            {
+                Result.failure(it)
+            }
+        )
     }
 }

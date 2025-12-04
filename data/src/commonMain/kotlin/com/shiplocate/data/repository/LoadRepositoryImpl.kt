@@ -10,7 +10,6 @@ import com.shiplocate.data.datasource.load.StopsLocalDataSource
 import com.shiplocate.data.mapper.toDomain
 import com.shiplocate.data.mapper.toEntity
 import com.shiplocate.data.mapper.toStopEntity
-import com.shiplocate.data.network.dto.load.LoadDto
 import com.shiplocate.domain.model.load.Load
 import com.shiplocate.domain.model.load.LoadStatus
 import com.shiplocate.domain.model.load.Route
@@ -35,34 +34,12 @@ class LoadRepositoryImpl(
         return try {
             // Try to fetch from server
             logger.info(LogCategory.GENERAL, "🌐 LoadRepositoryImpl: Fetching from server")
-            val loadDtos = loadsRemoteDataSource.getLoads(token)
-
-            // Cache the results
-            logger.info(LogCategory.GENERAL, "💾 LoadRepositoryImpl: Remove previous cached loads")
-
-            saveLoads(loadDtos)
-
-            // Return domain models
-            val loads = getCachedLoads()
-            logger.info(LogCategory.GENERAL, "✅ LoadRepositoryImpl: Successfully loaded ${loads.size} loads from server")
-            Result.success(loads)
+            val loads = loadsRemoteDataSource.getLoads(token)
+            Result.success(loads.map { it.toDomain() })
         } catch (e: Exception) {
-            // Server failed, try cache
+            // Server failed
             logger.info(LogCategory.GENERAL, "⚠️ LoadRepositoryImpl: Server request failed, falling back to cache: ${e.message}")
-
-            try {
-                val loads = getCachedLoads()
-                if (loads.isNotEmpty()) {
-                    logger.info(LogCategory.GENERAL, "✅ LoadRepositoryImpl: Loaded ${loads.size} loads from cache")
-                    Result.success(loads)
-                } else {
-                    logger.info(LogCategory.GENERAL, "❌ LoadRepositoryImpl: No cached loads available")
-                    Result.failure(Exception("No cached data available. Please check your connection."))
-                }
-            } catch (cacheError: Exception) {
-                logger.info(LogCategory.GENERAL, "❌ LoadRepositoryImpl: Cache read failed: ${cacheError.message}")
-                Result.failure(Exception("Failed to load data: ${e.message}"))
-            }
+            Result.failure(Exception("Failed to load data: ${e.message}"))
         }
     }
 
@@ -108,17 +85,7 @@ class LoadRepositoryImpl(
 
         return try {
             logger.info(LogCategory.GENERAL, "🌐 LoadRepositoryImpl: Sending connect request to server")
-            val loadDtos = loadsRemoteDataSource.connectToLoad(token, serverLoadId)
-
-            // Cache the updated results
-            logger.info(LogCategory.GENERAL, "💾 LoadRepositoryImpl: Updating cache with ${loadDtos.size} loads")
-
-            saveLoads(loadDtos)
-
-            // Return domain models
-            val loads = getCachedLoads()
-            logger.info(LogCategory.GENERAL, "✅ LoadRepositoryImpl: Successfully connected to load $serverLoadId")
-            Result.success(loads)
+            Result.success(loadsRemoteDataSource.connectToLoad(token, serverLoadId).map { it.toDomain() })
         } catch (e: Exception) {
             logger.info(LogCategory.GENERAL, "❌ LoadRepositoryImpl: Failed to connect to load: ${e.message}")
             Result.failure(e)
@@ -133,16 +100,7 @@ class LoadRepositoryImpl(
 
         return try {
             logger.info(LogCategory.GENERAL, "🌐 LoadRepositoryImpl: Sending disconnect request to server")
-            val loadDtos = loadsRemoteDataSource.disconnectFromLoad(token, serverLoadId)
-
-            // Cache the updated results
-            logger.info(LogCategory.GENERAL, "💾 LoadRepositoryImpl: Updating cache with ${loadDtos.size} loads")
-            saveLoads(loadDtos)
-
-            // Return domain models
-            val loads = getCachedLoads()
-            logger.info(LogCategory.GENERAL, "✅ LoadRepositoryImpl: Successfully disconnected from load $serverLoadId")
-            Result.success(loads)
+            return Result.success(loadsRemoteDataSource.disconnectFromLoad(token, serverLoadId).map { it.toDomain() })
         } catch (e: Exception) {
             logger.info(LogCategory.GENERAL, "❌ LoadRepositoryImpl: Failed to disconnect from load: ${e.message}")
             Result.failure(e)
@@ -158,15 +116,7 @@ class LoadRepositoryImpl(
         return try {
             logger.info(LogCategory.GENERAL, "🌐 LoadRepositoryImpl: Sending reject request to server")
             val loadDtos = loadsRemoteDataSource.rejectLoad(token, serverLoadId)
-
-            // Cache the updated results
-            logger.info(LogCategory.GENERAL, "💾 LoadRepositoryImpl: Updating cache with ${loadDtos.size} loads")
-            saveLoads(loadDtos)
-
-            // Return domain models
-            val loads = getCachedLoads()
-            logger.info(LogCategory.GENERAL, "✅ LoadRepositoryImpl: Successfully rejected load $serverLoadId")
-            Result.success(loads)
+            Result.success(loadDtos.map { it.toDomain() })
         } catch (e: Exception) {
             logger.info(LogCategory.GENERAL, "❌ LoadRepositoryImpl: Failed to reject load: ${e.message}")
             Result.failure(e)
@@ -256,11 +206,11 @@ class LoadRepositoryImpl(
             .map { stopEntities -> stopEntities.map { it.toDomain() } }
     }
 
-    private suspend fun saveLoads(loadDtos: List<LoadDto>) {
+    override suspend fun saveLoads(loads: List<Load>) {
         // Get all existing loads from database
         val existingLoads = loadsLocalDataSource.getLoads()
         val existingServerIds = existingLoads.map { it.serverId }.toSet()
-        val newServerIds = loadDtos.map { it.id }.toSet()
+        val newServerIds = loads.map { it.serverId }.toSet()
 
         // Find loads to delete (exist in database but not in loadDtos)
         val serverIdsToDelete = existingServerIds - newServerIds
@@ -276,14 +226,14 @@ class LoadRepositoryImpl(
         val loadsToInsert = mutableListOf<LoadEntity>()
         val loadsToUpdate = mutableListOf<LoadEntity>()
 
-        loadDtos.forEach { loadDto ->
-            val existingLoad = existingLoads.find { it.serverId == loadDto.id }
+        loads.forEach { load ->
+            val existingLoad = existingLoads.find { it.serverId == load.serverId }
             if (existingLoad != null) {
                 // Update existing load with new data, keeping the same id
-                loadsToUpdate.add(loadDto.toEntity().copy(id = existingLoad.id))
+                loadsToUpdate.add(load.toEntity().copy(id = existingLoad.id))
             } else {
                 // New load: set id = 0 so Room will auto-generate a new id
-                loadsToInsert.add(loadDto.toEntity().copy(id = 0))
+                loadsToInsert.add(load.toEntity().copy(id = 0))
             }
         }
 
@@ -301,18 +251,18 @@ class LoadRepositoryImpl(
 
         // Get all load entities (including newly inserted ones) for stops mapping
         val allLoads = loadsLocalDataSource.getLoads()
-        val loadEntities = loadDtos.map { loadDto ->
-            allLoads.find { it.serverId == loadDto.id } ?: error("Load not found after save: ${loadDto.id}")
+        val loadEntities = loads.map { load ->
+            allLoads.find { it.serverId == load.serverId } ?: error("Load not found after save: ${load.serverId}")
         }
 
         // Cache stops for each load - используем loadEntity.id для связи
-        loadDtos.zip(loadEntities).forEach { (loadDto, loadEntity) ->
+        loads.zip(loadEntities).forEach { (load, loadEntity) ->
             // Get existing stops for this load
             val existingStops = stopsLocalDataSource.getStopsByLoadId(loadEntity.id)
             val existingServerIds = existingStops.map { it.serverId }.toSet()
-            val newServerIds = loadDto.stops.map { it.id }.toSet()
+            val newServerIds = load.stops.map { it.id }.toSet()
 
-            // Find stops to delete (exist in database but not in loadDto.stops)
+            // Find stops to delete (exist in database but not in load.stops)
             val serverIdsToDelete = existingServerIds - newServerIds
             if (serverIdsToDelete.isNotEmpty() || newServerIds.isEmpty()) {
                 logger.info(
@@ -326,14 +276,14 @@ class LoadRepositoryImpl(
             val stopsToInsert = mutableListOf<StopEntity>()
             val stopsToUpdate = mutableListOf<StopEntity>()
 
-            loadDto.stops.forEach { stopDto ->
-                val existingStop = existingStops.find { it.serverId == stopDto.id }
+            load.stops.forEach { stop ->
+                val existingStop = existingStops.find { it.serverId == stop.id }
                 if (existingStop != null) {
                     // Update existing stop with new data, keeping the same id
-                    stopsToUpdate.add(stopDto.toStopEntity(loadEntity.id).copy(id = existingStop.id))
+                    stopsToUpdate.add(stop.toEntity(loadEntity.id).copy(id = existingStop.id))
                 } else {
                     // New stop: set id = 0 so Room will auto-generate a new id
-                    stopsToInsert.add(stopDto.toStopEntity(loadEntity.id).copy(id = 0))
+                    stopsToInsert.add(stop.toEntity(loadEntity.id).copy(id = 0))
                 }
             }
 
@@ -363,14 +313,14 @@ class LoadRepositoryImpl(
         completion: Int,
     ): Result<Stop> {
         logger.info(LogCategory.GENERAL, "🔄 LoadRepositoryImpl: Updating stop completion for stop $stopId to $completion")
-        
+
         return try {
             val stopDto = loadsRemoteDataSource.updateStopCompletion(token, stopId, completion)
-            
+
             // Update stop in local database
             val stopEntity = stopDto.toStopEntity(0) // loadId will be updated from existing stop
             val existingStop = stopsLocalDataSource.getStopByServerId(stopId)
-            
+
             if (existingStop != null) {
                 val updatedStop = stopEntity.copy(
                     id = existingStop.id,

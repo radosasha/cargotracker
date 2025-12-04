@@ -109,6 +109,8 @@ interface LoadRepository {
      */
     fun observeNotEnteredStopIdsUpdates(): Flow<List<Stop>>
 
+    suspend fun saveLoads(loads: List<Load>)
+
     /**
      * Update stop completion status
      * Updates the completion field for a stop

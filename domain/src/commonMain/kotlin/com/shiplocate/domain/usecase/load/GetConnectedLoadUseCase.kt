@@ -13,9 +13,9 @@ import com.shiplocate.domain.repository.LoadRepository
  */
 class GetConnectedLoadUseCase(
     private val loadRepository: LoadRepository,
-    private val authRepository: AuthRepository,
+    authRepository: AuthRepository,
     private val logger: Logger,
-) {
+): BaseLoadsUseCase(loadRepository, authRepository, logger) {
     suspend operator fun invoke(): Load? {
         logger.info(LogCategory.LOCATION, "HasConnectedLoadUseCase: Checking for connected load...")
         
@@ -30,18 +30,9 @@ class GetConnectedLoadUseCase(
         }
         
         logger.info(LogCategory.LOCATION, "HasConnectedLoadUseCase: No connected load in cache, checking server...")
-        
-        // Если в кеше нет, получаем token и запрашиваем с сервера
-        val authSession = authRepository.getSession()
-        val token = authSession?.token
-        
-        if (token == null) {
-            logger.warn(LogCategory.LOCATION, "HasConnectedLoadUseCase: Not authenticated, cannot check server")
-            return null
-        }
-        
+
         // Получаем loads с сервера (с fallback на кеш)
-        val loadsResult = loadRepository.getLoads(token)
+        val loadsResult = getLoads()
         
         return if (loadsResult.isSuccess) {
             val loads = loadsResult.getOrNull() ?: emptyList()
