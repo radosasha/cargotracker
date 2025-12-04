@@ -20,7 +20,6 @@ import com.shiplocate.domain.usecase.SendCachedTokenOnAuthUseCase
 import com.shiplocate.domain.usecase.StartTrackingUseCase
 import com.shiplocate.domain.usecase.StopTrackingIfLoadUnlinkedUseCase
 import com.shiplocate.domain.usecase.StopTrackingUseCase
-import com.shiplocate.domain.usecase.TestServerUseCase
 import com.shiplocate.domain.usecase.auth.ClearAuthSessionUseCase
 import com.shiplocate.domain.usecase.auth.GetAuthSessionUseCase
 import com.shiplocate.domain.usecase.auth.HasAuthSessionUseCase
@@ -70,9 +69,6 @@ val useCasesModule =
         factoryOf(::GetActiveLoadUseCase)
         factoryOf(::StartTrackingUseCase)
         factoryOf(::StopTrackingUseCase)
-
-        // Server Use Cases
-        factoryOf(::TestServerUseCase)
 
         // Auth Use Cases
         factoryOf(::RequestSmsCodeUseCase)

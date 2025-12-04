@@ -193,6 +193,7 @@ class AndroidPermissionManagerImpl(
                                         MainActivity.REQUEST_ENABLE_GPS,
                                     )
                                 }
+                                // TODO
                                 if (cont.isActive) cont.resume(Result.success(Unit))
                             } catch (sendEx: IntentSender.SendIntentException) {
                                 if (cont.isActive) cont.resume(Result.failure(sendEx))
