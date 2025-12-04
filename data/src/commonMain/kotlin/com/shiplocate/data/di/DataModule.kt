@@ -12,6 +12,7 @@ import com.shiplocate.data.datasource.LocationRemoteDataSource
 import com.shiplocate.data.datasource.LogsRemoteDataSource
 import com.shiplocate.data.datasource.PrefsDataSource
 import com.shiplocate.data.datasource.TrackingDataSource
+import com.shiplocate.data.datasource.auth.AuthPreferences
 import com.shiplocate.data.datasource.impl.FirebaseTokenLocalDataSourceImpl
 import com.shiplocate.data.datasource.impl.FirebaseTokenRemoteDataSourceImpl
 import com.shiplocate.data.datasource.impl.GpsLocationDataSourceImpl
@@ -26,6 +27,7 @@ import com.shiplocate.data.datasource.load.StopsLocalDataSource
 import com.shiplocate.data.datasource.message.MessagesLocalDataSource
 import com.shiplocate.data.datasource.message.MessagesRemoteDataSource
 import com.shiplocate.data.datasource.remote.AuthRemoteDataSource
+import com.shiplocate.data.datasource.route.RoutePreferences
 import com.shiplocate.data.network.api.AuthApi
 import com.shiplocate.data.network.api.AuthApiImpl
 import com.shiplocate.data.network.api.FirebaseTokenApi
@@ -35,7 +37,6 @@ import com.shiplocate.data.network.api.LoadApiImpl
 import com.shiplocate.data.network.api.LocationApi
 import com.shiplocate.data.network.api.LogsApi
 import com.shiplocate.data.network.api.LogsApiImpl
-import com.shiplocate.data.repository.AuthPreferencesRepositoryImpl
 import com.shiplocate.data.repository.AuthRepositoryImpl
 import com.shiplocate.data.repository.DeviceRepositoryImpl
 import com.shiplocate.data.repository.GpsRepositoryImpl
@@ -50,7 +51,6 @@ import com.shiplocate.data.repository.TrackingRepositoryImpl
 import com.shiplocate.data.services.LocationProcessorImpl
 import com.shiplocate.data.services.LocationSyncServiceImpl
 import com.shiplocate.domain.datasource.FirebaseTokenLocalDataSource
-import com.shiplocate.domain.repository.AuthPreferencesRepository
 import com.shiplocate.domain.repository.AuthRepository
 import com.shiplocate.domain.repository.DeviceRepository
 import com.shiplocate.domain.repository.GpsRepository
@@ -81,8 +81,9 @@ val dataModule =
             // HTTP Client
             single<HttpClient> { HttpClientProvider().createHttpClient() }
 
-            // DataStore - создается через DataStoreProvider (определен в платформо-специфичных модулях)
-            single { get<DataStoreProvider>().createDataStore(fileName = "shiplocate.preferences_pb") }
+            // AuthPreferences - создается через DataStoreProvider (определен в платформо-специфичных модулях)
+            single<AuthPreferences> { AuthPreferences(get<DataStoreProvider>().createDataStore(fileName = "shiplocate.preferences_pb")) }
+            single<RoutePreferences> { RoutePreferences(get<DataStoreProvider>().createDataStore(fileName = "shiplocate.preferences_route")) }
 
             // Database - создается через DatabaseProvider (определен в платформо-специфичных модулях)
             single<TrackerDatabase> {
@@ -176,8 +177,7 @@ val dataModule =
             single<PermissionRepository> { PermissionRepositoryImpl(get()) }
             single<PrefsRepository> { PrefsRepositoryImpl(get()) }
             single<TrackingRepository> { TrackingRepositoryImpl(get()) }
-            single<AuthRepository> { AuthRepositoryImpl(get()) }
-            single<AuthPreferencesRepository> { AuthPreferencesRepositoryImpl(get(), get(), get()) }
+            single<AuthRepository> { AuthRepositoryImpl(get<AuthPreferences>(), get(), get()) }
             single<LoadRepository> { LoadRepositoryImpl(get(), get(), get(), get()) }
             single<MessagesRepository> { MessagesRepositoryImpl(get(), get(), get(), get()) }
             single<LogsRepository> { LogsRepositoryImpl(get(), get(), get()) }

@@ -3,7 +3,7 @@ package com.shiplocate.trackingsdk.geofence
 import com.shiplocate.core.logging.LogCategory
 import com.shiplocate.core.logging.Logger
 import com.shiplocate.domain.model.load.Stop
-import com.shiplocate.domain.repository.AuthPreferencesRepository
+import com.shiplocate.domain.repository.AuthRepository
 import com.shiplocate.domain.repository.LoadRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.onEach
 class GeofenceTracker(
     private val loadsRepository: LoadRepository,
     private val geofenceClient: GeofenceClient,
-    private val authPreferencesRepository: AuthPreferencesRepository,
+    private val authRepository: AuthRepository,
     private val logger: Logger,
     private val scope: CoroutineScope,
 ) {
@@ -94,7 +94,7 @@ class GeofenceTracker(
     private suspend fun sendEnterStopQueue() {
         try {
             // Get authentication token
-            val authSession = authPreferencesRepository.getSession()
+            val authSession = authRepository.getSession()
             val token = authSession?.token
 
             if (token == null) {

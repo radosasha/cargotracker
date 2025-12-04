@@ -1,7 +1,7 @@
 package com.shiplocate.domain.usecase.message
 
 import com.shiplocate.domain.model.message.Message
-import com.shiplocate.domain.repository.AuthPreferencesRepository
+import com.shiplocate.domain.repository.AuthRepository
 import com.shiplocate.domain.repository.MessagesRepository
 import kotlinx.coroutines.flow.Flow
 
@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.Flow
  */
 class ObserveMessagesUseCase(
     private val messagesRepository: MessagesRepository,
-    private val authPreferencesRepository: AuthPreferencesRepository,
+    private val authRepository: AuthRepository,
 ) {
     /**
      * Get messages for a load as Flow
@@ -21,7 +21,7 @@ class ObserveMessagesUseCase(
      */
     suspend operator fun invoke(loadId: Long): Flow<List<Message>>? {
         // Get auth token
-        val authSession = authPreferencesRepository.getSession()
+        val authSession = authRepository.getSession()
         val token = authSession?.token
 
         if (token == null) {

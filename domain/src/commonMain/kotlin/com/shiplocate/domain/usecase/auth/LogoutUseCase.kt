@@ -3,7 +3,7 @@ package com.shiplocate.domain.usecase.auth
 import com.shiplocate.core.logging.LogCategory
 import com.shiplocate.core.logging.Logger
 import com.shiplocate.domain.model.auth.AuthError
-import com.shiplocate.domain.repository.AuthPreferencesRepository
+import com.shiplocate.domain.repository.AuthRepository
 import com.shiplocate.domain.repository.LoadRepository
 import com.shiplocate.domain.repository.NotificationRepository
 import com.shiplocate.domain.usecase.StopTrackingUseCase
@@ -13,7 +13,7 @@ import com.shiplocate.domain.usecase.StopTrackingUseCase
  * Clears all user data and session
  */
 class LogoutUseCase(
-    private val authPreferencesRepository: AuthPreferencesRepository,
+    private val authRepository: AuthRepository,
     private val loadRepository: LoadRepository,
     private val notificationRepository: NotificationRepository,
     private val stopTrackingUseCase: StopTrackingUseCase,
@@ -24,12 +24,12 @@ class LogoutUseCase(
             logger.info(LogCategory.AUTH, "LogoutUseCase: Starting logout process")
 
             // Step 1: Get current session token
-            val session = authPreferencesRepository.getSession()
+            val session = authRepository.getSession()
             val token = session?.token ?: return Result.success(Unit)
 
             // Step 2: Call logout API
             logger.info(LogCategory.AUTH, "LogoutUseCase: Calling logout API")
-            val logoutResult = authPreferencesRepository.logout(token)
+            val logoutResult = authRepository.logout(token)
             if (logoutResult.isFailure) {
                 val exception = logoutResult.exceptionOrNull()
                 
@@ -73,7 +73,7 @@ class LogoutUseCase(
 
             // Step 5: Clear auth session
             logger.info(LogCategory.AUTH, "LogoutUseCase: Clearing auth session")
-            authPreferencesRepository.clearSession()
+            authRepository.clearSession()
 
             logger.info(LogCategory.AUTH, "LogoutUseCase: ✅ Logout completed successfully")
             Result.success(Unit)

@@ -1,6 +1,6 @@
 package com.shiplocate.domain.usecase
 
-import com.shiplocate.domain.repository.AuthPreferencesRepository
+import com.shiplocate.domain.repository.AuthRepository
 import com.shiplocate.domain.repository.NotificationRepository
 
 /**
@@ -9,11 +9,11 @@ import com.shiplocate.domain.repository.NotificationRepository
  */
 class HandleFirebaseTokenUseCase(
     private val notificationRepository: NotificationRepository,
-    private val authPreferencesRepository: AuthPreferencesRepository,
+    private val authRepository: AuthRepository,
 ) {
     suspend operator fun invoke(token: String) {
         // Если пользователь авторизован - отправляем на сервер
-        if (authPreferencesRepository.hasSession()) {
+        if (authRepository.hasSession()) {
             notificationRepository.sendTokenToServer(token)
         }
         // Если не авторизован - токен уже сохранен в DataStore через DataSource

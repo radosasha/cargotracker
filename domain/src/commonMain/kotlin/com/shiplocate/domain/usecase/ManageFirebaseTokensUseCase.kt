@@ -2,7 +2,7 @@ package com.shiplocate.domain.usecase
 
 import com.shiplocate.core.logging.LogCategory
 import com.shiplocate.core.logging.Logger
-import com.shiplocate.domain.repository.AuthPreferencesRepository
+import com.shiplocate.domain.repository.AuthRepository
 import com.shiplocate.domain.repository.NotificationRepository
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.flow.launchIn
@@ -14,7 +14,7 @@ import kotlinx.coroutines.flow.onEach
  */
 class ManageFirebaseTokensUseCase(
     private val notificationRepository: NotificationRepository,
-    private val authPreferencesRepository: AuthPreferencesRepository,
+    private val authRepository: AuthRepository,
     private val logger: Logger,
 ) {
     private val coroutineScope = MainScope()
@@ -40,7 +40,7 @@ class ManageFirebaseTokensUseCase(
             }
 
             // Если пользователь авторизован - отправляем на сервер
-            if (authPreferencesRepository.hasSession()) {
+            if (authRepository.hasSession()) {
                 logger.info(LogCategory.GENERAL, "ManageFirebaseTokensUseCase: User is authenticated, sending current token to server")
                 notificationRepository.sendTokenToServer(currentToken)
             } else {
@@ -60,7 +60,7 @@ class ManageFirebaseTokensUseCase(
                     logger.info(LogCategory.GENERAL, "ManageFirebaseTokensUseCase: Token updated in local cache: ${token.take(20)}...")
 
                     // Если пользователь авторизован - отправляем на сервер
-                    if (authPreferencesRepository.hasSession()) {
+                    if (authRepository.hasSession()) {
                         logger.info(LogCategory.GENERAL, "ManageFirebaseTokensUseCase: User is authenticated, sending token to server")
                         notificationRepository.sendTokenToServer(token)
                     } else {

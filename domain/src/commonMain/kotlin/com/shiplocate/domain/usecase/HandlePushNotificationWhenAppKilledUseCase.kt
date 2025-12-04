@@ -3,7 +3,7 @@ package com.shiplocate.domain.usecase
 import com.shiplocate.core.logging.LogCategory
 import com.shiplocate.core.logging.Logger
 import com.shiplocate.domain.model.load.LoadStatus
-import com.shiplocate.domain.repository.AuthPreferencesRepository
+import com.shiplocate.domain.repository.AuthRepository
 import com.shiplocate.domain.repository.LoadRepository
 import com.shiplocate.domain.repository.TrackingRepository
 
@@ -14,7 +14,7 @@ import com.shiplocate.domain.repository.TrackingRepository
 class HandlePushNotificationWhenAppKilledUseCase(
     private val loadRepository: LoadRepository,
     private val trackingRepository: TrackingRepository,
-    private val authPreferencesRepository: AuthPreferencesRepository,
+    private val authRepository: AuthRepository,
     private val logger: Logger,
 ) {
     /**
@@ -26,7 +26,7 @@ class HandlePushNotificationWhenAppKilledUseCase(
             logger.info(LogCategory.GENERAL, "HandlePushNotificationWhenAppKilledUseCase: Processing push notification when app was killed")
 
             // Получаем токен авторизации
-            val authSession = authPreferencesRepository.getSession()
+            val authSession = authRepository.getSession()
             val token = authSession?.token
 
             if (token == null) {

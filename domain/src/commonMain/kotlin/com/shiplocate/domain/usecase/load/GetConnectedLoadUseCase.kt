@@ -4,7 +4,7 @@ import com.shiplocate.core.logging.LogCategory
 import com.shiplocate.core.logging.Logger
 import com.shiplocate.domain.model.load.Load
 import com.shiplocate.domain.model.load.LoadStatus
-import com.shiplocate.domain.repository.AuthPreferencesRepository
+import com.shiplocate.domain.repository.AuthRepository
 import com.shiplocate.domain.repository.LoadRepository
 
 /**
@@ -13,7 +13,7 @@ import com.shiplocate.domain.repository.LoadRepository
  */
 class GetConnectedLoadUseCase(
     private val loadRepository: LoadRepository,
-    private val authPreferencesRepository: AuthPreferencesRepository,
+    private val authRepository: AuthRepository,
     private val logger: Logger,
 ) {
     suspend operator fun invoke(): Load? {
@@ -32,7 +32,7 @@ class GetConnectedLoadUseCase(
         logger.info(LogCategory.LOCATION, "HasConnectedLoadUseCase: No connected load in cache, checking server...")
         
         // Если в кеше нет, получаем token и запрашиваем с сервера
-        val authSession = authPreferencesRepository.getSession()
+        val authSession = authRepository.getSession()
         val token = authSession?.token
         
         if (token == null) {

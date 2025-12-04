@@ -1,7 +1,7 @@
 package com.shiplocate.domain.usecase.load
 
 import com.shiplocate.domain.model.load.Load
-import com.shiplocate.domain.repository.AuthPreferencesRepository
+import com.shiplocate.domain.repository.AuthRepository
 import com.shiplocate.domain.repository.LoadRepository
 
 /**
@@ -10,7 +10,7 @@ import com.shiplocate.domain.repository.LoadRepository
  */
 class GetLoadsUseCase(
     private val loadRepository: LoadRepository,
-    private val authPreferencesRepository: AuthPreferencesRepository,
+    private val authRepository: AuthRepository,
 ) {
     /**
      * Get loads from server or cache
@@ -19,7 +19,7 @@ class GetLoadsUseCase(
      */
     suspend operator fun invoke(): Result<List<Load>> {
         // Get auth token
-        val authSession = authPreferencesRepository.getSession()
+        val authSession = authRepository.getSession()
         val token = authSession?.token
 
         if (token == null) {

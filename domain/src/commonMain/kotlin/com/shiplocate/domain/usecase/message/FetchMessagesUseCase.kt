@@ -1,7 +1,7 @@
 package com.shiplocate.domain.usecase.message
 
 import com.shiplocate.domain.model.message.Message
-import com.shiplocate.domain.repository.AuthPreferencesRepository
+import com.shiplocate.domain.repository.AuthRepository
 import com.shiplocate.domain.repository.MessagesRepository
 
 /**
@@ -10,7 +10,7 @@ import com.shiplocate.domain.repository.MessagesRepository
  */
 class FetchMessagesUseCase(
     private val messagesRepository: MessagesRepository,
-    private val authPreferencesRepository: AuthPreferencesRepository,
+    private val authRepository: AuthRepository,
 ) {
     /**
      * Refresh messages from server
@@ -20,7 +20,7 @@ class FetchMessagesUseCase(
      */
     suspend operator fun invoke(loadId: Long): Result<List<Message>> {
         // Get auth token
-        val authSession = authPreferencesRepository.getSession()
+        val authSession = authRepository.getSession()
         val token = authSession?.token
 
         if (token == null) {

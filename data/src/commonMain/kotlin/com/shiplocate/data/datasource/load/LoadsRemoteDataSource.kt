@@ -2,6 +2,7 @@ package com.shiplocate.data.datasource.load
 
 import com.shiplocate.data.network.api.LoadApi
 import com.shiplocate.data.network.dto.load.LoadDto
+import com.shiplocate.data.network.dto.load.RouteDto
 import com.shiplocate.data.network.dto.load.StopDto
 
 /**
@@ -104,5 +105,19 @@ class LoadsRemoteDataSource(
     ): StopDto {
         println("📡 LoadRemoteDataSource: Updating stop completion for stop $stopId to $completion")
         return loadApi.updateStopCompletion(token, stopId, completion)
+    }
+
+    /**
+     * Get route for a load
+     * @param token Bearer token for authentication
+     * @param loadId Load ID to get route for
+     * @return RouteDto
+     */
+    suspend fun getRoute(
+        token: String,
+        loadId: Long,
+    ): RouteDto {
+        println("📡 LoadRemoteDataSource: Getting route for load $loadId")
+        return loadApi.getRoute(token, loadId)
     }
 }

@@ -8,6 +8,7 @@ import com.shiplocate.data.network.dto.load.DisconnectLoadRequest
 import com.shiplocate.data.network.dto.load.EnterStopRequest
 import com.shiplocate.data.network.dto.load.LoadDto
 import com.shiplocate.data.network.dto.load.PingLoadRequest
+import com.shiplocate.data.network.dto.load.RouteDto
 import com.shiplocate.data.network.dto.load.StopDto
 import com.shiplocate.data.network.dto.load.UpdateStopCompletionRequest
 import com.shiplocate.data.network.dto.message.MessageDto
@@ -20,6 +21,7 @@ import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
+import io.ktor.client.request.url
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
@@ -150,6 +152,20 @@ interface LoadApi {
         loadId: Long,
         message: String,
     ): MessageDto
+
+    /**
+     * Get route for a load
+     * Computes Google Routes legs response for the stops associated with a load
+     *
+     * @param token JWT token for authentication
+     * @param loadId Load ID to get route for
+     * @return RouteDto
+     * @throws Exception if request fails
+     */
+    suspend fun getRoute(
+        token: String,
+        loadId: Long,
+    ): RouteDto
 }
 
 /**
@@ -375,6 +391,37 @@ class LoadApiImpl(
             } catch (parseError: Exception) {
                 logger.debug(LogCategory.NETWORK, "🌐 LoadApi: Failed to parse error response: ${parseError.message}")
                 "Failed to send message"
+            }
+            throw Exception(errorMessage)
+        } catch (e: Exception) {
+            logger.debug(LogCategory.NETWORK, "🌐 LoadApi: ❌ Network error: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getRoute(
+        token: String,
+        loadId: Long,
+    ): RouteDto {
+        logger.debug(LogCategory.NETWORK, "🌐 LoadApi: Getting route for load $loadId")
+
+        return try {
+            val response = httpClient.get("$baseUrl/api/mobile/loads/route") {
+                header(HttpHeaders.Authorization, "Bearer $token")
+                url {
+                    parameters.append("loadId", loadId.toString())
+                }
+            }
+
+            logger.debug(LogCategory.NETWORK, "🌐 LoadApi: Get route response status: ${response.status}")
+            response.bodyOrThrow<RouteDto>()
+        } catch (e: ResponseException) {
+            logger.debug(LogCategory.NETWORK, "🌐 LoadApi: ❌ Get route error: ${e.response.status}")
+            val errorMessage = try {
+                e.response.body<String>()
+            } catch (parseError: Exception) {
+                logger.debug(LogCategory.NETWORK, "🌐 LoadApi: Failed to parse error response: ${parseError.message}")
+                "Failed to get route"
             }
             throw Exception(errorMessage)
         } catch (e: Exception) {

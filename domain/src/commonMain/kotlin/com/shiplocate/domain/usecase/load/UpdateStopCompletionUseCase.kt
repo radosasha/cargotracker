@@ -1,7 +1,7 @@
 package com.shiplocate.domain.usecase.load
 
 import com.shiplocate.domain.model.load.Stop
-import com.shiplocate.domain.repository.AuthPreferencesRepository
+import com.shiplocate.domain.repository.AuthRepository
 import com.shiplocate.domain.repository.LoadRepository
 
 /**
@@ -10,7 +10,7 @@ import com.shiplocate.domain.repository.LoadRepository
  */
 class UpdateStopCompletionUseCase(
     private val loadRepository: LoadRepository,
-    private val authPreferencesRepository: AuthPreferencesRepository,
+    private val authRepository: AuthRepository,
 ) {
     /**
      * Update stop completion
@@ -26,7 +26,7 @@ class UpdateStopCompletionUseCase(
         println("✅ UpdateStopCompletionUseCase: Updating stop completion for stop $stopId to $completion")
 
         // Get auth token
-        val authSession = authPreferencesRepository.getSession()
+        val authSession = authRepository.getSession()
         val token = authSession?.token
 
         if (token == null) {

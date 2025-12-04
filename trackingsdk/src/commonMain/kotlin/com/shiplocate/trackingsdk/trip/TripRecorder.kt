@@ -3,7 +3,6 @@ package com.shiplocate.trackingsdk.trip
 import com.shiplocate.core.logging.LogCategory
 import com.shiplocate.core.logging.Logger
 import com.shiplocate.domain.model.GpsLocation
-import com.shiplocate.domain.repository.AuthPreferencesRepository
 import com.shiplocate.domain.repository.AuthRepository
 import com.shiplocate.domain.repository.DeviceRepository
 import com.shiplocate.domain.repository.GpsRepository
@@ -26,7 +25,7 @@ class TripRecorder(
     private val locationProcessor: LocationProcessor,
     private val deviceRepository: DeviceRepository,
     private val loadRepository: LoadRepository,
-    private val authPrefsRepository: AuthPreferencesRepository,
+    private val authPrefsRepository: AuthRepository,
     private val logger: Logger,
 ) {
 

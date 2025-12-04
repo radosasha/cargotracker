@@ -2,11 +2,29 @@ package com.shiplocate.data.mapper
 
 import com.shiplocate.core.database.entity.LoadEntity
 import com.shiplocate.core.database.entity.StopEntity
+import com.shiplocate.data.network.dto.load.LegDto
+import com.shiplocate.data.network.dto.load.LocalizedValueDto
+import com.shiplocate.data.network.dto.load.LocalizedValuesDto
 import com.shiplocate.data.network.dto.load.LoadDto
+import com.shiplocate.data.network.dto.load.NavigationInstructionDto
+import com.shiplocate.data.network.dto.load.PolylineDto
+import com.shiplocate.data.network.dto.load.RouteDto
+import com.shiplocate.data.network.dto.load.RouteLatLngDto
+import com.shiplocate.data.network.dto.load.StepDto
 import com.shiplocate.data.network.dto.load.StopDto
+import com.shiplocate.data.network.dto.load.WaypointLocationDto
+import com.shiplocate.domain.model.load.Leg
 import com.shiplocate.domain.model.load.Load
 import com.shiplocate.domain.model.load.LoadStatus
+import com.shiplocate.domain.model.load.LocalizedValue
+import com.shiplocate.domain.model.load.LocalizedValues
+import com.shiplocate.domain.model.load.NavigationInstruction
+import com.shiplocate.domain.model.load.Polyline
+import com.shiplocate.domain.model.load.Route
+import com.shiplocate.domain.model.load.RouteLatLng
+import com.shiplocate.domain.model.load.Step
 import com.shiplocate.domain.model.load.Stop
+import com.shiplocate.domain.model.load.WaypointLocation
 
 fun LoadDto.toDomain(): Load {
     return Load(
@@ -125,5 +143,74 @@ fun LoadEntity.toDomain(): Load {
         createdAt = createdAt,
         loadStatus = loadStatus.toLoadStatus(),
         stops = emptyList(), // Stops загружаются отдельно через StopsLocalDataSource
+    )
+}
+
+fun RouteDto.toDomain(): Route {
+    return Route(
+        distanceMeters = distanceMeters,
+        duration = duration,
+        legs = legs?.map { it.toDomain() },
+    )
+}
+
+fun LegDto.toDomain(): Leg {
+    return Leg(
+        distanceMeters = distanceMeters,
+        duration = duration,
+        polyline = polyline?.toDomain(),
+        steps = steps?.map { it.toDomain() },
+    )
+}
+
+fun StepDto.toDomain(): Step {
+    return Step(
+        distanceMeters = distanceMeters,
+        staticDuration = staticDuration,
+        polyline = polyline?.toDomain(),
+        startLocation = startLocation?.toDomain(),
+        endLocation = endLocation?.toDomain(),
+        navigationInstruction = navigationInstruction?.toDomain(),
+        localizedValues = localizedValues?.toDomain(),
+        travelMode = travelMode,
+    )
+}
+
+fun WaypointLocationDto.toDomain(): WaypointLocation {
+    return WaypointLocation(
+        latLng = latLng?.toDomain(),
+    )
+}
+
+fun RouteLatLngDto.toDomain(): RouteLatLng {
+    return RouteLatLng(
+        latitude = latitude,
+        longitude = longitude,
+    )
+}
+
+fun PolylineDto.toDomain(): Polyline {
+    return Polyline(
+        encodedPolyline = encodedPolyline,
+    )
+}
+
+fun NavigationInstructionDto.toDomain(): NavigationInstruction {
+    return NavigationInstruction(
+        maneuver = maneuver,
+        instructions = instructions,
+    )
+}
+
+fun LocalizedValuesDto.toDomain(): LocalizedValues {
+    return LocalizedValues(
+        distance = distance?.toDomain(),
+        staticDuration = staticDuration?.toDomain(),
+    )
+}
+
+fun LocalizedValueDto.toDomain(): LocalizedValue {
+    return LocalizedValue(
+        text = text,
     )
 }

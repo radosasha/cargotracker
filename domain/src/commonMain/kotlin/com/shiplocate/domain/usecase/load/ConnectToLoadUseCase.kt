@@ -1,7 +1,7 @@
 package com.shiplocate.domain.usecase.load
 
 import com.shiplocate.domain.model.load.Load
-import com.shiplocate.domain.repository.AuthPreferencesRepository
+import com.shiplocate.domain.repository.AuthRepository
 import com.shiplocate.domain.repository.LoadRepository
 
 /**
@@ -10,7 +10,7 @@ import com.shiplocate.domain.repository.LoadRepository
  */
 class ConnectToLoadUseCase(
     private val loadRepository: LoadRepository,
-    private val authPreferencesRepository: AuthPreferencesRepository,
+    private val authRepository: AuthRepository,
 ) {
     /**
      * Connect to load
@@ -22,7 +22,7 @@ class ConnectToLoadUseCase(
         println("🔌 ConnectToLoadUseCase: Connecting to load with id: $loadId")
 
         // Get auth token
-        val authSession = authPreferencesRepository.getSession()
+        val authSession = authRepository.getSession()
         val token = authSession?.token
 
         if (token == null) {

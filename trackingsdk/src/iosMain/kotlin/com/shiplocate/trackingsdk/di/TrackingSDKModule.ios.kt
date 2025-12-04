@@ -90,7 +90,7 @@ actual val trackingSDKModule: Module = module {
     single<PingService> {
         PingService(
             pingIntervalMs = 10 * 60 * 1000L,
-            authPreferencesRepository = get(),
+            authRepository = get(),
             loadRepository = get(),
             logger = get(),
             scope = get()
@@ -110,7 +110,7 @@ actual val trackingSDKModule: Module = module {
         GeofenceTracker(
             loadsRepository = get(),
             geofenceClient = get(),
-            authPreferencesRepository = get(),
+            authRepository = get(),
             logger = get(),
             scope = get()
         )

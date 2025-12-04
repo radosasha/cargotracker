@@ -2,7 +2,7 @@ package com.shiplocate.data.services
 
 import com.shiplocate.core.logging.LogCategory
 import com.shiplocate.core.logging.Logger
-import com.shiplocate.domain.repository.AuthPreferencesRepository
+import com.shiplocate.domain.repository.AuthRepository
 import com.shiplocate.domain.repository.LoadRepository
 import com.shiplocate.domain.repository.LocationRepository
 import com.shiplocate.domain.service.LocationSyncService
@@ -24,7 +24,7 @@ import kotlinx.coroutines.launch
 class LocationSyncServiceImpl(
     private val locationRepository: LocationRepository,
     private val loadRepository: LoadRepository,
-    private val authPrefsRepository: AuthPreferencesRepository,
+    private val authPrefsRepository: AuthRepository,
     private val coroutineScope: CoroutineScope,
     private val logger: Logger,
 ) : LocationSyncService {

@@ -5,7 +5,7 @@ import com.shiplocate.core.logging.Logger
 import com.shiplocate.data.datasource.FirebaseTokenRemoteDataSource
 import com.shiplocate.data.network.api.FirebaseTokenApi
 import com.shiplocate.data.network.dto.firebase.FirebaseTokenRequestDto
-import com.shiplocate.domain.repository.AuthPreferencesRepository
+import com.shiplocate.domain.repository.AuthRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 
@@ -15,7 +15,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
  */
 class FirebaseTokenRemoteDataSourceImpl(
     private val firebaseTokenApi: FirebaseTokenApi,
-    private val authPreferencesRepository: AuthPreferencesRepository,
+    private val authRepository: AuthRepository,
     private val logger: Logger,
 ) : FirebaseTokenRemoteDataSource {
 
@@ -25,7 +25,7 @@ class FirebaseTokenRemoteDataSourceImpl(
 
         try {
             // Получаем токен авторизации из сессии
-            val authSession = authPreferencesRepository.getSession()
+            val authSession = authRepository.getSession()
             if (authSession == null) {
                 logger.warn(LogCategory.AUTH, "FirebaseTokenRemoteDataSource: No auth session, cannot send token")
                 return
@@ -47,7 +47,7 @@ class FirebaseTokenRemoteDataSourceImpl(
 
     override suspend fun clearToken() {
         try {
-            val authSession = authPreferencesRepository.getSession()
+            val authSession = authRepository.getSession()
             if (authSession == null) {
                 logger.warn(LogCategory.AUTH, "FirebaseTokenRemoteDataSource: No auth session, cannot clear token")
                 return

@@ -2,7 +2,7 @@ package com.shiplocate.trackingsdk.ping
 
 import com.shiplocate.core.logging.LogCategory
 import com.shiplocate.core.logging.Logger
-import com.shiplocate.domain.repository.AuthPreferencesRepository
+import com.shiplocate.domain.repository.AuthRepository
 import com.shiplocate.domain.repository.LoadRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -16,7 +16,7 @@ import kotlinx.coroutines.launch
  */
 class PingService(
     private val pingIntervalMs: Long,
-    private val authPreferencesRepository: AuthPreferencesRepository,
+    private val authRepository: AuthRepository,
     private val loadRepository: LoadRepository,
     private val logger: Logger,
     private val scope: CoroutineScope,
@@ -65,7 +65,7 @@ class PingService(
 
     private suspend fun sendPing() {
         // Get authentication token
-        val authSession = authPreferencesRepository.getSession()
+        val authSession = authRepository.getSession()
         val token = authSession?.token
 
         if (token == null) {
