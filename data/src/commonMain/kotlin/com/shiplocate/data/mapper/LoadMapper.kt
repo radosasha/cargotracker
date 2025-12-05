@@ -255,3 +255,72 @@ fun LocalizedValueDto.toDomain(): LocalizedValue {
         text = text,
     )
 }
+
+fun Route.toDto(): RouteDto {
+    return RouteDto(
+        distanceMeters = distanceMeters,
+        duration = duration,
+        legs = legs?.map { it.toDto() },
+    )
+}
+
+fun Leg.toDto(): LegDto {
+    return LegDto(
+        distanceMeters = distanceMeters,
+        duration = duration,
+        polyline = polyline?.toDto(),
+        steps = steps?.map { it.toDto() },
+    )
+}
+
+fun Step.toDto(): StepDto {
+    return StepDto(
+        distanceMeters = distanceMeters,
+        staticDuration = staticDuration,
+        polyline = polyline?.toDto(),
+        startLocation = startLocation?.toDto(),
+        endLocation = endLocation?.toDto(),
+        navigationInstruction = navigationInstruction?.toDto(),
+        localizedValues = localizedValues?.toDto(),
+        travelMode = travelMode,
+    )
+}
+
+fun WaypointLocation.toDto(): WaypointLocationDto {
+    return WaypointLocationDto(
+        latLng = latLng?.toDto(),
+    )
+}
+
+fun RouteLatLng.toDto(): RouteLatLngDto {
+    return RouteLatLngDto(
+        latitude = latitude,
+        longitude = longitude,
+    )
+}
+
+fun Polyline.toDto(): PolylineDto {
+    return PolylineDto(
+        encodedPolyline = encodedPolyline,
+    )
+}
+
+fun NavigationInstruction.toDto(): NavigationInstructionDto {
+    return NavigationInstructionDto(
+        maneuver = maneuver,
+        instructions = instructions,
+    )
+}
+
+fun LocalizedValues.toDto(): LocalizedValuesDto {
+    return LocalizedValuesDto(
+        distance = distance?.toDto(),
+        staticDuration = staticDuration?.toDto(),
+    )
+}
+
+fun LocalizedValue.toDto(): LocalizedValueDto {
+    return LocalizedValueDto(
+        text = text,
+    )
+}

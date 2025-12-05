@@ -47,6 +47,7 @@ import com.shiplocate.data.repository.MessagesRepositoryImpl
 import com.shiplocate.data.repository.NotificationRepositoryImpl
 import com.shiplocate.data.repository.PermissionRepositoryImpl
 import com.shiplocate.data.repository.PrefsRepositoryImpl
+import com.shiplocate.data.repository.RouteRepositoryImpl
 import com.shiplocate.data.repository.TrackingRepositoryImpl
 import com.shiplocate.data.services.LocationProcessorImpl
 import com.shiplocate.data.services.LocationSyncServiceImpl
@@ -61,6 +62,7 @@ import com.shiplocate.domain.repository.MessagesRepository
 import com.shiplocate.domain.repository.NotificationRepository
 import com.shiplocate.domain.repository.PermissionRepository
 import com.shiplocate.domain.repository.PrefsRepository
+import com.shiplocate.domain.repository.RouteRepository
 import com.shiplocate.domain.repository.TrackingRepository
 import com.shiplocate.domain.service.LocationProcessor
 import com.shiplocate.domain.service.LocationSyncService
@@ -176,6 +178,7 @@ val dataModule =
             single<LocationRepository> { LocationRepositoryImpl(get(), get()) }
             single<PermissionRepository> { PermissionRepositoryImpl(get()) }
             single<PrefsRepository> { PrefsRepositoryImpl(get()) }
+            single<RouteRepository> { RouteRepositoryImpl(get<RoutePreferences>(), get(), get()) }
             single<TrackingRepository> { TrackingRepositoryImpl(get()) }
             single<AuthRepository> { AuthRepositoryImpl(get<AuthPreferences>(), get(), get()) }
             single<LoadRepository> { LoadRepositoryImpl(get(), get(), get(), get()) }

@@ -6,6 +6,7 @@ import com.shiplocate.domain.model.load.Load
 import com.shiplocate.domain.model.load.LoadStatus
 import com.shiplocate.domain.repository.AuthRepository
 import com.shiplocate.domain.repository.LoadRepository
+import com.shiplocate.domain.repository.RouteRepository
 
 /**
  * Use Case для проверки наличия connected load
@@ -15,7 +16,8 @@ class GetConnectedLoadUseCase(
     private val loadRepository: LoadRepository,
     authRepository: AuthRepository,
     private val logger: Logger,
-): BaseLoadsUseCase(loadRepository, authRepository, logger) {
+    routeRepository: RouteRepository,
+): BaseLoadsUseCase(loadRepository, authRepository, logger, routeRepository) {
     suspend operator fun invoke(): Load? {
         logger.info(LogCategory.LOCATION, "HasConnectedLoadUseCase: Checking for connected load...")
         

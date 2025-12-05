@@ -5,6 +5,7 @@ import com.shiplocate.core.logging.Logger
 import com.shiplocate.domain.model.load.LoadStatus
 import com.shiplocate.domain.repository.AuthRepository
 import com.shiplocate.domain.repository.LoadRepository
+import com.shiplocate.domain.repository.RouteRepository
 import com.shiplocate.domain.repository.TrackingRepository
 import com.shiplocate.domain.usecase.load.BaseLoadsUseCase
 
@@ -17,7 +18,8 @@ class HandlePushNotificationWhenAppKilledUseCase(
     private val trackingRepository: TrackingRepository,
     authRepository: AuthRepository,
     private val logger: Logger,
-) : BaseLoadsUseCase(loadRepository, authRepository, logger) {
+    routeRepository: RouteRepository,
+) : BaseLoadsUseCase(loadRepository, authRepository, logger, routeRepository) {
     /**
      * Обрабатывает push-уведомление когда приложение не запущено
      * Обновляет список loads с сервера

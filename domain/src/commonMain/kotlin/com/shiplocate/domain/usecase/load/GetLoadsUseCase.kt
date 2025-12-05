@@ -4,6 +4,7 @@ import com.shiplocate.core.logging.Logger
 import com.shiplocate.domain.model.load.Load
 import com.shiplocate.domain.repository.AuthRepository
 import com.shiplocate.domain.repository.LoadRepository
+import com.shiplocate.domain.repository.RouteRepository
 
 /**
  * Use case to get loads with automatic fallback to cache
@@ -13,7 +14,8 @@ class GetLoadsUseCase(
     loadRepository: LoadRepository,
     authRepository: AuthRepository,
     logger: Logger,
-) : BaseLoadsUseCase(loadRepository, authRepository, logger) {
+    routeRepository: RouteRepository,
+) : BaseLoadsUseCase(loadRepository, authRepository, logger, routeRepository) {
     /**
      * Get loads from server or cache
      * Automatically retrieves auth token from preferences
