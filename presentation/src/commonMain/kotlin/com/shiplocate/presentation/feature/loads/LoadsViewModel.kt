@@ -35,6 +35,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlin.math.roundToLong
 
 /**
  * ViewModel for Loads screen
@@ -308,7 +309,15 @@ class LoadsViewModel(
                     // This happens after BaseLoadsUseCase may have updated the route
                     val activeLoadUi = activeLoad?.let { load ->
                         val routeDuration = withContext(Dispatchers.Default) {
-                            routeRepository.getRoute(load.serverId)?.duration
+                            logger.debug(LogCategory.UI, "LoadsViewModel: Attempting to get route duration for load ${load.serverId}")
+                            val route = routeRepository.getRoute(load.serverId)
+                            val formatted = formatRouteDuration(route?.duration)
+                            if (formatted != null) {
+                                logger.info(LogCategory.UI, "LoadsViewModel: Retrieved formatted route duration: $formatted for load ${load.serverId}")
+                            } else {
+                                logger.debug(LogCategory.UI, "LoadsViewModel: No route found for load ${load.serverId}")
+                            }
+                            formatted
                         }
                         load.toActiveLoadUiModel(routeDuration = routeDuration)
                     }
@@ -380,7 +389,15 @@ class LoadsViewModel(
                 // Get route duration for active load if it exists
                 val activeLoadUi = activeLoad?.let { load ->
                     val routeDuration = withContext(Dispatchers.Default) {
-                        routeRepository.getRoute(load.serverId)?.duration
+                        logger.debug(LogCategory.UI, "LoadsViewModel: Attempting to get cached route duration for load ${load.serverId}")
+                        val route = routeRepository.getRoute(load.serverId)
+                        val formatted = formatRouteDuration(route?.duration)
+                        if (formatted != null) {
+                            logger.info(LogCategory.UI, "LoadsViewModel: Retrieved cached formatted route duration: $formatted for load ${load.serverId}")
+                        } else {
+                            logger.debug(LogCategory.UI, "LoadsViewModel: No cached route found for load ${load.serverId}")
+                        }
+                        formatted
                     }
                     load.toActiveLoadUiModel(routeDuration = routeDuration)
                 }
@@ -654,6 +671,36 @@ class LoadsViewModel(
                 _isLoadingAction.value = false
             }
         }
+    }
+
+    private fun formatRouteDuration(rawDuration: String?): String? {
+        val totalSeconds = rawDuration?.let { parseDurationSeconds(it) } ?: return null
+        val hours = totalSeconds / 3600
+        val minutes = (totalSeconds % 3600) / 60
+        val hoursPart = hours.toString().padStart(2, '0')
+        val minutesPart = minutes.toString().padStart(2, '0')
+        return "${hoursPart}h:${minutesPart}m"
+    }
+
+    private fun parseDurationSeconds(rawDuration: String): Long? {
+        val value = rawDuration.trim()
+        if (value.isEmpty()) return null
+
+        if (value.endsWith("s", ignoreCase = true)) {
+            val numeric = value.dropLast(1)
+            numeric.toDoubleOrNull()?.let { return it.roundToLong() }
+        }
+
+        if (value.startsWith("PT", ignoreCase = true)) {
+            val regex = Regex("""PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+(?:\.\d+)?)S)?""", RegexOption.IGNORE_CASE)
+            val match = regex.matchEntire(value) ?: return null
+            val hours = match.groups[1]?.value?.takeIf { it.isNotEmpty() }?.toLongOrNull() ?: 0L
+            val minutes = match.groups[2]?.value?.takeIf { it.isNotEmpty() }?.toLongOrNull() ?: 0L
+            val seconds = match.groups[3]?.value?.takeIf { it.isNotEmpty() }?.toDoubleOrNull() ?: 0.0
+            return hours * 3600 + minutes * 60 + seconds.roundToLong()
+        }
+
+        return value.toLongOrNull()
     }
 }
 

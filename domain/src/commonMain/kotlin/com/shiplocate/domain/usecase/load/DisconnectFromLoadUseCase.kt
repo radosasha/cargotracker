@@ -5,6 +5,7 @@ import com.shiplocate.core.logging.Logger
 import com.shiplocate.domain.model.load.Load
 import com.shiplocate.domain.repository.AuthRepository
 import com.shiplocate.domain.repository.LoadRepository
+import com.shiplocate.domain.repository.RouteRepository
 
 /**
  * Use case to disconnect from a load
@@ -13,6 +14,7 @@ import com.shiplocate.domain.repository.LoadRepository
 class DisconnectFromLoadUseCase(
     private val loadRepository: LoadRepository,
     private val authRepository: AuthRepository,
+    private val routeRepository: RouteRepository,
     private val logger: Logger,
 ) {
     /**
@@ -47,6 +49,7 @@ class DisconnectFromLoadUseCase(
             // Cache the updated results
             logger.info(LogCategory.GENERAL, "💾 DisconnectFromLoadUseCase: Saving ${it.size} loads to cache")
             loadRepository.saveLoads(it)
+            routeRepository.deleteRoute(load.serverId)
 
             // Return domain models
             val loads = loadRepository.getCachedLoads()

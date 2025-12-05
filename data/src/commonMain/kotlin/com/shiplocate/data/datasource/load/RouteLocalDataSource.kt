@@ -39,7 +39,7 @@ interface RouteLocalDataSource {
      * Delete route for a load
      * @param loadId Load ID
      */
-    suspend fun deleteRoute(loadId: Long)
+    suspend fun deleteRoute(loadId: Long): Boolean
 
     /**
      * Clear all routes

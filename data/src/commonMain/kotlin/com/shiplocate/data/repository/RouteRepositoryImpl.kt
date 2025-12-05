@@ -42,5 +42,10 @@ class RouteRepositoryImpl(
     override suspend fun getRoute(loadId: Long): Route? {
         return routeLocalDataSource.getRoute(loadId)
     }
+
+    override suspend fun deleteRoute(loadId: Long) {
+        val deleted = routeLocalDataSource.deleteRoute(loadId)
+        logger.info(LogCategory.GENERAL, "🧹 RouteRepositoryImpl: Deleted cached route for load $loadId, deleted=$deleted")
+    }
 }
 

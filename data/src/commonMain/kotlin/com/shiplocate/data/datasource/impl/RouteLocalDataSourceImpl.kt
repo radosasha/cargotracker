@@ -61,11 +61,11 @@ class RouteLocalDataSourceImpl(
         return routePreferences.getProvider()
     }
 
-    override suspend fun deleteRoute(loadId: Long) {
+    override suspend fun deleteRoute(loadId: Long): Boolean {
         val savedLoadId = routePreferences.getLoadId()
-        if (savedLoadId == loadId) {
+        return if (savedLoadId == loadId) {
             routePreferences.clearAll()
-        }
+        } else false
     }
 
     override suspend fun clearAllRoutes() {

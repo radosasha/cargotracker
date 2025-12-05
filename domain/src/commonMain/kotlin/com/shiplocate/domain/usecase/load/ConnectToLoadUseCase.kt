@@ -5,6 +5,7 @@ import com.shiplocate.core.logging.Logger
 import com.shiplocate.domain.model.load.Load
 import com.shiplocate.domain.repository.AuthRepository
 import com.shiplocate.domain.repository.LoadRepository
+import com.shiplocate.domain.repository.RouteRepository
 
 /**
  * Use case to connect to a load
@@ -13,6 +14,7 @@ import com.shiplocate.domain.repository.LoadRepository
 class ConnectToLoadUseCase(
     private val loadRepository: LoadRepository,
     private val authRepository: AuthRepository,
+    private val routeRepository: RouteRepository,
     private val logger: Logger,
 ) {
     /**
@@ -53,6 +55,7 @@ class ConnectToLoadUseCase(
                 // Return domain models
                 val loads = loadRepository.getCachedLoads()
                 logger.info(LogCategory.GENERAL, "✅ ConnectToLoadUseCase: Successfully connected to load ${load.serverId}")
+                routeRepository.setRequireUpdate(load.stops.size >= 2)
                 Result.success(loads)
             },
             {

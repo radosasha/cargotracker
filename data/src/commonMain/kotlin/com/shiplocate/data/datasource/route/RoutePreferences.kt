@@ -77,13 +77,14 @@ class RoutePreferences(
         }
     }
 
-    suspend fun clearAll() {
+    suspend fun clearAll(): Boolean {
         dataStore.edit { preferences ->
             preferences.remove(KEY_LOAD_ID)
             preferences.remove(KEY_ROUTE_JSON)
             preferences.remove(KEY_PROVIDER)
             preferences.remove(KEY_REQUIRE_UPDATE)
         }
+        return true
     }
 
     fun observeRouteJson(): Flow<String?> {
