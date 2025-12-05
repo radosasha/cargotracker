@@ -87,8 +87,8 @@ val dataModule =
 
             // AuthPreferences - создается через DataStoreProvider (определен в платформо-специфичных модулях)
             single<AuthPreferences> { AuthPreferences(get<DataStoreProvider>().createDataStore(fileName = "shiplocate.preferences_pb")) }
-            single<RoutePreferences> { RoutePreferences(get<DataStoreProvider>().createDataStore(fileName = "shiplocate.preferences_route")) }
-            single<FirebasePreferences> { FirebasePreferences(get<DataStoreProvider>().createDataStore(fileName = "shiplocate.preferences_firebase")) }
+            single<RoutePreferences> { RoutePreferences(get<DataStoreProvider>().createDataStore(fileName = "shiplocate_route.preferences_pb")) }
+            single<FirebasePreferences> { FirebasePreferences(get<DataStoreProvider>().createDataStore(fileName = "shiplocate_firebase.preferences_pb")) }
 
             // Database - создается через DatabaseProvider (определен в платформо-специфичных модулях)
             single<TrackerDatabase> {
