@@ -3,6 +3,7 @@ package com.shiplocate.data.di
 import com.shiplocate.core.database.DatabaseProvider
 import com.shiplocate.core.database.TrackerDatabase
 import com.shiplocate.core.datastore.DataStoreProvider
+import com.shiplocate.core.logging.Logger
 import com.shiplocate.core.network.HttpClientProvider
 import com.shiplocate.data.config.ServerConfig
 import com.shiplocate.data.datasource.FirebaseTokenRemoteDataSource
@@ -20,9 +21,11 @@ import com.shiplocate.data.datasource.impl.LocationLocalDataSourceImpl
 import com.shiplocate.data.datasource.impl.LocationRemoteDataSourceImpl
 import com.shiplocate.data.datasource.impl.LogsRemoteDataSourceImpl
 import com.shiplocate.data.datasource.impl.PrefsDataSourceImpl
+import com.shiplocate.data.datasource.impl.RouteLocalDataSourceImpl
 import com.shiplocate.data.datasource.impl.TrackingDataSourceImpl
 import com.shiplocate.data.datasource.load.LoadsLocalDataSource
 import com.shiplocate.data.datasource.load.LoadsRemoteDataSource
+import com.shiplocate.data.datasource.load.RouteLocalDataSource
 import com.shiplocate.data.datasource.load.StopsLocalDataSource
 import com.shiplocate.data.datasource.message.MessagesLocalDataSource
 import com.shiplocate.data.datasource.message.MessagesRemoteDataSource
@@ -96,7 +99,7 @@ val dataModule =
             single<LocationLocalDataSource> { LocationLocalDataSourceImpl(get()) }
 
             // JSON serialization
-            single {
+            single<Json> {
                 Json {
                     ignoreUnknownKeys = true
                     isLenient = true
@@ -163,6 +166,7 @@ val dataModule =
             single { LoadsRemoteDataSource(get()) }
             single { StopsLocalDataSource(get()) }
             single { LoadsLocalDataSource(get(), get<StopsLocalDataSource>()) }
+            single<RouteLocalDataSource> { RouteLocalDataSourceImpl(get<RoutePreferences>(), get<Json>()) }
             single { MessagesRemoteDataSource(get()) }
             single { MessagesLocalDataSource(get()) }
             single<LogsRemoteDataSource> { LogsRemoteDataSourceImpl(get(), get()) }
@@ -178,7 +182,7 @@ val dataModule =
             single<LocationRepository> { LocationRepositoryImpl(get(), get()) }
             single<PermissionRepository> { PermissionRepositoryImpl(get()) }
             single<PrefsRepository> { PrefsRepositoryImpl(get()) }
-            single<RouteRepository> { RouteRepositoryImpl(get<RoutePreferences>(), get(), get()) }
+            single<RouteRepository> { RouteRepositoryImpl(get<RouteLocalDataSource>(), get<Logger>()) }
             single<TrackingRepository> { TrackingRepositoryImpl(get()) }
             single<AuthRepository> { AuthRepositoryImpl(get<AuthPreferences>(), get(), get()) }
             single<LoadRepository> { LoadRepositoryImpl(get(), get(), get(), get()) }
