@@ -6,6 +6,7 @@ import com.shiplocate.core.logging.LogCategory
 import com.shiplocate.core.logging.Logger
 import com.shiplocate.domain.model.load.LoadStatus
 import com.shiplocate.domain.model.notification.NotificationType
+import com.shiplocate.domain.repository.RouteRepository
 import com.shiplocate.domain.usecase.GetActiveLoadUseCase
 import com.shiplocate.domain.usecase.GetPermissionStatusUseCase
 import com.shiplocate.domain.usecase.ObservePermissionsUseCase
@@ -21,7 +22,9 @@ import com.shiplocate.domain.usecase.load.GetCachedLoadsUseCase
 import com.shiplocate.domain.usecase.load.GetLoadsUseCase
 import com.shiplocate.domain.usecase.load.RejectLoadUseCase
 import com.shiplocate.domain.usecase.load.UpdateStopCompletionUseCase
+import com.shiplocate.presentation.mapper.toActiveLoadUiModel
 import com.shiplocate.presentation.mapper.toUiModel
+import com.shiplocate.presentation.model.ActiveLoadUiModel
 import com.shiplocate.presentation.model.LoadUiModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -53,6 +56,7 @@ class LoadsViewModel(
     private val observeReceivedPushesUseCase: ObserveReceivedPushesUseCase,
     private val stopTrackingIfLoadUnlinkedUseCase: StopTrackingIfLoadUnlinkedUseCase,
     private val logoutUseCase: LogoutUseCase,
+    private val routeRepository: RouteRepository,
     private val logger: Logger,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow<LoadsUiState>(LoadsUiState.Loading)
@@ -298,8 +302,16 @@ class LoadsViewModel(
                     val permissionStatus = withContext(Dispatchers.Default) {
                         permissionStatusUseCase()
                     }
-                    val activeLoadUi = activeLoad?.toUiModel()
-                    val showWarning = activeLoadUi != null && !permissionStatus.hasAllPermissionsForTracking
+                    val showWarning = activeLoad != null && !permissionStatus.hasAllPermissionsForTracking
+
+                    // Get route duration for active load if it exists
+                    // This happens after BaseLoadsUseCase may have updated the route
+                    val activeLoadUi = activeLoad?.let { load ->
+                        val routeDuration = withContext(Dispatchers.Default) {
+                            routeRepository.getRoute(load.serverId)?.duration
+                        }
+                        load.toActiveLoadUiModel(routeDuration = routeDuration)
+                    }
 
                     _isRefreshing.value = false
                     _uiState.value = LoadsUiState.Success(
@@ -363,8 +375,15 @@ class LoadsViewModel(
                     permissionStatusUseCase()
                 }
 
-                val activeLoadUi = activeLoad?.toUiModel()
-                val showWarning = activeLoadUi != null && !permissionStatus.hasAllPermissionsForTracking
+                val showWarning = activeLoad != null && !permissionStatus.hasAllPermissionsForTracking
+
+                // Get route duration for active load if it exists
+                val activeLoadUi = activeLoad?.let { load ->
+                    val routeDuration = withContext(Dispatchers.Default) {
+                        routeRepository.getRoute(load.serverId)?.duration
+                    }
+                    load.toActiveLoadUiModel(routeDuration = routeDuration)
+                }
 
                 _uiState.value = LoadsUiState.Success(
                     activeLoad = activeLoadUi,
@@ -645,7 +664,7 @@ sealed class LoadsUiState {
     data object Loading : LoadsUiState()
 
     data class Success(
-        val activeLoad: LoadUiModel? = null, // Один Load для первой вкладки (Active)
+        val activeLoad: ActiveLoadUiModel? = null, // Один Load для первой вкладки (Active)
         val upcomingLoads: List<LoadUiModel> = emptyList(), // Список Load для второй вкладки (Upcoming)
         val showPermissionsWarning: Boolean = false, // Показывать красное окно с предупреждением о разрешениях
     ) : LoadsUiState()

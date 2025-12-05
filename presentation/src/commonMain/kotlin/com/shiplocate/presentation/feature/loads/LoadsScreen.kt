@@ -47,6 +47,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.shiplocate.presentation.component.StopsTimeline
+import com.shiplocate.presentation.model.ActiveLoadUiModel
 import com.shiplocate.presentation.model.LoadUiModel
 import com.shiplocate.presentation.util.DateFormatter
 
@@ -685,7 +686,7 @@ private fun LoadItem(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ActiveLoadListWithRefresh(
-    load: LoadUiModel,
+    load: ActiveLoadUiModel,
     isRefreshing: Boolean,
     isLoadingAction: Boolean,
     onRefresh: () -> Unit,
@@ -718,7 +719,7 @@ private fun ActiveLoadListWithRefresh(
 @Suppress("FunctionName")
 @Composable
 private fun ActiveLoadItem(
-    load: LoadUiModel,
+    load: ActiveLoadUiModel,
     isLoadingAction: Boolean,
     onConfirmLoadDelivered: () -> Unit,
     onUpdateStopCompletion: (Long, Int) -> Unit,
@@ -788,6 +789,27 @@ private fun ActiveLoadItem(
                 fontWeight = FontWeight.SemiBold,
                 color = getLoadStatusColor(load.loadStatus),
             )
+        }
+
+        // ETA from route
+        load.routeDuration?.let { duration ->
+            Row(
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(
+                    text = "ETA:",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                )
+                Text(
+                    text = duration,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.secondary,
+                )
+            }
         }
 
         // Last Updated

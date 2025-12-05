@@ -32,5 +32,12 @@ interface RouteRepository {
      * @param requireUpdate Whether route update is required
      */
     suspend fun setRequireUpdate(requireUpdate: Boolean)
+
+    /**
+     * Get route for a load
+     * @param loadId Load ID (server ID)
+     * @return Route if found, null otherwise
+     */
+    suspend fun getRoute(loadId: Long): Route?
 }
 
