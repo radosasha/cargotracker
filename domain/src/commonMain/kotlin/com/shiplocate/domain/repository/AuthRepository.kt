@@ -34,4 +34,10 @@ interface AuthRepository {
      * @return Result with auth token or error
      */
     suspend fun verifySmsCode(verify: SmsCodeVerify): Result<AuthToken>
+
+    /**
+     * Save phone number
+     * @param phoneNumber Phone number to save
+     */
+    suspend fun savePhoneNumber(phoneNumber: String)
 }

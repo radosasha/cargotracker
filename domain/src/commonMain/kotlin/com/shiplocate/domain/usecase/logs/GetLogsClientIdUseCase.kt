@@ -3,10 +3,8 @@ package com.shiplocate.domain.usecase.logs
 import com.shiplocate.domain.repository.AuthRepository
 import com.shiplocate.domain.repository.DeviceRepository
 import com.shiplocate.domain.repository.LoadRepository
-import com.shiplocate.domain.repository.PrefsRepository
 
 class GetLogsClientIdUseCase(
-    private val prefsRepository: PrefsRepository,
     private val deviceRepository: DeviceRepository,
     private val authRepository: AuthRepository,
     private val loadRepository: LoadRepository,
@@ -18,7 +16,8 @@ class GetLogsClientIdUseCase(
 
     suspend operator fun invoke(): String {
         var clientId = if (authRepository.hasSession()) {
-            val phoneNumber = prefsRepository.getPhoneNumber()
+            val session = authRepository.getSession()
+            val phoneNumber = session?.user?.phone
             if (phoneNumber == null) {
                 getFormatedClientId("NoPhone")
             } else {

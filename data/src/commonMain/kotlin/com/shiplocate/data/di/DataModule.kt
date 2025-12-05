@@ -14,6 +14,7 @@ import com.shiplocate.data.datasource.LogsRemoteDataSource
 import com.shiplocate.data.datasource.PrefsDataSource
 import com.shiplocate.data.datasource.TrackingDataSource
 import com.shiplocate.data.datasource.auth.AuthPreferences
+import com.shiplocate.data.datasource.firebase.FirebasePreferences
 import com.shiplocate.data.datasource.impl.FirebaseTokenLocalDataSourceImpl
 import com.shiplocate.data.datasource.impl.FirebaseTokenRemoteDataSourceImpl
 import com.shiplocate.data.datasource.impl.GpsLocationDataSourceImpl
@@ -49,7 +50,6 @@ import com.shiplocate.data.repository.LogsRepositoryImpl
 import com.shiplocate.data.repository.MessagesRepositoryImpl
 import com.shiplocate.data.repository.NotificationRepositoryImpl
 import com.shiplocate.data.repository.PermissionRepositoryImpl
-import com.shiplocate.data.repository.PrefsRepositoryImpl
 import com.shiplocate.data.repository.RouteRepositoryImpl
 import com.shiplocate.data.repository.TrackingRepositoryImpl
 import com.shiplocate.data.services.LocationProcessorImpl
@@ -64,7 +64,6 @@ import com.shiplocate.domain.repository.LogsRepository
 import com.shiplocate.domain.repository.MessagesRepository
 import com.shiplocate.domain.repository.NotificationRepository
 import com.shiplocate.domain.repository.PermissionRepository
-import com.shiplocate.domain.repository.PrefsRepository
 import com.shiplocate.domain.repository.RouteRepository
 import com.shiplocate.domain.repository.TrackingRepository
 import com.shiplocate.domain.service.LocationProcessor
@@ -89,6 +88,7 @@ val dataModule =
             // AuthPreferences - создается через DataStoreProvider (определен в платформо-специфичных модулях)
             single<AuthPreferences> { AuthPreferences(get<DataStoreProvider>().createDataStore(fileName = "shiplocate.preferences_pb")) }
             single<RoutePreferences> { RoutePreferences(get<DataStoreProvider>().createDataStore(fileName = "shiplocate.preferences_route")) }
+            single<FirebasePreferences> { FirebasePreferences(get<DataStoreProvider>().createDataStore(fileName = "shiplocate.preferences_firebase")) }
 
             // Database - создается через DatabaseProvider (определен в платформо-специфичных модулях)
             single<TrackerDatabase> {
@@ -172,7 +172,7 @@ val dataModule =
             single<LogsRemoteDataSource> { LogsRemoteDataSourceImpl(get(), get()) }
 
             // Firebase Token Data Sources
-            single<FirebaseTokenLocalDataSource> { FirebaseTokenLocalDataSourceImpl(get()) }
+            single<FirebaseTokenLocalDataSource> { FirebaseTokenLocalDataSourceImpl(get<FirebasePreferences>()) }
             single<FirebaseTokenRemoteDataSource> { FirebaseTokenRemoteDataSourceImpl(get(), get(), get()) }
             // FirebaseTokenService регистрируется в платформо-специфичных модулях composeApp
 
@@ -181,7 +181,6 @@ val dataModule =
             single<DeviceRepository> { DeviceRepositoryImpl(get()) }
             single<LocationRepository> { LocationRepositoryImpl(get(), get()) }
             single<PermissionRepository> { PermissionRepositoryImpl(get()) }
-            single<PrefsRepository> { PrefsRepositoryImpl(get()) }
             single<RouteRepository> { RouteRepositoryImpl(get<RouteLocalDataSource>(), get<Logger>()) }
             single<TrackingRepository> { TrackingRepositoryImpl(get()) }
             single<AuthRepository> { AuthRepositoryImpl(get<AuthPreferences>(), get(), get()) }

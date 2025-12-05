@@ -126,11 +126,10 @@ class EnterPinViewModel(
                     logger.info(LogCategory.AUTH, "EnterPinViewModel: User: ${authToken.user.name} (${authToken.user.phone})")
 
                     // Save session
-                    val session =
-                        AuthSession(
-                            token = authToken.token,
-                            user = authToken.user,
-                        )
+                    val session = AuthSession(
+                        token = authToken.token,
+                        user = authToken.user,
+                    )
                     saveAuthSessionUseCase(session)
                     logger.info(LogCategory.AUTH, "EnterPinViewModel: Session saved")
 

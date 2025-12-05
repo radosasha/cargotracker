@@ -4,7 +4,6 @@ import com.shiplocate.core.logging.LogCategory
 import com.shiplocate.core.logging.Logger
 import com.shiplocate.domain.model.TrackingStatus
 import com.shiplocate.domain.repository.PermissionRepository
-import com.shiplocate.domain.repository.PrefsRepository
 import com.shiplocate.domain.repository.TrackingRepository
 
 /**
@@ -14,7 +13,6 @@ import com.shiplocate.domain.repository.TrackingRepository
 class StartTrackingUseCase(
     private val permissionRepository: PermissionRepository,
     private val trackingRepository: TrackingRepository,
-    private val prefsRepository: PrefsRepository,
     private val logger: Logger,
 ) {
     suspend operator fun invoke(loadId: Long): Result<Unit> {

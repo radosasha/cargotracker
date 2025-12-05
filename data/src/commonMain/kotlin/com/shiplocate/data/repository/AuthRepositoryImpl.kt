@@ -73,6 +73,12 @@ class AuthRepositoryImpl(
         authPreferences.clearAll()
     }
 
+    override suspend fun savePhoneNumber(phoneNumber: String) {
+        logger.info(LogCategory.AUTH, "💾 AuthRepositoryImpl: Saving phone number: $phoneNumber")
+        authPreferences.saveUserPhone(phoneNumber)
+        logger.info(LogCategory.AUTH, "💾 AuthRepositoryImpl: ✅ Phone number saved successfully")
+    }
+
     override suspend fun hasSession(): Boolean {
         val has = authPreferences.hasToken()
         logger.info(LogCategory.AUTH, "🔍 AuthPreferencesRepository: Has session = $has")
