@@ -58,11 +58,15 @@ interface RouteRepository {
      * Fetch route for a load from the server
      * @param token Authentication token
      * @param serverLoadId Load ID on server
+     * @param startLat Start latitude coordinate
+     * @param startLon Start longitude coordinate
      * @return Result with Route or failure
      */
     suspend fun getRoute(
         token: String,
         serverLoadId: Long,
+        startLat: Double,
+        startLon: Double,
     ): Result<Route>
 }
 

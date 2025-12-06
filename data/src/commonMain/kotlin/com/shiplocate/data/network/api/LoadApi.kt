@@ -8,7 +8,9 @@ import com.shiplocate.data.network.dto.load.DisconnectLoadRequest
 import com.shiplocate.data.network.dto.load.EnterStopRequest
 import com.shiplocate.data.network.dto.load.LoadDto
 import com.shiplocate.data.network.dto.load.PingLoadRequest
+import com.shiplocate.data.network.dto.load.RouteCoordinateDto
 import com.shiplocate.data.network.dto.load.RouteDto
+import com.shiplocate.data.network.dto.load.RouteRequestDto
 import com.shiplocate.data.network.dto.load.StopDto
 import com.shiplocate.data.network.dto.load.UpdateStopCompletionRequest
 import com.shiplocate.data.network.dto.message.MessageDto
@@ -21,7 +23,6 @@ import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
-import io.ktor.client.request.url
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
@@ -159,12 +160,16 @@ interface LoadApi {
      *
      * @param token JWT token for authentication
      * @param loadId Load ID to get route for
+     * @param startLat Start latitude coordinate
+     * @param startLon Start longitude coordinate
      * @return RouteDto
      * @throws Exception if request fails
      */
     suspend fun getRoute(
         token: String,
         loadId: Long,
+        startLat: Double,
+        startLon: Double,
     ): RouteDto
 }
 
@@ -402,15 +407,24 @@ class LoadApiImpl(
     override suspend fun getRoute(
         token: String,
         loadId: Long,
+        startLat: Double,
+        startLon: Double,
     ): RouteDto {
-        logger.debug(LogCategory.NETWORK, "🌐 LoadApi: Getting route for load $loadId")
+        logger.debug(LogCategory.NETWORK, "🌐 LoadApi: Getting route for load $loadId with start coordinates ($startLat, $startLon)")
 
         return try {
-            val response = httpClient.get("$baseUrl/api/mobile/loads/route") {
+            val routeRequest = RouteRequestDto(
+                loadId = loadId,
+                start = RouteCoordinateDto(
+                    lat = startLat,
+                    lon = startLon,
+                ),
+            )
+
+            val response = httpClient.post("$baseUrl/api/mobile/loads/route") {
                 header(HttpHeaders.Authorization, "Bearer $token")
-                url {
-                    parameters.append("loadId", loadId.toString())
-                }
+                header(HttpHeaders.ContentType, "application/json")
+                setBody(routeRequest)
             }
 
             logger.debug(LogCategory.NETWORK, "🌐 LoadApi: Get route response status: ${response.status}")

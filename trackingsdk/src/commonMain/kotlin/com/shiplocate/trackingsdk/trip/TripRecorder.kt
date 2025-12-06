@@ -17,6 +17,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
+import kotlinx.datetime.Clock
 
 /**
  * TripRecorder - объединяет логику StartTrackerUseCase и StopTrackerUseCase
@@ -56,6 +57,8 @@ class TripRecorder(
                     "TripRecorder: 🔥 RECEIVED GPS location: Lat=${location.latitude}, Lon=${location.longitude}"
                 )
 
+                // FIXME mock location
+                val location = GpsLocation(latitude = 45.49760, longitude = -73.749417, accuracy = 10.0f, timestamp = Clock.System.now())
                 if (routeRepository.getRequireUpdate()) {
                     logger.debug(LogCategory.LOCATION, "TripRecorder: First GPS location received, checking route update requirement")
                     val authSession = authPrefsRepository.getSession()
@@ -63,7 +66,7 @@ class TripRecorder(
                     if (token == null) {
                         logger.warn(LogCategory.LOCATION, "TripRecorder: Cannot request route update - no auth session")
                     } else {
-                        val routeResult = fetchRoute(token, connectedLoad)
+                        val routeResult = fetchRoute(token, connectedLoad, location.latitude, location.longitude)
                         routeResult.fold({
                             route = it
                         }, {
@@ -72,8 +75,6 @@ class TripRecorder(
                     }
                 }
 
-                // FIXME mock location
-                // val location = GpsLocation(latitude = 45.49760, longitude = -73.749417, accuracy = 10.0f, timestamp = Clock.System.now())
                 // Обрабатываем координату
                 // Используем loadName только для отправки на сервер (OsmAnd протокол ожидает uniqueId)
                 val result = processLocation(connectedLoad.serverId, location)
@@ -207,9 +208,12 @@ class TripRecorder(
         )
     }
 
-    private suspend fun fetchRoute(token: String, load: Load): Result<Route> {
-        logger.info(LogCategory.LOCATION, "TripRecorder: Requesting route update for load ${load.serverId} after first GPS location")
-        val routeResult = routeRepository.getRoute(token, load.serverId)
+    private suspend fun fetchRoute(token: String, load: Load, startLat: Double, startLon: Double): Result<Route> {
+        logger.info(
+            LogCategory.LOCATION,
+            "TripRecorder: Requesting route update for load ${load.serverId} after first GPS location with start coordinates ($startLat, $startLon)"
+        )
+        val routeResult = routeRepository.getRoute(token, load.serverId, startLat, startLon)
         return routeResult.fold(
             onSuccess = { route ->
                 routeRepository.saveRoute(

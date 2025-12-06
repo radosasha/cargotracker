@@ -59,12 +59,14 @@ class RouteRepositoryImpl(
     override suspend fun getRoute(
         token: String,
         serverLoadId: Long,
+        startLat: Double,
+        startLon: Double,
     ): Result<Route> {
-        logger.info(LogCategory.GENERAL, "🔄 RouteRepositoryImpl: Getting route for load $serverLoadId")
+        logger.info(LogCategory.GENERAL, "🔄 RouteRepositoryImpl: Getting route for load $serverLoadId with start coordinates ($startLat, $startLon)")
 
         return try {
             logger.info(LogCategory.GENERAL, "🌐 RouteRepositoryImpl: Sending route request to server")
-            val routeDto = loadsRemoteDataSource.getRoute(token, serverLoadId)
+            val routeDto = loadsRemoteDataSource.getRoute(token, serverLoadId, startLat, startLon)
             val route = routeDto.toDomain()
             logger.info(LogCategory.GENERAL, "✅ RouteRepositoryImpl: Successfully got route for load $serverLoadId")
             Result.success(route)

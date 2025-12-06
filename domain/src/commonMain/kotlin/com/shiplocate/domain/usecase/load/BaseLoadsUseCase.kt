@@ -49,9 +49,9 @@ open class BaseLoadsUseCase(
             val requireUpdate = routeRepository.getRequireUpdate()
             // Get updated connected load and its stops
             val updatedConnectedLoad = loadRepository.getConnectedLoad()
-            val shouldUpdateRoute = when {
+            val needUpdateRoute = when {
                 updatedConnectedLoad == null -> false
-                updatedConnectedLoad.stops.size <= 1 -> false
+                updatedConnectedLoad.stops.isEmpty() -> false
                 else -> {
                     val updatedStops = updatedConnectedLoad.stops
                     val stopsChanged = hasStopsChanged(cachedStops, updatedStops)
@@ -62,9 +62,10 @@ open class BaseLoadsUseCase(
                 }
             }
 
-            if (requireUpdate != shouldUpdateRoute) {
-                logger.info(LogCategory.GENERAL, "🔄 BaseLoadsUseCase: Route update required changed requireUpdate=$shouldUpdateRoute")
-                routeRepository.setRequireUpdate(shouldUpdateRoute)
+            // only change to true and previous value was false
+            if (needUpdateRoute && !requireUpdate) {
+                logger.info(LogCategory.GENERAL, "🔄 BaseLoadsUseCase: Route update required changed requireUpdate=$needUpdateRoute")
+                routeRepository.setRequireUpdate(true)
             }
 
             val cachedLoads = loadRepository.getCachedLoads()

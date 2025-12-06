@@ -55,7 +55,7 @@ class ConnectToLoadUseCase(
                 // Return domain models
                 val loads = loadRepository.getCachedLoads()
                 logger.info(LogCategory.GENERAL, "✅ ConnectToLoadUseCase: Successfully connected to load ${load.serverId}")
-                routeRepository.setRequireUpdate(load.stops.size >= 2)
+                routeRepository.setRequireUpdate(load.stops.isNotEmpty())
                 Result.success(loads)
             },
             {

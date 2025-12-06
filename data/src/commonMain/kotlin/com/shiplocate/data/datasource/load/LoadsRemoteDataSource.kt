@@ -111,13 +111,17 @@ class LoadsRemoteDataSource(
      * Get route for a load
      * @param token Bearer token for authentication
      * @param loadId Load ID to get route for
+     * @param startLat Start latitude coordinate
+     * @param startLon Start longitude coordinate
      * @return RouteDto
      */
     suspend fun getRoute(
         token: String,
         loadId: Long,
+        startLat: Double,
+        startLon: Double,
     ): RouteDto {
-        println("📡 LoadRemoteDataSource: Getting route for load $loadId")
-        return loadApi.getRoute(token, loadId)
+        println("📡 LoadRemoteDataSource: Getting route for load $loadId with start coordinates ($startLat, $startLon)")
+        return loadApi.getRoute(token, loadId, startLat, startLon)
     }
 }
