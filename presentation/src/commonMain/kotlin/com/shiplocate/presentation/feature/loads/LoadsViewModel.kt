@@ -42,7 +42,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlin.math.roundToLong
 
 /**
  * ViewModel for Loads screen
@@ -686,34 +685,13 @@ class LoadsViewModel(
         }
     }
 
-    private fun formatRouteDuration(rawDuration: String?): String? {
-        val totalSeconds = rawDuration?.let { parseDurationSeconds(it) } ?: return null
-        val hours = totalSeconds / 3600
-        val minutes = (totalSeconds % 3600) / 60
+    private fun formatRouteDuration(durationSeconds: Int?): String? {
+        if (durationSeconds == null) return null
+        val hours = durationSeconds / 3600
+        val minutes = (durationSeconds % 3600) / 60
         val hoursPart = hours.toString().padStart(2, '0')
         val minutesPart = minutes.toString().padStart(2, '0')
         return "${hoursPart}h:${minutesPart}m"
-    }
-
-    private fun parseDurationSeconds(rawDuration: String): Long? {
-        val value = rawDuration.trim()
-        if (value.isEmpty()) return null
-
-        if (value.endsWith("s", ignoreCase = true)) {
-            val numeric = value.dropLast(1)
-            numeric.toDoubleOrNull()?.let { return it.roundToLong() }
-        }
-
-        if (value.startsWith("PT", ignoreCase = true)) {
-            val regex = Regex("""PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+(?:\.\d+)?)S)?""", RegexOption.IGNORE_CASE)
-            val match = regex.matchEntire(value) ?: return null
-            val hours = match.groups[1]?.value?.takeIf { it.isNotEmpty() }?.toLongOrNull() ?: 0L
-            val minutes = match.groups[2]?.value?.takeIf { it.isNotEmpty() }?.toLongOrNull() ?: 0L
-            val seconds = match.groups[3]?.value?.takeIf { it.isNotEmpty() }?.toDoubleOrNull() ?: 0.0
-            return hours * 3600 + minutes * 60 + seconds.roundToLong()
-        }
-
-        return value.toLongOrNull()
     }
 }
 

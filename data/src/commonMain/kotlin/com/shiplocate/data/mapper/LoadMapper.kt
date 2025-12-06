@@ -3,9 +3,9 @@ package com.shiplocate.data.mapper
 import com.shiplocate.core.database.entity.LoadEntity
 import com.shiplocate.core.database.entity.StopEntity
 import com.shiplocate.data.network.dto.load.LegDto
+import com.shiplocate.data.network.dto.load.LoadDto
 import com.shiplocate.data.network.dto.load.LocalizedValueDto
 import com.shiplocate.data.network.dto.load.LocalizedValuesDto
-import com.shiplocate.data.network.dto.load.LoadDto
 import com.shiplocate.data.network.dto.load.NavigationInstructionDto
 import com.shiplocate.data.network.dto.load.PolylineDto
 import com.shiplocate.data.network.dto.load.RouteDto
@@ -23,6 +23,7 @@ import com.shiplocate.domain.model.load.Polyline
 import com.shiplocate.domain.model.load.Route
 import com.shiplocate.domain.model.load.RouteLatLng
 import com.shiplocate.domain.model.load.Step
+import com.shiplocate.domain.model.load.StepCoordinate
 import com.shiplocate.domain.model.load.Stop
 import com.shiplocate.domain.model.load.WaypointLocation
 
@@ -187,10 +188,60 @@ fun Load.toEntity(): LoadEntity {
     )
 }
 
+/**
+ * Parse duration string like "24115s" to Int (seconds)
+ */
+private fun parseDuration(duration: String?): Int? {
+    if (duration == null) return null
+    return duration.removeSuffix("s").toIntOrNull()
+}
+
+/**
+ * Decode Google encoded polyline to array of coordinates
+ */
+private fun decodePolyline(encoded: String?): List<StepCoordinate>? {
+    if (encoded == null || encoded.isEmpty()) return null
+    
+    val coordinates = mutableListOf<StepCoordinate>()
+    var index = 0
+    var lat = 0
+    var lng = 0
+    
+    while (index < encoded.length) {
+        var shift = 0
+        var result = 0
+        var byte: Int
+        do {
+            byte = encoded[index++].code - 63
+            result = result or ((byte and 0x1F) shl shift)
+            shift += 5
+        } while (byte >= 0x20)
+        val deltaLat = if ((result and 1) != 0) ((result shr 1).inv()) else (result shr 1)
+        lat += deltaLat
+        
+        shift = 0
+        result = 0
+        do {
+            byte = encoded[index++].code - 63
+            result = result or ((byte and 0x1F) shl shift)
+            shift += 5
+        } while (byte >= 0x20)
+        val deltaLng = if ((result and 1) != 0) ((result shr 1).inv()) else (result shr 1)
+        lng += deltaLng
+        
+        coordinates.add(StepCoordinate(
+            latitude = lat / 1e5,
+            longitude = lng / 1e5
+        ))
+    }
+    
+    return coordinates
+}
+
 fun RouteDto.toDomain(): Route {
     return Route(
         distanceMeters = distanceMeters,
-        duration = duration,
+        duration = parseDuration(duration),
         legs = legs?.map { it.toDomain() },
     )
 }
@@ -198,7 +249,7 @@ fun RouteDto.toDomain(): Route {
 fun LegDto.toDomain(): Leg {
     return Leg(
         distanceMeters = distanceMeters,
-        duration = duration,
+        duration = parseDuration(duration),
         polyline = polyline?.toDomain(),
         steps = steps?.map { it.toDomain() },
     )
@@ -207,8 +258,8 @@ fun LegDto.toDomain(): Leg {
 fun StepDto.toDomain(): Step {
     return Step(
         distanceMeters = distanceMeters,
-        staticDuration = staticDuration,
-        polyline = polyline?.toDomain(),
+        staticDuration = parseDuration(staticDuration),
+        polyline = decodePolyline(polyline?.encodedPolyline),
         startLocation = startLocation?.toDomain(),
         endLocation = endLocation?.toDomain(),
         navigationInstruction = navigationInstruction?.toDomain(),
@@ -256,10 +307,56 @@ fun LocalizedValueDto.toDomain(): LocalizedValue {
     )
 }
 
+/**
+ * Convert duration Int (seconds) to String format like "24115s"
+ */
+private fun formatDuration(duration: Int?): String? {
+    return duration?.let { "${it}s" }
+}
+
+/**
+ * Encode array of coordinates to Google encoded polyline
+ */
+private fun encodePolyline(coordinates: List<StepCoordinate>?): PolylineDto? {
+    if (coordinates == null || coordinates.isEmpty()) return null
+    
+    val encoded = StringBuilder()
+    var prevLat = 0
+    var prevLng = 0
+    
+    for (coord in coordinates) {
+        val lat = (coord.latitude * 1e5).toInt()
+        val lng = (coord.longitude * 1e5).toInt()
+        
+        val deltaLat = lat - prevLat
+        val deltaLng = lng - prevLng
+        
+        encodeValue(deltaLat, encoded)
+        encodeValue(deltaLng, encoded)
+        
+        prevLat = lat
+        prevLng = lng
+    }
+    
+    return PolylineDto(encodedPolyline = encoded.toString())
+}
+
+/**
+ * Encode a single value for polyline encoding
+ */
+private fun encodeValue(value: Int, encoded: StringBuilder) {
+    var v = if (value < 0) ((value shl 1).inv()) else (value shl 1)
+    while (v >= 0x20) {
+        encoded.append((0x20 or (v and 0x1F) + 63).toChar())
+        v = v shr 5
+    }
+    encoded.append((v + 63).toChar())
+}
+
 fun Route.toDto(): RouteDto {
     return RouteDto(
         distanceMeters = distanceMeters,
-        duration = duration,
+        duration = formatDuration(duration),
         legs = legs?.map { it.toDto() },
     )
 }
@@ -267,7 +364,7 @@ fun Route.toDto(): RouteDto {
 fun Leg.toDto(): LegDto {
     return LegDto(
         distanceMeters = distanceMeters,
-        duration = duration,
+        duration = formatDuration(duration),
         polyline = polyline?.toDto(),
         steps = steps?.map { it.toDto() },
     )
@@ -276,8 +373,8 @@ fun Leg.toDto(): LegDto {
 fun Step.toDto(): StepDto {
     return StepDto(
         distanceMeters = distanceMeters,
-        staticDuration = staticDuration,
-        polyline = polyline?.toDto(),
+        staticDuration = formatDuration(staticDuration),
+        polyline = encodePolyline(polyline),
         startLocation = startLocation?.toDto(),
         endLocation = endLocation?.toDto(),
         navigationInstruction = navigationInstruction?.toDto(),
