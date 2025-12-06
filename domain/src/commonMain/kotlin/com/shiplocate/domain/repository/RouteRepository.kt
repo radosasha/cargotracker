@@ -1,6 +1,7 @@
 package com.shiplocate.domain.repository
 
 import com.shiplocate.domain.model.load.Route
+import kotlinx.coroutines.flow.Flow
 
 /**
  * Repository interface for Route data operations
@@ -39,6 +40,13 @@ interface RouteRepository {
      * @return Route if found, null otherwise
      */
     suspend fun getCachedRoute(loadId: Long): Route?
+
+    /**
+     * Observe route changes from data store
+     * Returns Flow that emits Route when route JSON changes
+     * @return Flow of Route, or null if not found
+     */
+    fun observeRoute(): Flow<Route?>
 
     /**
      * Delete cached route for a load

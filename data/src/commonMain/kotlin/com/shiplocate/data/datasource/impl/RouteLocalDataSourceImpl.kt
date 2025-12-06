@@ -1,11 +1,15 @@
 package com.shiplocate.data.datasource.impl
 
+import com.shiplocate.core.logging.LogCategory
+import com.shiplocate.core.logging.Logger
 import com.shiplocate.data.datasource.load.RouteLocalDataSource
 import com.shiplocate.data.datasource.route.RoutePreferences
 import com.shiplocate.data.mapper.toDomain
 import com.shiplocate.data.mapper.toDto
 import com.shiplocate.data.network.dto.load.RouteDto
 import com.shiplocate.domain.model.load.Route
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
@@ -16,6 +20,7 @@ import kotlinx.serialization.json.Json
 class RouteLocalDataSourceImpl(
     private val routePreferences: RoutePreferences,
     private val json: Json,
+    private val logger: Logger,
 ) : RouteLocalDataSource {
 
     override suspend fun saveRoute(
@@ -50,6 +55,20 @@ class RouteLocalDataSourceImpl(
             routeDto.toDomain()
         } catch (e: Exception) {
             null
+        }
+    }
+
+    override fun observeRoute(): Flow<Route?> {
+        return routePreferences.observeRouteJson().map { routeJson ->
+            routeJson?.let { jsonString ->
+                try {
+                    val routeDto = json.decodeFromString<RouteDto>(jsonString)
+                    routeDto.toDomain()
+                } catch (e: Exception) {
+                    logger.error(LogCategory.ERROR, "${e.message}")
+                    null
+                }
+            }
         }
     }
 

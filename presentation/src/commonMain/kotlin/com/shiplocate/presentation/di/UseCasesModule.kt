@@ -30,8 +30,10 @@ import com.shiplocate.domain.usecase.auth.VerifySmsCodeUseCase
 import com.shiplocate.domain.usecase.load.ConnectToLoadUseCase
 import com.shiplocate.domain.usecase.load.DisconnectFromLoadUseCase
 import com.shiplocate.domain.usecase.load.GetCachedLoadsUseCase
+import com.shiplocate.domain.usecase.load.GetCachedRouteUseCase
 import com.shiplocate.domain.usecase.load.GetConnectedLoadUseCase
 import com.shiplocate.domain.usecase.load.GetLoadsUseCase
+import com.shiplocate.domain.usecase.load.ObserveCachedRouteUseCase
 import com.shiplocate.domain.usecase.load.RejectLoadUseCase
 import com.shiplocate.domain.usecase.load.UpdateStopCompletionUseCase
 import com.shiplocate.domain.usecase.logs.GetLogsClientIdUseCase
@@ -83,6 +85,8 @@ val useCasesModule =
         // Load Use Cases
         factoryOf(::GetLoadsUseCase)
         factoryOf(::GetCachedLoadsUseCase)
+        factoryOf(::GetCachedRouteUseCase)
+        factoryOf(::ObserveCachedRouteUseCase)
         factoryOf(::ConnectToLoadUseCase)
         factoryOf(::DisconnectFromLoadUseCase)
         factoryOf(::RejectLoadUseCase)

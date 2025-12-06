@@ -166,7 +166,7 @@ val dataModule =
             single { LoadsRemoteDataSource(get()) }
             single { StopsLocalDataSource(get()) }
             single { LoadsLocalDataSource(get(), get<StopsLocalDataSource>()) }
-            single<RouteLocalDataSource> { RouteLocalDataSourceImpl(get<RoutePreferences>(), get<Json>()) }
+            single<RouteLocalDataSource> { RouteLocalDataSourceImpl(get<RoutePreferences>(), get<Json>(), get()) }
             single { MessagesRemoteDataSource(get()) }
             single { MessagesLocalDataSource(get()) }
             single<LogsRemoteDataSource> { LogsRemoteDataSourceImpl(get(), get()) }

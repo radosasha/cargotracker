@@ -4,9 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.shiplocate.core.logging.LogCategory
 import com.shiplocate.core.logging.Logger
+import com.shiplocate.domain.model.load.Load
 import com.shiplocate.domain.model.load.LoadStatus
 import com.shiplocate.domain.model.notification.NotificationType
-import com.shiplocate.domain.repository.RouteRepository
 import com.shiplocate.domain.usecase.GetActiveLoadUseCase
 import com.shiplocate.domain.usecase.GetPermissionStatusUseCase
 import com.shiplocate.domain.usecase.ObservePermissionsUseCase
@@ -19,7 +19,9 @@ import com.shiplocate.domain.usecase.StopTrackingUseCase
 import com.shiplocate.domain.usecase.auth.LogoutUseCase
 import com.shiplocate.domain.usecase.load.DisconnectFromLoadUseCase
 import com.shiplocate.domain.usecase.load.GetCachedLoadsUseCase
+import com.shiplocate.domain.usecase.load.GetCachedRouteUseCase
 import com.shiplocate.domain.usecase.load.GetLoadsUseCase
+import com.shiplocate.domain.usecase.load.ObserveCachedRouteUseCase
 import com.shiplocate.domain.usecase.load.RejectLoadUseCase
 import com.shiplocate.domain.usecase.load.UpdateStopCompletionUseCase
 import com.shiplocate.presentation.mapper.toActiveLoadUiModel
@@ -27,11 +29,16 @@ import com.shiplocate.presentation.mapper.toUiModel
 import com.shiplocate.presentation.model.ActiveLoadUiModel
 import com.shiplocate.presentation.model.LoadUiModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -57,7 +64,8 @@ class LoadsViewModel(
     private val observeReceivedPushesUseCase: ObserveReceivedPushesUseCase,
     private val stopTrackingIfLoadUnlinkedUseCase: StopTrackingIfLoadUnlinkedUseCase,
     private val logoutUseCase: LogoutUseCase,
-    private val routeRepository: RouteRepository,
+    private val getCachedRouteUseCase: GetCachedRouteUseCase,
+    private val observeCachedRouteUseCase: ObserveCachedRouteUseCase,
     private val logger: Logger,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow<LoadsUiState>(LoadsUiState.Loading)
@@ -97,14 +105,21 @@ class LoadsViewModel(
     val logoutError: StateFlow<String?> = _logoutError.asStateFlow()
 
     init {
-        // Подписываемся на изменения разрешений из Flow
+        observePermissions()
+        observePushes()
+        observeActiveLoadRoute()
+    }
+
+    private fun observePermissions() {
         observePermissionsUseCase()
             .onEach { status ->
                 logger.debug(LogCategory.PERMISSIONS, "LoadsViewModel: Received permission status update from Flow")
                 updatePermissionsWarning(status)
             }
             .launchIn(viewModelScope)
+    }
 
+    private fun observePushes() {
         // Подписываемся на push-уведомления когда приложение запущено
         observeReceivedPushesUseCase()
             .onEach { type ->
@@ -120,6 +135,46 @@ class LoadsViewModel(
                     )
                 ) {
                     refresh()
+                }
+            }
+            .launchIn(viewModelScope)
+    }
+
+    /**
+     * Observes route changes for active load and updates UI automatically
+     */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private fun observeActiveLoadRoute() {
+        _uiState.map { state ->
+            when (state) {
+                is LoadsUiState.Success -> state.activeLoad?.id
+                else -> null
+            }
+        }
+            .distinctUntilChanged()
+            .flatMapLatest { activeLoadId ->
+                if (activeLoadId != null) {
+                    // Filter by loadId in flatMapLatest
+                    observeCachedRouteUseCase().map { route ->
+                        route
+                    }
+                } else {
+                    flowOf(null)
+                }
+            }
+            .onEach { route ->
+                logger.debug(
+                    LogCategory.UI,
+                    "LoadsViewModel: Route updated for active load, duration=${route?.duration}"
+                )
+                val currentState = _uiState.value
+                if (currentState is LoadsUiState.Success) {
+                    val activeLoad = currentState.activeLoad
+                    if (activeLoad != null) {
+                        val routeDuration = formatRouteDuration(route?.duration)
+                        val updatedActiveLoad = activeLoad.copy(routeDuration = routeDuration)
+                        _uiState.value = currentState.copy(activeLoad = updatedActiveLoad)
+                    }
                 }
             }
             .launchIn(viewModelScope)
@@ -280,7 +335,6 @@ class LoadsViewModel(
         }
 
         viewModelScope.launch {
-            val activeLoad = getActiveLoadUseCase()
             val result = withContext(Dispatchers.Default) {
                 getLoadsUseCase()
             }
@@ -288,46 +342,8 @@ class LoadsViewModel(
             result.fold(
                 onSuccess = { loads ->
                     logger.info(LogCategory.UI, "LoadsViewModel: Successfully loaded ${loads.size} loads")
-
-                    if (activeLoad != null) {
-                        stopTrackingIfLoadUnlinkedUseCase(activeLoad)
-                    }
-                    // Сортируем список по дате создания (createdAt) - новые сверху
-                    val sortedLoads = loads.sortedByDescending { it.createdAt }
-
-                    // Разделяем на Active (LOAD_STATUS_CONNECTED) и Upcoming (LOAD_STATUS_NOT_CONNECTED)
-                    val activeLoad = sortedLoads.firstOrNull { it.loadStatus == LoadStatus.LOAD_STATUS_CONNECTED }
-                    val upcomingLoads = sortedLoads.filter { it.loadStatus == LoadStatus.LOAD_STATUS_NOT_CONNECTED }
-
-                    // Получаем текущий статус разрешений для расчета showPermissionsWarning
-                    val permissionStatus = withContext(Dispatchers.Default) {
-                        permissionStatusUseCase()
-                    }
-                    val showWarning = activeLoad != null && !permissionStatus.hasAllPermissionsForTracking
-
-                    // Get route duration for active load if it exists
-                    // This happens after BaseLoadsUseCase may have updated the route
-                    val activeLoadUi = activeLoad?.let { load ->
-                        val routeDuration = withContext(Dispatchers.Default) {
-                            logger.debug(LogCategory.UI, "LoadsViewModel: Attempting to get route duration for load ${load.serverId}")
-                            val route = routeRepository.getCachedRoute(load.id)
-                            val formatted = formatRouteDuration(route?.duration)
-                            if (formatted != null) {
-                                logger.info(LogCategory.UI, "LoadsViewModel: Retrieved formatted route duration: $formatted for load ${load.serverId}")
-                            } else {
-                                logger.debug(LogCategory.UI, "LoadsViewModel: No route found for load ${load.serverId}")
-                            }
-                            formatted
-                        }
-                        load.toActiveLoadUiModel(routeDuration = routeDuration)
-                    }
-
+                    showLoadsOnUI(loads)
                     _isRefreshing.value = false
-                    _uiState.value = LoadsUiState.Success(
-                        activeLoad = activeLoadUi,
-                        upcomingLoads = upcomingLoads.map { it.toUiModel() },
-                        showPermissionsWarning = showWarning,
-                    )
                 },
                 onFailure = { error ->
                     logger.error(LogCategory.UI, "LoadsViewModel: Failed to load loads: ${error.message}")
@@ -339,6 +355,39 @@ class LoadsViewModel(
                 },
             )
         }
+    }
+
+    private suspend fun showLoadsOnUI(loads: List<Load>) {
+        // Сортируем список по дате создания (createdAt) - новые сверху
+        val sortedLoads = loads.sortedBy { it.createdAt }
+
+        // Разделяем на Active (LOAD_STATUS_CONNECTED) и Upcoming (LOAD_STATUS_NOT_CONNECTED)
+        val activeLoad = sortedLoads.firstOrNull { it.loadStatus == LoadStatus.LOAD_STATUS_CONNECTED }
+        val upcomingLoads = sortedLoads.filter { it.loadStatus == LoadStatus.LOAD_STATUS_NOT_CONNECTED }
+
+        if (activeLoad != null) {
+            stopTrackingIfLoadUnlinkedUseCase(activeLoad)
+        }
+
+        // Получаем текущий статус разрешений для расчета showPermissionsWarning
+        val permissionStatus = withContext(Dispatchers.Default) {
+            permissionStatusUseCase()
+        }
+        val showWarning = activeLoad != null && !permissionStatus.hasAllPermissionsForTracking
+
+        // Route will be updated automatically via observeActiveLoadRoute()
+
+        val activeLoadUi = activeLoad?.let {
+            val cachedRoute = getCachedRouteUseCase(it.id)
+            val routeDuration = formatRouteDuration(cachedRoute?.duration)
+            it.toActiveLoadUiModel(routeDuration = routeDuration)
+        }
+
+        _uiState.value = LoadsUiState.Success(
+            activeLoad = activeLoadUi,
+            upcomingLoads = upcomingLoads.map { it.toUiModel() },
+            showPermissionsWarning = showWarning,
+        )
     }
 
     /**
@@ -365,48 +414,12 @@ class LoadsViewModel(
 
         viewModelScope.launch(Dispatchers.Default) {
             try {
-                val cachedLoads =
-                    withContext(Dispatchers.Default) {
-                        getCachedLoadsUseCase()
-                    }
+                val cachedLoads = withContext(Dispatchers.Default) {
+                    getCachedLoadsUseCase()
+                }
                 logger.info(LogCategory.UI, "LoadsViewModel: Successfully loaded ${cachedLoads.size} loads from cache")
 
-                // Сортируем кешированный список по дате создания (createdAt) - новые сверху
-                val sortedCachedLoads = cachedLoads.sortedByDescending { it.createdAt }
-                logger.debug(LogCategory.UI, "LoadsViewModel: Sorted ${sortedCachedLoads.size} cached loads by createdAt (newest first)")
-
-                // Разделяем на Active (LOAD_STATUS_CONNECTED) и Upcoming (LOAD_STATUS_NOT_CONNECTED)
-                val activeLoad = sortedCachedLoads.firstOrNull { it.loadStatus == LoadStatus.LOAD_STATUS_CONNECTED }
-                val upcomingLoads = sortedCachedLoads.filter { it.loadStatus == LoadStatus.LOAD_STATUS_NOT_CONNECTED }
-
-                // Получаем текущий статус разрешений для расчета showPermissionsWarning
-                val permissionStatus = withContext(Dispatchers.Default) {
-                    permissionStatusUseCase()
-                }
-
-                val showWarning = activeLoad != null && !permissionStatus.hasAllPermissionsForTracking
-
-                // Get route duration for active load if it exists
-                val activeLoadUi = activeLoad?.let { load ->
-                    val routeDuration = withContext(Dispatchers.Default) {
-                        logger.debug(LogCategory.UI, "LoadsViewModel: Attempting to get cached route duration for load ${load.serverId}")
-                        val route = routeRepository.getCachedRoute(load.id)
-                        val formatted = formatRouteDuration(route?.duration)
-                        if (formatted != null) {
-                            logger.info(LogCategory.UI, "LoadsViewModel: Retrieved cached formatted route duration: $formatted for load ${load.serverId}")
-                        } else {
-                            logger.debug(LogCategory.UI, "LoadsViewModel: No cached route found for load ${load.serverId}")
-                        }
-                        formatted
-                    }
-                    load.toActiveLoadUiModel(routeDuration = routeDuration)
-                }
-
-                _uiState.value = LoadsUiState.Success(
-                    activeLoad = activeLoadUi,
-                    upcomingLoads = upcomingLoads.map { it.toUiModel() },
-                    showPermissionsWarning = showWarning,
-                )
+                showLoadsOnUI(cachedLoads)
             } catch (e: Exception) {
                 logger.error(LogCategory.UI, "LoadsViewModel: Failed to load from cache: ${e.message}")
                 _uiState.value =

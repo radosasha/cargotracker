@@ -7,6 +7,7 @@ import com.shiplocate.data.datasource.load.RouteLocalDataSource
 import com.shiplocate.data.mapper.toDomain
 import com.shiplocate.domain.model.load.Route
 import com.shiplocate.domain.repository.RouteRepository
+import kotlinx.coroutines.flow.Flow
 
 /**
  * Implementation of RouteRepository
@@ -44,6 +45,10 @@ class RouteRepositoryImpl(
 
     override suspend fun getCachedRoute(loadId: Long): Route? {
         return routeLocalDataSource.getRoute(loadId)
+    }
+
+    override fun observeRoute(): Flow<Route?> {
+        return routeLocalDataSource.observeRoute()
     }
 
     override suspend fun deleteRoute(loadId: Long) {

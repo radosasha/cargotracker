@@ -1,6 +1,7 @@
 package com.shiplocate.data.datasource.load
 
 import com.shiplocate.domain.model.load.Route
+import kotlinx.coroutines.flow.Flow
 
 /**
  * Local data source for Route caching
@@ -27,6 +28,13 @@ interface RouteLocalDataSource {
      * @return Route domain model, or null if not found
      */
     suspend fun getRoute(loadId: Long): Route?
+
+    /**
+     * Observe route changes from data store
+     * Returns Flow that emits Route when route JSON changes
+     * @return Flow of Route domain model, or null if not found
+     */
+    fun observeRoute(): Flow<Route?>
 
     /**
      * Get route provider for a load
