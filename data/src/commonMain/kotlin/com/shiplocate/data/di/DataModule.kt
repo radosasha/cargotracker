@@ -107,7 +107,7 @@ val dataModule =
                 }
             }
 
-            val baseUrl = "https://${ServerConfig.BASE_URL}"
+            val baseUrl = "http://${ServerConfig.BASE_URL}"
             // Network API
             single {
                 LocationApi(
@@ -181,7 +181,13 @@ val dataModule =
             single<DeviceRepository> { DeviceRepositoryImpl(get()) }
             single<LocationRepository> { LocationRepositoryImpl(get(), get()) }
             single<PermissionRepository> { PermissionRepositoryImpl(get()) }
-            single<RouteRepository> { RouteRepositoryImpl(get<RouteLocalDataSource>(), get<Logger>()) }
+            single<RouteRepository> {
+                RouteRepositoryImpl(
+                    routeLocalDataSource = get<RouteLocalDataSource>(),
+                    loadsRemoteDataSource = get(),
+                    logger = get<Logger>(),
+                )
+            }
             single<TrackingRepository> { TrackingRepositoryImpl(get()) }
             single<AuthRepository> { AuthRepositoryImpl(get<AuthPreferences>(), get(), get()) }
             single<LoadRepository> { LoadRepositoryImpl(get(), get(), get(), get()) }

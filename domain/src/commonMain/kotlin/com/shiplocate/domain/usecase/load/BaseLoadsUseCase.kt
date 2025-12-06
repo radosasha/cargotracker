@@ -67,11 +67,6 @@ open class BaseLoadsUseCase(
                 routeRepository.setRequireUpdate(shouldUpdateRoute)
             }
 
-            // Update route if needed
-            if (shouldUpdateRoute && updatedConnectedLoad != null) {
-                updateRoute(token, updatedConnectedLoad.serverId)
-            }
-
             val cachedLoads = loadRepository.getCachedLoads()
             logger.info(LogCategory.GENERAL, "✅ BaseLoadsUseCase: Successfully loaded ${cachedLoads.size} loads from server")
             return Result.success(cachedLoads)
@@ -112,30 +107,5 @@ open class BaseLoadsUseCase(
         }
 
         return false
-    }
-
-    /**
-     * Update route for connected load
-     */
-    private suspend fun updateRoute(token: String, loadId: Long) {
-        logger.info(LogCategory.GENERAL, "🔄 BaseLoadsUseCase: Requesting route for load $loadId")
-
-        val routeResult = loadRepository.getRoute(token, loadId)
-
-        routeResult.fold(
-            onSuccess = { route ->
-                // Save route to repository (serialization happens in data layer)
-                routeRepository.saveRoute(
-                    loadId = loadId,
-                    route = route,
-                    provider = "google",
-                    requireUpdate = false,
-                )
-            },
-            onFailure = { error ->
-                logger.error(LogCategory.GENERAL, "❌ BaseLoadsUseCase: Failed to get route: ${error.message}", error)
-                routeRepository.setRequireUpdate(true)
-            }
-        )
     }
 }

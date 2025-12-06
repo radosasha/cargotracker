@@ -3,11 +3,14 @@ package com.shiplocate.trackingsdk.trip
 import com.shiplocate.core.logging.LogCategory
 import com.shiplocate.core.logging.Logger
 import com.shiplocate.domain.model.GpsLocation
+import com.shiplocate.domain.model.load.Load
+import com.shiplocate.domain.model.load.Route
 import com.shiplocate.domain.repository.AuthRepository
 import com.shiplocate.domain.repository.DeviceRepository
 import com.shiplocate.domain.repository.GpsRepository
 import com.shiplocate.domain.repository.LoadRepository
 import com.shiplocate.domain.repository.LocationRepository
+import com.shiplocate.domain.repository.RouteRepository
 import com.shiplocate.domain.service.LocationProcessResult
 import com.shiplocate.domain.service.LocationProcessor
 import kotlinx.coroutines.Dispatchers
@@ -25,9 +28,12 @@ class TripRecorder(
     private val locationProcessor: LocationProcessor,
     private val deviceRepository: DeviceRepository,
     private val loadRepository: LoadRepository,
+    private val routeRepository: RouteRepository,
     private val authPrefsRepository: AuthRepository,
     private val logger: Logger,
 ) {
+
+    private var route: Route? = null
 
     /**
      * Запускает GPS трекинг и возвращает Flow с результатами обработки координат
@@ -41,6 +47,8 @@ class TripRecorder(
             loadRepository.getLoadById(loadId)
         } ?: throw IllegalStateException("Connected Load not found")
 
+        route = routeRepository.getCachedRoute(loadId)
+
         return gpsRepository.startGpsTracking()
             .map { location ->
                 logger.info(
@@ -48,12 +56,33 @@ class TripRecorder(
                     "TripRecorder: 🔥 RECEIVED GPS location: Lat=${location.latitude}, Lon=${location.longitude}"
                 )
 
+                if (routeRepository.getRequireUpdate()) {
+                    logger.debug(LogCategory.LOCATION, "TripRecorder: First GPS location received, checking route update requirement")
+                    val authSession = authPrefsRepository.getSession()
+                    val token = authSession?.token
+                    if (token == null) {
+                        logger.warn(LogCategory.LOCATION, "TripRecorder: Cannot request route update - no auth session")
+                    } else {
+                        val routeResult = fetchRoute(token, connectedLoad)
+                        routeResult.fold({
+                            route = it
+                        }, {
+                            logger.info(LogCategory.LOCATION, "unable to fetch route: ${it.message}")
+                        })
+                    }
+                }
+
+                // FIXME mock location
+                // val location = GpsLocation(latitude = 45.49760, longitude = -73.749417, accuracy = 10.0f, timestamp = Clock.System.now())
                 // Обрабатываем координату
                 // Используем loadName только для отправки на сервер (OsmAnd протокол ожидает uniqueId)
                 val result = processLocation(connectedLoad.serverId, location)
 
                 if (result.shouldSend) {
-                    logger.info(LogCategory.LOCATION, "TripRecorder: ✅ Successfully processed location\nTripRecorder: Reason: ${result.reason}")
+                    logger.info(
+                        LogCategory.LOCATION,
+                        "TripRecorder: ✅ Successfully processed location\nTripRecorder: Reason: ${result.reason}"
+                    )
                 } else {
                     logger.info(LogCategory.LOCATION, "TripRecorder: ⏭️ Location filtered out\nTripRecorder: Reason: ${result.reason}")
                 }
@@ -175,6 +204,31 @@ class TripRecorder(
             lastCoordinateLon = location.longitude,
             lastCoordinateTime = location.timestamp.toEpochMilliseconds(),
             coordinateErrorMeters = location.accuracy.toInt(),
+        )
+    }
+
+    private suspend fun fetchRoute(token: String, load: Load): Result<Route> {
+        logger.info(LogCategory.LOCATION, "TripRecorder: Requesting route update for load ${load.serverId} after first GPS location")
+        val routeResult = routeRepository.getRoute(token, load.serverId)
+        return routeResult.fold(
+            onSuccess = { route ->
+                routeRepository.saveRoute(
+                    loadId = load.id,
+                    route = route,
+                    provider = "google",
+                    requireUpdate = false,
+                )
+                logger.info(LogCategory.LOCATION, "TripRecorder: Route updated successfully for load ${load.serverId}")
+                Result.success(route)
+            },
+            onFailure = { error ->
+                logger.error(
+                    LogCategory.LOCATION,
+                    "TripRecorder: Failed to update route for load ${load.serverId}: ${error.message}",
+                    error
+                )
+                Result.failure(error)
+            },
         )
     }
 }

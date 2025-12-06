@@ -1,7 +1,6 @@
 package com.shiplocate.domain.repository
 
 import com.shiplocate.domain.model.load.Load
-import com.shiplocate.domain.model.load.Route
 import com.shiplocate.domain.model.load.Stop
 import kotlinx.coroutines.flow.Flow
 
@@ -131,15 +130,4 @@ interface LoadRepository {
      */
     suspend fun clearAllData()
 
-    /**
-     * Get route for a load
-     * Computes Google Routes legs response for the stops associated with a load
-     * @param token Authentication token
-     * @param loadId Load ID to get route for
-     * @return Route wrapped in Result
-     */
-    suspend fun getRoute(
-        token: String,
-        loadId: Long,
-    ): Result<Route>
 }

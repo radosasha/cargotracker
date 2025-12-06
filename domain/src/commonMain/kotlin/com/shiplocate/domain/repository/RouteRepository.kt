@@ -38,12 +38,23 @@ interface RouteRepository {
      * @param loadId Load ID (server ID)
      * @return Route if found, null otherwise
      */
-    suspend fun getRoute(loadId: Long): Route?
+    suspend fun getCachedRoute(loadId: Long): Route?
 
     /**
      * Delete cached route for a load
      * @param loadId Load ID (server ID)
      */
     suspend fun deleteRoute(loadId: Long)
+
+    /**
+     * Fetch route for a load from the server
+     * @param token Authentication token
+     * @param serverLoadId Load ID on server
+     * @return Result with Route or failure
+     */
+    suspend fun getRoute(
+        token: String,
+        serverLoadId: Long,
+    ): Result<Route>
 }
 

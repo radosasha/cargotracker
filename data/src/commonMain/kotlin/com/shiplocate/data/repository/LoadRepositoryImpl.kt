@@ -12,7 +12,6 @@ import com.shiplocate.data.mapper.toEntity
 import com.shiplocate.data.mapper.toStopEntity
 import com.shiplocate.domain.model.load.Load
 import com.shiplocate.domain.model.load.LoadStatus
-import com.shiplocate.domain.model.load.Route
 import com.shiplocate.domain.model.load.Stop
 import com.shiplocate.domain.repository.LoadRepository
 import kotlinx.coroutines.flow.Flow
@@ -351,24 +350,4 @@ class LoadRepositoryImpl(
         }
     }
 
-    override suspend fun getRoute(
-        token: String,
-        loadId: Long,
-    ): Result<Route> {
-        logger.info(LogCategory.GENERAL, "🔄 LoadRepositoryImpl: Getting route for load $loadId")
-
-        return try {
-            logger.info(LogCategory.GENERAL, "🌐 LoadRepositoryImpl: Sending route request to server")
-            val routeDto = loadsRemoteDataSource.getRoute(token, loadId)
-
-            // Map DTO to domain model
-            val route = routeDto.toDomain()
-
-            logger.info(LogCategory.GENERAL, "✅ LoadRepositoryImpl: Successfully got route for load $loadId")
-            Result.success(route)
-        } catch (e: Exception) {
-            logger.info(LogCategory.GENERAL, "❌ LoadRepositoryImpl: Failed to get route for load $loadId: ${e.message}")
-            Result.failure(e)
-        }
-    }
 }

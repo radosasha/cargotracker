@@ -49,7 +49,7 @@ class DisconnectFromLoadUseCase(
             // Cache the updated results
             logger.info(LogCategory.GENERAL, "💾 DisconnectFromLoadUseCase: Saving ${it.size} loads to cache")
             loadRepository.saveLoads(it)
-            routeRepository.deleteRoute(load.serverId)
+            routeRepository.deleteRoute(load.id)
 
             // Return domain models
             val loads = loadRepository.getCachedLoads()

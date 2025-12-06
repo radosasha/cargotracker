@@ -310,7 +310,7 @@ class LoadsViewModel(
                     val activeLoadUi = activeLoad?.let { load ->
                         val routeDuration = withContext(Dispatchers.Default) {
                             logger.debug(LogCategory.UI, "LoadsViewModel: Attempting to get route duration for load ${load.serverId}")
-                            val route = routeRepository.getRoute(load.serverId)
+                            val route = routeRepository.getCachedRoute(load.id)
                             val formatted = formatRouteDuration(route?.duration)
                             if (formatted != null) {
                                 logger.info(LogCategory.UI, "LoadsViewModel: Retrieved formatted route duration: $formatted for load ${load.serverId}")
@@ -390,7 +390,7 @@ class LoadsViewModel(
                 val activeLoadUi = activeLoad?.let { load ->
                     val routeDuration = withContext(Dispatchers.Default) {
                         logger.debug(LogCategory.UI, "LoadsViewModel: Attempting to get cached route duration for load ${load.serverId}")
-                        val route = routeRepository.getRoute(load.serverId)
+                        val route = routeRepository.getCachedRoute(load.id)
                         val formatted = formatRouteDuration(route?.duration)
                         if (formatted != null) {
                             logger.info(LogCategory.UI, "LoadsViewModel: Retrieved cached formatted route duration: $formatted for load ${load.serverId}")
